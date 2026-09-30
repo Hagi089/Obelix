@@ -14,9 +14,9 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 
 | Bereich | Automatisch | Gerät (du) |
 |---|---|---|
-| Projektbasis (Phase 1) | ✅ Build, Lint | ⏳ 3 Fälle |
-| Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ⏳ 9 Fälle |
-| Alle weiteren Bereiche | ⬜ | ⬜ |
+| Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
+| Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
+| Alle weiteren Bereiche (ab Phase 3) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `9aa78b2`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (13 Tests) · `lintDebug` ✅ · keine Warnungen im Bauablauf.
 
@@ -43,33 +43,33 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | A-13 | Name nicht leer, höchstens 50 Zeichen | `AuthValidatorTest` | ✅ |
 | A-14 | Build der Debug-APK, Lint | GitHub Actions | ✅ |
 
-### 2.2 Gerätetest Phase 1 – Projektbasis (⏳ offen, du)
+### 2.2 Gerätetest Phase 1 – Projektbasis (✅ bestanden, 30.09.2026)
 
 Voraussetzung: Debug-APK aus dem obersten GitHub-Lauf (Actions → Artifacts → `obelix-debug-apk`) installiert.
 
 | ID | Schritte | Erwartet | Ergebnis |
 |---|---|---|---|
-| G1-01 | App starten | Startet ohne Absturz. Weil du nicht angemeldet bist, erscheint die Anmeldeseite (nicht der Hauptbereich) | ⏳ |
-| G1-02 | Nach Anmeldung (siehe G2-04): unten sind **sechs** Bereiche sichtbar: Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente. Tippe jeden an | Jeder Bereich wird geöffnet, der aktive ist markiert, Titel oben passt, Text „Dieser Bereich ist noch nicht verfügbar" | ⏳ |
-| G1-03 | Zahnrad oben rechts tippen, dann den Zurück-Pfeil | Einstellungen öffnen, Zurück führt zum vorigen Bereich | ⏳ |
+| G1-01 | App starten | Startet ohne Absturz. Weil du nicht angemeldet bist, erscheint die Anmeldeseite (nicht der Hauptbereich) | ✅ (30.09.2026, Benutzer) |
+| G1-02 | Nach Anmeldung (siehe G2-04): unten sind **sechs** Bereiche sichtbar: Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente. Tippe jeden an | Jeder Bereich wird geöffnet, der aktive ist markiert, Titel oben passt, Text „Dieser Bereich ist noch nicht verfügbar" | ✅ (30.09.2026, Benutzer) |
+| G1-03 | Zahnrad oben rechts tippen, dann den Zurück-Pfeil | Einstellungen öffnen, Zurück führt zum vorigen Bereich | ✅ (30.09.2026, Benutzer) |
 
-### 2.3 Gerätetest Phase 2 – Authentifizierung (⏳ offen, du)
+### 2.3 Gerätetest Phase 2 – Authentifizierung (✅ bestanden, 30.09.2026)
 
 Hinweis: Für neue Konten eine E-Mail-Adresse verwenden, auf die du Zugriff hast (für den Passwort-Reset).
 
 | ID | Schritte | Erwartet | Ergebnis |
 |---|---|---|---|
-| G2-01 | „Konto erstellen" mit Name, gültiger E-Mail, Passwort mit mindestens 8 Zeichen | Danach erscheint der Hauptbereich. In der Firebase-Konsole (Authentication → Benutzer) erscheint das Konto | ⏳ |
-| G2-02 | Erneut registrieren mit **derselben** E-Mail | Meldung „Zu dieser E-Mail-Adresse gibt es bereits ein Konto. Bitte melde dich an." | ⏳ |
-| G2-03 | Registrieren mit leerem Namen, ungültiger E-Mail (z. B. `abc`), Passwort mit 5 Zeichen | Jeweils Meldung am Feld, kein Serveraufruf, kein neues Konto in Firebase | ⏳ |
-| G2-04 | Zahnrad → „Abmelden", danach mit den Daten aus G2-01 anmelden | Nach dem Abmelden erscheint die Anmeldeseite; die Anmeldung führt in den Hauptbereich | ⏳ |
-| G2-05 | Angemeldet: App komplett schließen (aus der Übersicht wischen) und neu öffnen | Du bleibst angemeldet. Nach Abmelden, Schließen und Öffnen bleibst du abgemeldet | ⏳ |
-| G2-06 | Anmelden mit falschem Passwort; dann mit unbekannter E-Mail | Beide Male „E-Mail-Adresse oder Passwort ist falsch." (gleicher Text) | ⏳ |
-| G2-07 | „Passwort vergessen?" → E-Mail eingeben → Link senden. Danach Link in der E-Mail öffnen (auch Spam prüfen), neues Passwort setzen, damit anmelden | Bestätigungstext erscheint (auch bei unbekannter E-Mail derselbe Text); E-Mail kommt an; Anmeldung mit neuem Passwort klappt | ⏳ |
-| G2-08 | Flugmodus an, dann App öffnen, dann Anmelden versuchen | Oben rotes Feld „Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell."; Anmelden zeigt „Keine Verbindung zum Server …", **keine** Erfolgsmeldung. Flugmodus aus: Hinweis verschwindet | ⏳ |
-| G2-09 | Passwort-Augensymbol antippen; Bildschirm drehen; Tastatur „Weiter/Fertig"-Taste benutzen | Passwort wird angezeigt bzw. verborgen; Eingaben bleiben beim Drehen erhalten; „Fertig" sendet das Formular ab | ⏳ |
+| G2-01 | „Konto erstellen" mit Name, gültiger E-Mail, Passwort mit mindestens 8 Zeichen | Danach erscheint der Hauptbereich. In der Firebase-Konsole (Authentication → Benutzer) erscheint das Konto | ✅ (30.09.2026, Benutzer) |
+| G2-02 | Erneut registrieren mit **derselben** E-Mail | Meldung „Zu dieser E-Mail-Adresse gibt es bereits ein Konto. Bitte melde dich an." | ✅ (30.09.2026, Benutzer) |
+| G2-03 | Registrieren mit leerem Namen, ungültiger E-Mail (z. B. `abc`), Passwort mit 5 Zeichen | Jeweils Meldung am Feld, kein Serveraufruf, kein neues Konto in Firebase | ✅ (30.09.2026, Benutzer) |
+| G2-04 | Zahnrad → „Abmelden", danach mit den Daten aus G2-01 anmelden | Nach dem Abmelden erscheint die Anmeldeseite; die Anmeldung führt in den Hauptbereich | ✅ (30.09.2026, Benutzer) |
+| G2-05 | Angemeldet: App komplett schließen (aus der Übersicht wischen) und neu öffnen | Du bleibst angemeldet. Nach Abmelden, Schließen und Öffnen bleibst du abgemeldet | ✅ (30.09.2026, Benutzer) |
+| G2-06 | Anmelden mit falschem Passwort; dann mit unbekannter E-Mail | Beide Male „E-Mail-Adresse oder Passwort ist falsch." (gleicher Text) | ✅ (30.09.2026, Benutzer) |
+| G2-07 | „Passwort vergessen?" → E-Mail eingeben → Link senden. Danach Link in der E-Mail öffnen (auch Spam prüfen), neues Passwort setzen, damit anmelden | Bestätigungstext erscheint (auch bei unbekannter E-Mail derselbe Text); E-Mail kommt an; Anmeldung mit neuem Passwort klappt | ✅ (30.09.2026, Benutzer) |
+| G2-08 | Flugmodus an, dann App öffnen, dann Anmelden versuchen | Oben rotes Feld „Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell."; Anmelden zeigt „Keine Verbindung zum Server …", **keine** Erfolgsmeldung. Flugmodus aus: Hinweis verschwindet | ✅ (30.09.2026, Benutzer) |
+| G2-09 | Passwort-Augensymbol antippen; Bildschirm drehen; Tastatur „Weiter/Fertig"-Taste benutzen | Passwort wird angezeigt bzw. verborgen; Eingaben bleiben beim Drehen erhalten; „Fertig" sendet das Formular ab | ✅ (30.09.2026, Benutzer) |
 
-Bitte für jeden Fall ✅ oder ❌ melden, bei ❌ mit einem Screenshot oder der genauen Meldung.
+Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer auf dem Gerät erfolgreich getestet. Bei künftigen Fällen bitte ✅ oder ❌ melden, bei ❌ mit Screenshot oder genauer Meldung.
 
 ### 2.4 Bekannte Lücken der Tests
 - Die ViewModels (Anmeldeablauf) haben noch keine automatischen Tests, weil die Coroutine-Testbibliothek noch nicht eingebunden ist. Der Ablauf wird bisher nur durch G2-01 bis G2-08 geprüft.
@@ -103,3 +103,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | Datum | Änderung |
 |---|---|
 | 30.09.2026 | Datei angelegt. 13 automatische Tests (A-01 bis A-13) und Bau/Lint (A-14) bestanden; Gerätefälle G1-01 bis G1-03 und G2-01 bis G2-09 offen |
+| 30.09.2026 | Benutzer meldet alle 12 Gerätefälle (G1-01 bis G2-09) als bestanden. Phase 1 und 2 damit vollständig abgenommen. Nächste Phase: 3 |

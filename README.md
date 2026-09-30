@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils: Kalender, Einnahmen und Ausgaben, Auffälligkeiten, geplante Anschaffungen, Stellplätze und Dokumente.
 
-Status: **Phase 2 (Authentifizierung) umgesetzt**, Haushalt und Rollen folgen in Phase 3. Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md).
+Status: **Phase 2 (Authentifizierung) umgesetzt**, Haushalt und Rollen folgen in Phase 3. Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Technologien
 - Kotlin, Jetpack Compose, Material 3 (adaptive Navigation: Leiste auf Smartphones, Rail auf Tablets)

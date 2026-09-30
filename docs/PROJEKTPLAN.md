@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 5: Phase 2 Authentifizierung umgesetzt) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+Stand: 30.09.2026 (Rev. 6: Phase 1 und 2 auf dem Gerät abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 3 als Nächstes).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -428,7 +428,7 @@ Nach **jeder** Phase: implementieren → kompilieren → Tests → Fehler behebe
 ### Phase 0 – Analyse und Architektur ✅ (dieses Dokument)
 Abschlusskriterium: Freigabe durch dich.
 
-### Phase 1 – Projektbasis und Firebase ✅ (30.09.2026, mit Einschränkung)
+### Phase 1 – Projektbasis und Firebase ✅ (30.09.2026, auf dem Gerät abgenommen)
 - **Ziel:** Leere App startet, Firebase verbunden, CI kompiliert.
 - **Dateien:** `settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle/libs.versions.toml`, `AndroidManifest.xml`, `MainActivity`, Theme, Navigation-Gerüst, `strings.xml`, `.gitignore`, `README.md`, `.github/workflows/build.yml`, `firebase/firebase.json`
 - **Umsetzung:** Projekt, Abhängigkeiten (Compose BOM, Navigation, Firebase BOM, Auth, Firestore), Firestore-Persistenz aus, Netzwerkstatus, Fehler-Mapper, Theme, leere Navigation, `google-services.json` lokal.
@@ -439,7 +439,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Festgelegte Versionen (geprüft am 30.09.2026):** AGP 9.3.3, Gradle 9.5.1, Kotlin 2.4.10, Compose BOM 2026.09.00, Navigation 2.10.2, Lifecycle 2.11.0, Firebase BoM 34.19.0, `minSdk 26`, `compileSdk 37` (von den AndroidX-Bibliotheken verlangt), `targetSdk 36`.
 - **Offene Punkte:** (1) `targetSdk` später auf 37 heben; (2) GitHub-Actions-Aktionen `setup-java@v4` und Node-20-Hinweis: kein Fehler, aber Update auf v5 sinnvoll; (3) Compose-Material-Icons-Erweiterung wird über `material-icons-extended 1.7.8` bezogen (Version nicht gesondert gegen die BOM geprüft, Build ist grün).
 
-### Phase 2 – Authentifizierung ✅ (30.09.2026, Gerätetest durch den Benutzer steht aus)
+### Phase 2 – Authentifizierung ✅ (30.09.2026, auf dem Gerät abgenommen)
 - **Ziel:** Registrierung, Login, Logout, Passwort-Reset.
 - **Dateien:** `AuthRepository`, `auth/*`, Navigation-Guard.
 - **Umsetzung:** Formulare mit Validierung (E-Mail, Passwortlänge), deutsche Fehlermeldungen (falsches Passwort, Netzwerk), Sitzung bleibt erhalten.
@@ -447,7 +447,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Abschluss:** Alle genannten Fälle manuell und per Test bestanden.
 - **Umgesetzt (Commit `432e9fa`, CI grün):** `AuthRepository` (Firebase Auth), Formulare Anmelden / Konto erstellen / Passwort zurücksetzen, Sitzungsstatus (ohne Anmeldung sieht man nur die Anmeldeseiten), Einstellungen mit Konto und „Abmelden", Fehlermeldungen auf Deutsch. Passwort mindestens 8 Zeichen. Bei „falsche E-Mail" und „falsches Passwort" erscheint dieselbe Meldung (verrät nicht, ob es ein Konto gibt); beim Passwort-Reset erscheint immer dieselbe neutrale Bestätigung.
 - **Automatisch geprüft (Unit-Tests in CI):** Validierung von E-Mail, Passwort und Name; Abbildung der Firebase-Fehler auf Meldungen (falsche Zugangsdaten, Konto existiert, zu schwaches Passwort, zu viele Versuche, kein Netz).
-- **Noch nicht geprüft – Gerätetest durch den Benutzer:** 9 Fälle (G2-01 bis G2-09) plus 3 Fälle zur Projektbasis (G1-01 bis G1-03), siehe [`TESTFAELLE.md`](TESTFAELLE.md). Die Debug-APK aus dem obersten GitHub-Lauf enthält die Firebase-Konfiguration.
+- **Gerätetest:** Alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) hat der Benutzer am 30.09.2026 erfolgreich getestet, siehe [`TESTFAELLE.md`](TESTFAELLE.md).
 - **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Die Datenrechte kommen in Phase 3 über die Firestore-Regeln (Zugriff nur mit Einladungscode). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
 ### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis)
@@ -618,7 +618,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | Phase | Status | Datum | Offene Punkte |
 |---|---|---|---|
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
-| 1 Projektbasis | abgeschlossen (CI grün) | 30.09.2026 | Gerätetest der APK durch den Benutzer; Firebase-Projekt anlegen |
-| 2 Authentifizierung | umgesetzt, CI grün | 30.09.2026 | Gerätetest (9 Fälle, siehe Phase 2) durch den Benutzer |
+| 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
+| 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 3 Haushalt, Rollen, Regeln | nächste Phase | | |
 | 4–12 | nicht begonnen | | |
