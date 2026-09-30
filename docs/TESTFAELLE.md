@@ -18,7 +18,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
 | Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
 | Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ✅ 16 von 16 (G4-01 bis G4-16) |
-| Geplante Ausgaben (Phase 5, Version 08) | ✅ 14 neue Unit-Tests, ✅ 13 neue Regel-Tests (R-08) | ✅ 12 von 12 (G5-01 bis G5-12, vom Entwickler-Auftraggeber am 30.09.2026 gemeldet) |
+| Geplante Ausgaben (Phase 5, Version 08) | ✅ 14 neue Unit-Tests, ✅ 13 neue Regel-Tests (R-08) | ✅ 12 von 12 (G5-01 bis G5-12, vom Auftraggeber am 30.09.2026 gemeldet) |
 | UI-Überarbeitung (Version 07) | ✅ Bau, Lint | ⏳ 0 von 10 (GU-01 bis GU-10), Ergebnisse noch nicht gemeldet |
 | Alle weiteren Bereiche (ab Phase 6) | ⬜ | ⬜ |
 
