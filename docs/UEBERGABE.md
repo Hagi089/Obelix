@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) umgesetzt, Gerätetest GU offen · **Phase 5 – Geplante Ausgaben umgesetzt (Version 08), Gerätetest G5 offen** · danach: **Phase 6 – Dateiablage und Belege**
+Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) umgesetzt, Gerätetest GU offen · **Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden)** · danach: **Phase 6 – Dateiablage und Belege**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -16,8 +16,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
 | UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ⏳ Gerätetest GU-01 bis GU-10 offen |
-| 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ⏳ Gerätetest G5-01 bis G5-12 offen, Regeln neu veröffentlichen |
-| **6** | **Dateiablage und Belege** | **⬜ nächste Phase** (nach Abnahme von Phase 5 durch den Gerätetest, sonst auf Wunsch) |
+| 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ✅ Gerätetest G5-01 bis G5-12 bestanden |
+| **6** | **Dateiablage und Belege** | **⬜ nächste Phase** (Phase 5 abgenommen) |
 | 7–12 | Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
@@ -61,7 +61,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Kauf = eine Transaktion** (`PlannedExpenseRepository.purchase`): liest den Status, legt die Ausgabe mit dem **tatsächlichen** Betrag an (`plannedExpenseId` gesetzt) und setzt die Planung auf `PURCHASED`. Die Regeln erzwingen das (`existsAfter`/`getAfter`), eine gekaufte Planung ist nicht mehr änderbar. Geplante Ausgaben zählen **nie** im Kontostand.
 - **Buchung löschen** (`FinanceRepository.delete(id, plannedExpenseId, uid)`): stammt sie aus einem Kauf, wird die Planung im selben Schritt wieder `PLANNED` (Annahme des Entwicklers, Plan Entscheidung 23; auf Wunsch änderbar). Buchungen aus einem Kauf bleiben Ausgaben (Art gesperrt).
 - **Neu im Code:** `data/planned/*` (Modelle, `PlannedValidator`, `PurchasePlanner`, `PlannedCalculator`, Repository), `ui/planned/*`, `AppError.CONFLICT`, gemeinsame Funktion `bookingCreateData` und Sammlungsnamen in `FinanceRepository.kt`, `AppContainer.plannedExpenseRepository`.
-- **Offen:** Gerätetest G5-01 bis G5-12 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4c). **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jeder Zugriff auf `plannedExpenses` mit „Dafür fehlt dir die Berechtigung" fehl. Alte App vor der Installation deinstallieren. Dashboard-Zähler für offene Anschaffungen folgen in Phase 11.
+- **Abgenommen:** Gerätetest G5-01 bis G5-12 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4c). Hinweis (gilt weiter bei jeder Regeländerung): **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jeder Zugriff auf `plannedExpenses` mit „Dafür fehlt dir die Berechtigung" fehl. Alte App vor der Installation deinstallieren. Dashboard-Zähler für offene Anschaffungen folgen in Phase 11.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
@@ -113,7 +113,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 4 abgenommen. Phase 5 (Geplante Ausgaben) ist als Version 08 gebaut (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün). Gerätetest GU-01 bis GU-10 (Version 07): [bestanden / Ergebnisse hier eintragen]. Gerätetest G5-01 bis G5-12 (Version 08): [bestanden / Ergebnisse hier eintragen]. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole [neu veröffentlicht / noch nicht].
+Stand: Phase 1 bis 5 abgenommen. Phase 5 (Geplante Ausgaben) ist Version 08 (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün); Gerätetest G5-01 bis G5-12 bestanden; die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht. Gerätetest GU-01 bis GU-10 (Version 07): [bestanden / Ergebnisse hier eintragen; bisher nicht gemeldet, gilt als offen].
 
 Auftrag jetzt: PHASE 6 – Dateiablage und Belege gemäß Plan (Dateien gestückelt in Firestore, Option F). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 

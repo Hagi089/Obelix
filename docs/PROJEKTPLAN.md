@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 11: **Phase 5 – Geplante Ausgaben umgesetzt** (Version 08), Bau und Tests grün, Gerätetest G5 offen; Phase 4 abgenommen; UI-Überarbeitung gebaut, Gerätetest GU offen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, Phase 5 wartet auf Gerätetest, nächste Phase 6).
+Stand: 30.09.2026 (Rev. 11: **Phase 5 – Geplante Ausgaben abgenommen** (Version 08), Bau und Tests grün, Gerätetest G5-01 bis G5-12 bestanden; Phase 4 abgenommen; UI-Überarbeitung gebaut, Gerätetest GU offen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, Phase 5 abgenommen, nächste Phase 6).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -501,7 +501,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Kategorien nur für ADMIN:** Der Abschnitt „Kategorien" in den Einstellungen wird nur ADMINs angezeigt (Entscheidung des Benutzers, 30.09.2026). Die Firestore-Regeln erlauben weiterhin jedem Benutzer das Anlegen (R-07); Mitglieder haben in der App aber keinen Weg dafür. Regeln bewusst nicht verschärft (nicht verlangt).
 - Nicht geprüft (Gerätetest GU): Aussehen auf verschiedenen Launchern und Formen, Lesbarkeit der Karte im hellen und dunklen Modus. Bildgrößen: Hintergrund 169 KB, Icon-Vordergrund 270 KB.
 
-### Phase 5 – Geplante Ausgaben ✅ umgesetzt (30.09.2026, Version 08), Gerätetest G5 offen
+### Phase 5 – Geplante Ausgaben ✅ abgenommen (30.09.2026, Version 08, Gerätetest G5-01 bis G5-12 bestanden)
 - **Ziel:** Planung, „Gekauft“-Workflow mit tatsächlichem Betrag.
 - **Umgesetzt (Commit `29eea16`):**
   - `firebase/firestore.rules`: Sammlung `plannedExpenses` (`validPlanned`), Buchungen mit optionalem, unveränderlichem `plannedExpenseId` (siehe Abschnitt 7). Regel-Tests R-08 (13 Fälle).
@@ -664,5 +664,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
 | 4 Finanzen und Excel-Import | ✅ abgenommen: Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); Gerätetest G4-01 bis G4-16 bestanden (Benutzer, 30.09.2026), Import in das echte Projekt durchgeführt | 30.09.2026 | – |
-| 5 Geplante Ausgaben | umgesetzt (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 offen**, Regeln müssen neu veröffentlicht werden | 30.09.2026 | Gerätetest G5, GU (UI-Überarbeitung) |
+| 5 Geplante Ausgaben | abgenommen (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 bestanden (abgenommen)** | 30.09.2026 | Gerätetest GU (UI-Überarbeitung) |
 | 6–12 | nicht begonnen | | |
