@@ -37,7 +37,7 @@ fun ObelixNavHost(
         composable<DocumentsRoute> { SectionNotAvailableScreen() }
         composable<SettingsRoute> {
             val settingsViewModel: SettingsViewModel = viewModel(
-                factory = viewModelFactory { initializer { SettingsViewModel(container.householdRepository, user.uid) } },
+                factory = viewModelFactory { initializer { SettingsViewModel(container.userRepository, user.uid) } },
             )
             SettingsScreen(viewModel = settingsViewModel, user = user, onSignOut = onSignOut)
         }

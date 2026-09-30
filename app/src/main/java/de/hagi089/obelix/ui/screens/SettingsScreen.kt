@@ -46,18 +46,18 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.hagi089.obelix.R
 import de.hagi089.obelix.data.auth.AuthUser
-import de.hagi089.obelix.data.household.AccessCode
-import de.hagi089.obelix.data.household.Member
-import de.hagi089.obelix.data.household.Membership
-import de.hagi089.obelix.data.household.Role
+import de.hagi089.obelix.data.user.AccessCode
+import de.hagi089.obelix.data.user.Role
+import de.hagi089.obelix.data.user.UserProfile
+import de.hagi089.obelix.ui.settings.SettingsUiState
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
 private sealed interface Confirm {
     data object RenewCode : Confirm
-    data class Remove(val member: Member) : Confirm
+    data class Remove(val user: UserProfile) : Confirm
 }
 
-/** Einstellungen: Konto, Haushalt, Zugangscode und Mitglieder (Verwaltung nur für ADMIN). */
+/** Einstellungen: Konto; für ADMIN zusätzlich Zugangscode und Benutzerverwaltung. */
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
@@ -67,7 +67,7 @@ fun SettingsScreen(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirm by remember { mutableStateOf<Confirm?>(null) }
-    val membership = state.membership
+    val profile = state.profile
 
     Column(
         modifier = modifier
@@ -77,15 +77,19 @@ fun SettingsScreen(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         SectionTitle(R.string.settings_account)
-        (membership?.member?.displayName ?: user.displayName)?.takeIf { it.isNotBlank() }?.let {
+        (profile?.displayName ?: user.displayName)?.takeIf { it.isNotBlank() }?.let {
             Text(text = it, style = MaterialTheme.typography.bodyLarge)
         }
         user.email?.let { Text(text = it, style = MaterialTheme.typography.bodyMedium) }
+        profile?.let {
+            Text(
+                text = stringResource(R.string.settings_your_role, stringResource(roleLabel(it.role))),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+        }
         OutlinedButton(onClick = onSignOut, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
             Text(stringResource(R.string.action_sign_out))
         }
-
-        HorizontalDivider()
 
         state.error?.let { error ->
             Text(
@@ -94,7 +98,7 @@ fun SettingsScreen(
                 color = MaterialTheme.colorScheme.error,
                 modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
             )
-            if (membership == null) {
+            if (profile == null) {
                 Button(onClick = viewModel::refresh, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                     Text(stringResource(R.string.action_retry))
                 }
@@ -103,23 +107,19 @@ fun SettingsScreen(
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         }
-        if (membership != null) {
-            HouseholdSection(membership)
-            CodeSection(membership, busy = state.isLoading, onRenew = { confirm = Confirm.RenewCode })
+        if (profile?.isAdmin == true) {
             HorizontalDivider()
-            SectionTitle(R.string.settings_members)
-            state.members.forEach { member ->
-                val isSelf = member.uid == membership.member.uid
-                MemberRow(
-                    member = member,
-                    membership = membership,
+            CodeSection(state, onRenew = { confirm = Confirm.RenewCode })
+            HorizontalDivider()
+            SectionTitle(R.string.settings_users)
+            state.users.forEach { other ->
+                val isSelf = other.uid == profile.uid
+                UserRow(
+                    user = other,
                     isSelf = isSelf,
-                    canManage = membership.isAdmin && !isSelf && !state.isLoading,
-                    onToggleRole = {
-                        viewModel.setRole(member, if (member.role == Role.ADMIN) Role.MEMBER else Role.ADMIN)
-                    },
-                    onSwitchParty = { viewModel.switchParty(member) },
-                    onRemove = { confirm = Confirm.Remove(member) },
+                    canManage = !isSelf && !state.isLoading,
+                    onToggleRole = { viewModel.toggleRole(other) },
+                    onRemove = { confirm = Confirm.Remove(other) },
                 )
             }
         }
@@ -134,10 +134,10 @@ fun SettingsScreen(
             onDismiss = { confirm = null },
         )
         is Confirm.Remove -> ConfirmDialog(
-            title = R.string.settings_member_remove_title,
-            text = stringResource(R.string.settings_member_remove_text, pending.member.displayName),
-            confirmLabel = R.string.settings_member_remove_confirm,
-            onConfirm = { confirm = null; viewModel.remove(pending.member) },
+            title = R.string.settings_user_remove_title,
+            text = stringResource(R.string.settings_user_remove_text, pending.user.displayName),
+            confirmLabel = R.string.settings_user_remove_confirm,
+            onConfirm = { confirm = null; viewModel.remove(pending.user) },
             onDismiss = { confirm = null },
         )
         null -> Unit
@@ -150,28 +150,11 @@ private fun SectionTitle(@StringRes titleRes: Int) {
 }
 
 @Composable
-private fun HouseholdSection(membership: Membership) {
-    SectionTitle(R.string.settings_household)
-    Text(text = membership.household.name, style = MaterialTheme.typography.bodyLarge)
-    Text(
-        text = stringResource(
-            R.string.settings_your_role,
-            stringResource(roleLabel(membership.member.role)),
-            membership.partyName(membership.member.partyId),
-        ),
-        style = MaterialTheme.typography.bodyMedium,
-    )
-}
-
-@Composable
-private fun CodeSection(membership: Membership, busy: Boolean, onRenew: () -> Unit) {
+private fun CodeSection(state: SettingsUiState, onRenew: () -> Unit) {
     val context = LocalContext.current
-    val code = membership.household.inviteCode
+    val code = state.accessCode
     SectionTitle(R.string.settings_code)
-    Text(
-        text = stringResource(R.string.settings_code_intro),
-        style = MaterialTheme.typography.bodyMedium,
-    )
+    Text(text = stringResource(R.string.settings_code_intro), style = MaterialTheme.typography.bodyMedium)
     if (code == null) {
         Text(text = stringResource(R.string.settings_code_none), style = MaterialTheme.typography.bodyMedium)
     } else {
@@ -185,43 +168,31 @@ private fun CodeSection(membership: Membership, busy: Boolean, onRenew: () -> Un
             }
         }
     }
-    if (membership.isAdmin) {
-        Button(onClick = onRenew, enabled = !busy, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
-            Text(stringResource(if (code == null) R.string.settings_code_create else R.string.settings_code_renew))
-        }
+    Button(onClick = onRenew, enabled = !state.isLoading, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+        Text(stringResource(if (code == null) R.string.settings_code_create else R.string.settings_code_renew))
     }
 }
 
 @Composable
-private fun MemberRow(
-    member: Member,
-    membership: Membership,
+private fun UserRow(
+    user: UserProfile,
     isSelf: Boolean,
     canManage: Boolean,
     onToggleRole: () -> Unit,
-    onSwitchParty: () -> Unit,
     onRemove: () -> Unit,
 ) {
     var menuOpen by remember { mutableStateOf(false) }
-    val name = if (isSelf) stringResource(R.string.settings_member_you, member.displayName) else member.displayName
+    val name = if (isSelf) stringResource(R.string.settings_user_you, user.displayName) else user.displayName
     ListItem(
         headlineContent = { Text(name) },
-        supportingContent = {
-            Text(
-                stringResource(
-                    R.string.settings_member_details,
-                    membership.partyName(member.partyId),
-                    stringResource(roleLabel(member.role)),
-                ),
-            )
-        },
+        supportingContent = { Text(stringResource(roleLabel(user.role))) },
         trailingContent = if (canManage) {
             {
                 Box {
                     IconButton(onClick = { menuOpen = true }) {
                         Icon(
                             imageVector = Icons.Filled.MoreVert,
-                            contentDescription = stringResource(R.string.settings_member_actions, member.displayName),
+                            contentDescription = stringResource(R.string.settings_user_actions, user.displayName),
                         )
                     }
                     DropdownMenu(expanded = menuOpen, onDismissRequest = { menuOpen = false }) {
@@ -229,18 +200,14 @@ private fun MemberRow(
                             text = {
                                 Text(
                                     stringResource(
-                                        if (member.role == Role.ADMIN) R.string.settings_make_member else R.string.settings_make_admin,
+                                        if (user.role == Role.ADMIN) R.string.settings_make_member else R.string.settings_make_admin,
                                     ),
                                 )
                             },
                             onClick = { menuOpen = false; onToggleRole() },
                         )
                         DropdownMenuItem(
-                            text = { Text(stringResource(R.string.settings_switch_party)) },
-                            onClick = { menuOpen = false; onSwitchParty() },
-                        )
-                        DropdownMenuItem(
-                            text = { Text(stringResource(R.string.settings_member_remove)) },
+                            text = { Text(stringResource(R.string.settings_user_remove)) },
                             onClick = { menuOpen = false; onRemove() },
                         )
                     }

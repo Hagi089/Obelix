@@ -1,4 +1,4 @@
-package de.hagi089.obelix.data.household
+package de.hagi089.obelix.data.user
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse

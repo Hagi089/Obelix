@@ -65,39 +65,23 @@
     <string name="error_weak_password">Das Passwort ist zu schwach. Bitte wähle ein längeres Passwort.</string>
     <string name="error_too_many_requests">Zu viele Versuche. Bitte warte einige Minuten und versuche es dann erneut.</string>
 
-    <!-- Zugangscode und Einrichtung -->
+    <!-- Zugangscode -->
     <string name="auth_access_code">Zugangscode</string>
-    <string name="auth_access_code_hint">Bekommst du vom Admin deines Haushalts</string>
+    <string name="auth_access_code_hint">Bekommst du vom Admin</string>
     <string name="error_access_code_invalid">Der Zugangscode ist ungültig oder nicht mehr gültig.</string>
     <string name="error_access_code_required">Bitte gib den Zugangscode ein.</string>
     <string name="error_access_code_format">Der Zugangscode besteht aus 16 Buchstaben und Ziffern.</string>
-    <string name="error_household_name_required">Bitte gib einen Namen für den Haushalt ein.</string>
-    <string name="error_party_name_required">Bitte gib einen Namen ein.</string>
-    <string name="error_text_too_long">Der Text ist zu lang.</string>
+    <string name="access_code_title">Zugangscode eingeben</string>
+    <string name="access_code_intro">Ohne gültigen Zugangscode hast du keinen Zugriff auf die Daten. Den Code bekommst du vom Admin.</string>
+    <string name="access_code_button">Weiter</string>
+    <string name="profile_load_failed">Benutzerdaten konnten nicht geladen werden</string>
     <string name="action_retry">Erneut versuchen</string>
     <string name="action_cancel">Abbrechen</string>
     <string name="action_copy">Kopieren</string>
     <string name="action_share">Teilen</string>
-    <string name="household_load_failed">Haushalt konnte nicht geladen werden</string>
 
-    <string name="onboarding_code_title">Zugangscode eingeben</string>
-    <string name="onboarding_code_intro">Ohne Zugangscode hast du keinen Zugriff auf die Daten eines Haushalts. Den Code bekommst du vom Admin deines Haushalts.</string>
-    <string name="onboarding_code_button">Weiter</string>
-    <string name="onboarding_join_title">Deine Partei</string>
-    <string name="onboarding_join_intro">Der Code ist gültig. Wähle, zu welcher Partei du gehörst.</string>
-    <string name="onboarding_join_button">Beitreten</string>
-    <string name="onboarding_other_code">Anderen Code eingeben</string>
-    <string name="onboarding_create_title">Haushalt einrichten</string>
-    <string name="onboarding_create_intro">Du legst den Haushalt an und wirst Admin. Der Haushalt hat zwei Parteien.</string>
-    <string name="onboarding_household_name">Name des Haushalts</string>
-    <string name="onboarding_party_one">Erste Partei</string>
-    <string name="onboarding_party_two">Zweite Partei</string>
-    <string name="onboarding_own_party">Ich gehöre zu</string>
-    <string name="onboarding_create_button">Haushalt anlegen</string>
-
-    <!-- Einstellungen: Haushalt -->
-    <string name="settings_household">Haushalt</string>
-    <string name="settings_your_role">Deine Rolle: %1$s · Partei: %2$s</string>
+    <!-- Einstellungen: Rolle, Zugangscode, Benutzer -->
+    <string name="settings_your_role">Deine Rolle: %1$s</string>
     <string name="role_admin">Admin</string>
     <string name="role_member">Mitglied</string>
     <string name="settings_code">Zugangscode</string>
@@ -106,18 +90,16 @@
     <string name="settings_code_create">Zugangscode erzeugen</string>
     <string name="settings_code_renew">Neuen Zugangscode erzeugen</string>
     <string name="settings_code_renew_title">Neuen Code erzeugen?</string>
-    <string name="settings_code_renew_text">Der bisherige Code wird sofort ungültig. Bereits angemeldete Mitglieder behalten ihren Zugriff.</string>
+    <string name="settings_code_renew_text">Der bisherige Code wird sofort ungültig. Bereits registrierte Benutzer behalten ihren Zugriff.</string>
     <string name="settings_code_renew_confirm">Neuen Code erzeugen</string>
     <string name="settings_code_share_text">Dein Zugangscode für OBELIX: %1$s</string>
-    <string name="settings_members">Mitglieder</string>
-    <string name="settings_member_you">%1$s (du)</string>
-    <string name="settings_member_details">%1$s · %2$s</string>
-    <string name="settings_member_actions">Aktionen für %1$s</string>
+    <string name="settings_users">Benutzer</string>
+    <string name="settings_user_you">%1$s (du)</string>
+    <string name="settings_user_actions">Aktionen für %1$s</string>
     <string name="settings_make_admin">Zum Admin machen</string>
     <string name="settings_make_member">Zum Mitglied machen</string>
-    <string name="settings_switch_party">Andere Partei zuordnen</string>
-    <string name="settings_member_remove">Entfernen</string>
-    <string name="settings_member_remove_title">Mitglied entfernen?</string>
-    <string name="settings_member_remove_text">%1$s verliert den Zugriff auf den Haushalt. Mit dem gültigen Zugangscode kann die Person wieder beitreten.</string>
-    <string name="settings_member_remove_confirm">Entfernen</string>
+    <string name="settings_user_remove">Entfernen</string>
+    <string name="settings_user_remove_title">Benutzer entfernen?</string>
+    <string name="settings_user_remove_text">%1$s verliert den Zugriff auf die Daten. Mit dem aktuellen Zugangscode kann die Person sich erneut freischalten.</string>
+    <string name="settings_user_remove_confirm">Entfernen</string>
 </resources>

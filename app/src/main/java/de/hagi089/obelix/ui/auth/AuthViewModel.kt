@@ -6,10 +6,9 @@ import androidx.lifecycle.viewModelScope
 import de.hagi089.obelix.core.error.AppError
 import de.hagi089.obelix.core.error.AppException
 import de.hagi089.obelix.core.validation.AuthValidator
-import de.hagi089.obelix.core.validation.HouseholdValidator
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
-import de.hagi089.obelix.data.household.AccessCode
+import de.hagi089.obelix.data.user.AccessCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -63,13 +62,13 @@ class AuthViewModel(
 
     /**
      * Registrierung nur mit Zugangscode. Code und Name werden vor dem Anlegen des Kontos abgelegt;
-     * die Einrichtung prüft den Code direkt danach und löscht das Konto bei ungültigem Code wieder.
+     * der Codebildschirm legt direkt danach das Benutzerdokument an und löscht das Konto bei ungültigem Code wieder.
      */
     fun register(name: String, email: String, password: String, accessCode: String) {
         val nameError = AuthValidator.name(name)
         val emailError = AuthValidator.email(email)
         val passwordError = AuthValidator.newPassword(password)
-        val codeError = HouseholdValidator.accessCode(accessCode)
+        val codeError = AuthValidator.accessCode(accessCode)
         if (nameError != null || emailError != null || passwordError != null || codeError != null) {
             _state.value = AuthUiState(
                 nameError = nameError,

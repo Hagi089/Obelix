@@ -2,6 +2,7 @@ package de.hagi089.obelix.core.validation
 
 import androidx.annotation.StringRes
 import de.hagi089.obelix.R
+import de.hagi089.obelix.data.user.AccessCode
 
 /**
  * Eingabeprüfung für die Anmeldeformulare. Liefert die Fehlermeldung (deutsch) oder null, wenn gültig.
@@ -39,5 +40,16 @@ object AuthValidator {
         value.isBlank() -> R.string.error_name_required
         value.trim().length > MAX_NAME_LENGTH -> R.string.error_name_too_long
         else -> null
+    }
+
+    /** Zugangscode: 16 Zeichen; Bindestriche, Leerzeichen und Kleinbuchstaben sind bei der Eingabe erlaubt. */
+    @StringRes
+    fun accessCode(value: String): Int? {
+        val normalized = AccessCode.normalize(value)
+        return when {
+            normalized.isEmpty() -> R.string.error_access_code_required
+            !AccessCode.isValid(normalized) -> R.string.error_access_code_format
+            else -> null
+        }
     }
 }

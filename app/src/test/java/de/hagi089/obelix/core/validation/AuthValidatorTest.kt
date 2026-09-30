@@ -47,4 +47,22 @@ class AuthValidatorTest {
         assertNull(AuthValidator.name("Tobias"))
         assertNull(AuthValidator.name("x".repeat(50)))
     }
+
+    @Test
+    fun accessCode_empty_isRequired() {
+        assertEquals(R.string.error_access_code_required, AuthValidator.accessCode(""))
+        assertEquals(R.string.error_access_code_required, AuthValidator.accessCode("  - "))
+    }
+
+    @Test
+    fun accessCode_wrongFormat_isRejected() {
+        assertEquals(R.string.error_access_code_format, AuthValidator.accessCode("ABC"))
+        assertEquals(R.string.error_access_code_format, AuthValidator.accessCode("ABCDEFGH23456781"))
+    }
+
+    @Test
+    fun accessCode_formattedInput_isAccepted() {
+        assertNull(AuthValidator.accessCode("abcd-efgh-2345-6789"))
+        assertNull(AuthValidator.accessCode("ABCDEFGH23456789"))
+    }
 }

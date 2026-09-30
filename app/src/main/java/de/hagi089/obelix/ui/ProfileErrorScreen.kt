@@ -21,9 +21,9 @@ import de.hagi089.obelix.R
 import de.hagi089.obelix.core.error.AppError
 import de.hagi089.obelix.ui.components.OfflineBanner
 
-/** Der Haushaltsstand konnte nicht geladen werden: Fehler anzeigen, erneut versuchen oder abmelden. */
+/** Die Benutzerdaten konnten nicht geladen werden: Fehler anzeigen, erneut versuchen oder abmelden. */
 @Composable
-fun HouseholdErrorScreen(error: AppError, isOnline: Boolean, onRetry: () -> Unit, onSignOut: () -> Unit) {
+fun ProfileErrorScreen(error: AppError, isOnline: Boolean, onRetry: () -> Unit, onSignOut: () -> Unit) {
     Surface(modifier = Modifier.fillMaxSize()) {
         Column(modifier = Modifier.fillMaxSize()) {
             if (!isOnline) OfflineBanner()
@@ -33,7 +33,7 @@ fun HouseholdErrorScreen(error: AppError, isOnline: Boolean, onRetry: () -> Unit
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(
-                    text = stringResource(R.string.household_load_failed),
+                    text = stringResource(R.string.profile_load_failed),
                     style = MaterialTheme.typography.titleLarge,
                     textAlign = TextAlign.Center,
                 )

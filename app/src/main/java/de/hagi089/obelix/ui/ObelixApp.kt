@@ -46,8 +46,8 @@ import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.SettingsRoute
 import de.hagi089.obelix.ui.navigation.TopLevelDestination
 import de.hagi089.obelix.ui.navigation.navigateToTopLevel
-import de.hagi089.obelix.ui.onboarding.OnboardingScreen
-import de.hagi089.obelix.ui.onboarding.OnboardingViewModel
+import de.hagi089.obelix.ui.onboarding.AccessCodeScreen
+import de.hagi089.obelix.ui.onboarding.AccessCodeViewModel
 
 @Composable
 fun ObelixApp(container: AppContainer) {
@@ -57,7 +57,7 @@ fun ObelixApp(container: AppContainer) {
     }
     val isOnline by container.networkMonitor.isOnline.collectAsStateWithLifecycle(initialValue = true)
     val sessionViewModel: SessionViewModel = viewModel(
-        factory = viewModelFactory { initializer { SessionViewModel(container.authRepository, container.householdRepository) } },
+        factory = viewModelFactory { initializer { SessionViewModel(container.authRepository, container.userRepository) } },
     )
     val session by sessionViewModel.session.collectAsStateWithLifecycle()
 
@@ -69,15 +69,15 @@ fun ObelixApp(container: AppContainer) {
             )
             AuthScreens(viewModel = authViewModel, isOnline = isOnline)
         }
-        is SessionState.SignedIn -> when (val household = current.household) {
-            HouseholdState.Loading -> LoadingScreen()
-            HouseholdState.None -> {
-                val onboardingViewModel: OnboardingViewModel = viewModel(
-                    key = "onboarding-${current.user.uid}",
+        is SessionState.SignedIn -> when (val profile = current.profile) {
+            ProfileState.Loading -> LoadingScreen()
+            ProfileState.None -> {
+                val codeViewModel: AccessCodeViewModel = viewModel(
+                    key = "access-code-${current.user.uid}",
                     factory = viewModelFactory {
                         initializer {
-                            OnboardingViewModel(
-                                container.householdRepository,
+                            AccessCodeViewModel(
+                                container.userRepository,
                                 container.authRepository,
                                 container.registrationHandoff,
                                 current.user.uid,
@@ -85,20 +85,20 @@ fun ObelixApp(container: AppContainer) {
                         }
                     },
                 )
-                OnboardingScreen(
-                    viewModel = onboardingViewModel,
+                AccessCodeScreen(
+                    viewModel = codeViewModel,
                     isOnline = isOnline,
-                    onFinished = sessionViewModel::reloadHousehold,
+                    onFinished = sessionViewModel::reloadProfile,
                     onSignOut = sessionViewModel::signOut,
                 )
             }
-            is HouseholdState.Failed -> HouseholdErrorScreen(
-                error = household.error,
+            is ProfileState.Failed -> ProfileErrorScreen(
+                error = profile.error,
                 isOnline = isOnline,
-                onRetry = sessionViewModel::reloadHousehold,
+                onRetry = sessionViewModel::reloadProfile,
                 onSignOut = sessionViewModel::signOut,
             )
-            is HouseholdState.Ready -> ObelixMainScaffold(
+            is ProfileState.Ready -> ObelixMainScaffold(
                 user = current.user,
                 container = container,
                 isOnline = isOnline,
