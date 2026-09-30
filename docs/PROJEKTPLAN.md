@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 8: **kein Haushalt mehr**, Benutzer mit Zugangscode; Phase 3 abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 3 abgenommen, als Nächstes Phase 4).
+Stand: 30.09.2026 (Rev. 9: **Phase 4 umgesetzt** – Finanzen und Excel-Import; Gerätetest G4 offen) · Status: **freigegeben, in Umsetzung** (Phase 3 abgenommen, Phase 4 wartet auf die Geräteabnahme, danach Phase 5).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -29,6 +29,11 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 8 | Dashboard-Zeitraum | Vorerst nicht nötig; Dashboard zeigt zunächst nur Bestände und Zähler ohne Zeitraum. |
 | – | Design | **Google-Richtlinien:** Material 3 mit Systemfarben, Android-Architekturleitfaden, Kotlin-Styleguide, Barrierefreiheit (Kontrast, Beschriftungen, Touch-Ziele ≥ 48 dp). |
 | 3, 9, 10 | Karte, Löschart, `google-services.json` | Noch nicht ausdrücklich entschieden; es gelten meine Vorschläge: OSM-Karte (Prüfung in Phase 9), hartes Löschen mit Bestätigung, `google-services.json` nicht committen. |
+| 16 | Import-Weg (Phase 4) | **Weg B: einmaliger Import in der App, nur ADMIN** (entschieden 30.09.2026). Die Excel wird außerhalb der App in eine private Datei `obelix-import.json` umgewandelt (Cent gerundet, Status und Zahler-Bezeichnung zugeordnet, erwartete Kontrollwerte enthalten). Die App prüft die Datei, vergleicht die Kontrollwerte **vor** dem Schreiben, lässt die zwei Excel-Zahler je einem Benutzerkonto zuordnen (Auswahl aus der Benutzerliste, **keine E-Mail-Adressen nötig**) und schreibt nach Bestätigung. Kein Node-Skript, keine Service-Account-Datei. Der Import lässt sich wiederholen, ohne Buchungen doppelt anzulegen (feste ID `xl-<Excel-Zeile>`, Feld `importRef`). Die Importdatei liegt nie im Repository (`.gitignore`: `obelix-import*.json`). Der Import-Code kann nach dem Import wieder entfernt werden (Phase 12). |
+| 17 | Kategorien ohne Art (Phase 4) | Das Feld `type` (Einnahme/Ausgabe) entfällt: „Sonstiges" wird in der Excel für Ausgaben **und** Einnahmen benutzt (2 Sonderleistungen). Eine Kategorie gilt für beide. |
+| 18 | Kontostand-Berechnung (Phase 4) | Clientseitig aus **einer** Abfrage aller Buchungen je Öffnen des Finanzbereichs (~300 Lesevorgänge bei 50.000 pro Tag im Spark-Kontingent). Firestore-Aggregationen (`sum()`) nicht nötig; ob sie einen zusätzlichen Index bräuchten, wurde nicht geprüft. |
+| 19 | Filter „Zeitraum" (Phase 4) | Als **Jahresfilter** umgesetzt (einfachste Lösung, Auslegung des Plans). |
+| 20 | Einnahmen mit Person (Phase 4) | „Bezahlt durch" der Excel wird bei Einnahmen zum **Einzahler** (`paidByUid`, in der App „Eingezahlt von", optional). |
 
 **Annahmen, die ich getroffen habe (bitte widersprechen, falls falsch):**
 - Übernommen werden die **12 tatsächlich verwendeten** Kategorien, unverändert (auch „Werkstatt" neben „TÜV/Werkstatt"). Die nie benutzten `Look`-Einträge werden nicht angelegt, sie können über die Einstellungen ergänzt werden.
@@ -235,7 +240,7 @@ Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Fire
 | paidByUid | String → `users` | Ausgabe: ja; Einnahme: optional. Angezeigt wird der Name des Benutzers |
 | settlement | `OPEN` \| `SETTLED` \| `SPONSORED` | Ausgabe: ja (Standard beim Anlegen: `OPEN`). Einnahme: immer `SETTLED`. Excel „nein" → `OPEN`, „ja" → `SETTLED`, „gesponsert"/„wird gesponsert" → `SPONSORED` |
 | settledAt / settledBy | Timestamp / uid | gesetzt beim Übergang `OPEN` → `SETTLED` |
-| importRef | String | nur bei importierten Buchungen: Excel-Zeilennummer, zur Nachvollziehbarkeit |
+| importRef | String | nur bei importierten Buchungen: `xl-<Excel-Zeile>` (zugleich Dokument-ID); unveränderlich |
 | description | String | ja |
 | comment | String | nein |
 | receipt | Map {path, contentType, sizeBytes} | nein (nur Ausgabe) |
@@ -285,7 +290,7 @@ Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Fire
 | file | Map {path, contentType, sizeBytes} | ja |
 | uploadedBy (uid + Name), uploadedAt | | ja |
 
-**Category** – `categories/{id}`: `name`, `type` (`INCOME`\|`EXPENSE`), `active` (Bool), Audit. Inhalt **ausschließlich aus der Excel-Datei** (12 verwendete Werte; Behandlung von „Werkstatt" vs. „TÜV/Werkstatt" und der ungenutzten `Look`-Einträge: Entscheidung 13).
+**Category** – `categories/{id}`: `name` (1–50 Zeichen), `active` (Bool), Audit (`createdAt/By`, bei Änderung `updatedAt/By`). **Kein `type`** (Entscheidung 17). Inhalt beim Import **ausschließlich aus der Excel-Datei** (12 verwendete Werte, „Werkstatt" bleibt neben „TÜV/Werkstatt", ungenutzte `Look`-Einträge entfallen: Entscheidung 13). Anlegen: jeder Benutzer; umbenennen/deaktivieren: nur ADMIN; nie löschen.
 
 ### Wichtige Datenflüsse
 
@@ -391,7 +396,7 @@ Alle Regeln liegen versioniert in `firebase/`. Sie werden **zusammen mit dem jew
 - **Code erneuern** (nur ADMIN, in den Einstellungen): neuer Code in `config/access`, der alte ist sofort ungültig. Bereits registrierte Benutzer behalten ihren Zugriff.
 - **Erster ADMIN:** einmalig in der Firebase-Konsole: `config/access` mit einem Code anlegen, in der App registrieren, dann im eigenen `users`-Dokument `role` auf `ADMIN` setzen (Anleitung `FIREBASE-EINRICHTUNG.md`, Abschnitt 8). In der App kann sich niemand selbst zum ADMIN machen.
 - **Grenzen (ehrlich):** Firebase Auth kann das bloße Anlegen eines Kontos ohne Blaze nicht sperren. Ein Fremder kann kurz ein leeres Konto anlegen, hat aber keinerlei Datenzugriff; die App löscht es bei falschem Code wieder. Ein **weitergegebener Code** gilt, bis der ADMIN ihn erneuert. Gegenmaßnahme: ADMIN sieht alle Benutzer, kann Unbekannte entfernen und danach den Code erneuern. Jeder Benutzer kann in `users` den Code sehen, mit dem sich andere registriert haben; das ist höchstens ein früherer oder der aktuelle Code, den ohnehin alle Benutzer bekommen haben.
-- Die fachlichen Sammlungen (Finanzen, Kalender, …) sind bis zu ihrer jeweiligen Phase komplett gesperrt (auch für ADMINs), damit nichts versehentlich offen ist.
+- Die fachlichen Sammlungen (Kalender, …) sind bis zu ihrer jeweiligen Phase komplett gesperrt (auch für ADMINs), damit nichts versehentlich offen ist. **Ab Phase 4 freigegeben:** `transactions` (Lesen/Anlegen/Ändern/Löschen für alle Benutzer; Validierung: Pflichtfelder, `amountCents` ganze Zahl 1 bis 100.000.000, Datumsformat, Status, Einnahme immer `SETTLED`, Ausgabe braucht Zahler, `createdBy/At` und `updatedBy/At` erzwungen, `importRef` unveränderlich) und `categories` (Lesen/Anlegen alle, Ändern nur ADMIN, Löschen nie).
 
 **Storage-Regeln (falls Storage):** Zugriff nur für registrierte Benutzer (Storage-Regeln können Firestore per `firestore.exists()` abfragen); Größen- und `contentType`-Limits.
 
@@ -463,18 +468,25 @@ Abschlusskriterium: Freigabe durch dich.
 - **Noch nicht geprüft (kein Gerät, kein Zugriff auf das echte Projekt):** Ablauf in der App und mit dem echten Firebase-Projekt (Tests G3-xx). Dafür muss der Benutzer die Regeln veröffentlichen, den Code anlegen und sich zum ADMIN machen (`FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8).
 - **Bekannt / offen:** (1) Entfernte Benutzer behalten ihr Konto in Firebase Auth (ohne Datenzugriff); löschen kann man es in der Konsole. (2) Die Rolle wird beim Start und beim Öffnen der Einstellungen geladen, nicht laufend. (3) Keine Mutationsprüfung der Regel-Tests.
 
-### Phase 4 – Finanzen und Excel-Import
+### Phase 4 – Finanzen und Excel-Import ✅ umgesetzt (30.09.2026), Gerätetest G4 offen
 - **Ziel:** Einnahmen, Ausgaben, Kategorien, Zahler (Benutzer), Abrechnungsstatus, Kontostand, Übersicht; historische Daten aus der Excel übernommen.
-- **Dateien:** `Transaction`, `Category`, `FinanceRepository`, `finance/*`, `settings/Kategorien`, `core/Money` (Cent-Rechnung), Rules, `tools/import/` (Import-Skript, **ohne Daten**).
-- **Umsetzung:**
-  - Einnahme/Ausgabe erfassen, bearbeiten, löschen (mit Bestätigung); Pflichtfelder laut Anforderung 12/13; Betrag > 0, genau 2 Nachkommastellen.
-  - Abrechnungsstatus: neue Ausgabe = „offen"; Aktion „Erstattet"; „gesponsert" wählbar.
-  - Übersicht: Kontostand, offene Forderungen je Benutzer, Kontostand nach Begleichung, Gesamtausgaben (inkl. gesponsert); Filter nach Kategorie/Zahler/Zeitraum.
-  - Kategorien: Liste aus der Excel; neue Kategorie in den Einstellungen.
-  - Import: einmaliges Skript liest die Excel lokal (Datei bleibt in `private/`), rundet auf Cent, legt Kategorien und Buchungen an, schreibt ein Protokoll (übersprungene Nullbeträge, Rundungen). Zuerst gegen den **Firebase-Emulator**, erst nach deiner Freigabe gegen das echte Projekt. Durchführung mit einem Admin-Zugang (Service-Account-Datei), die **nie** ins Repository kommt.
-- **Tests:** Unit-Tests Cent-Rechnung und Kontostand; Import-Test gegen die Kontrollwerte (Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung, Summen, Anzahl); Statuswechsel offen → erstattet; Rules (fremder Haushalt, Pflichtfelder, negativer Betrag); Offline.
-- **Abschluss:** Nach dem Import zeigt die App dieselben Kennzahlen wie die Excel-Formeln (nachgerechnet: Kontostand bleibt nach Rundung identisch).
-- **Belege** folgen in Phase 6, sobald die Dateiablage steht.
+- **Umgesetzt (Commits `4c2dc88`, `c2b2b61`, `d870760`):**
+  - `firebase/firestore.rules`: `transactions` und `categories` (siehe Abschnitt 7). Regel-Tests R-06 (10 Fälle) und R-07 (5 Fälle).
+  - `core/money/Money` (Cent, deutsche Eingabe/Anzeige), `data/finance/` (`Booking`, `BookingInput`, `Category`, `FinanceCalculator`, `BookingValidator`, `FinanceRepository`, `CategoryRepository`), `core/util/RepositoryCall` (gemeinsame Fehler-/Zeitlimit-/Transaktionshilfe für neue Repositories).
+  - Finanzbereich (`ui/finance/`): Übersicht (Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung, Einnahmen/Ausgaben gesamt, davon gesponsert), Filter (Art, Kategorie, Zahler, Jahr), Liste, Formular (Einnahme/Ausgabe, Datumsauswahl, Betrag mit Komma, Kategorie, Zahler, Status, Beschreibung, Kommentar), Aktion „Als erstattet markieren", Löschen mit Bestätigung. Ladezustand, Fehler mit „Erneut versuchen" (nie eine leere Liste statt eines Fehlers), Leerzustand, Offline-Hinweis; alle Schreibvorgänge als Transaktion.
+  - Kategorien in den Einstellungen (`CategorySection`): alle legen an, ADMIN benennt um und (de)aktiviert.
+  - Excel-Import (`data/finance/importing/`, `ui/importing/`): Datei wählen → Prüfung → Kontrollwerte → Zahler zuordnen → Bestätigung → Schreiben in Blöcken à 10 → Ergebnis; Entscheidung 16. Nur für ADMIN sichtbar (Einstellungen). Neue Bibliothek: `kotlinx-serialization-json`.
+  - Excel-Regeln: 300 von 325 Zeilen werden importiert (59 Einnahmen, 241 Ausgaben); die 25 Nullbeträge (Inventarliste) werden nicht importiert und in der Vorschau aufgelistet (15c); „Verantwortung" steht im Kommentar, unverändert (15b); Beträge kaufmännisch auf Cent gerundet; Zahler = Konto laut Zuordnung.
+- **Kontrollwerte (aus den Rohwerten der Excel unabhängig nachgerechnet; auch nach der Cent-Rundung unverändert):** Kontostand 107,17 € · offene Forderung des Kontos von Robert (Excel „Heidi/Robert") 99,00 €, des Kontos von Tobias 0,00 € · Kontostand nach Begleichung 8,17 € · Einnahmen 69.617,94 € (59 Buchungen: 57 Einzahlungen und 2 Sonderleistungen) · Ausgaben 70.415,60 € (241 Buchungen) · davon gesponsert 805,83 € (16 Buchungen). Die frühere Angabe „Ausgaben −70.293,59 €" in der Excel-Analyse war ein Nettowert (Sonderleistungen von den Ausgaben abgezogen) und ist berichtigt.
+- **Automatisch geprüft (GitHub Actions, Commit `d870760`):** Android-Bau, Lint und **49 Unit-Tests** grün (27 neu: Geld, Kontostand, Validierung, Importprüfung); **45 Regel-Tests** im Emulator grün (15 neu). Details: [`TESTFAELLE.md`](TESTFAELLE.md).
+- **Noch nicht geprüft (von dir zu prüfen, Tests G4-01 bis G4-16):** Regeln in der Konsole neu veröffentlichen; Bedienung auf dem Gerät; der eigentliche Import in dein echtes Projekt; Darstellung (Datumsauswahl, Auswahlfelder, Filter, Bildschirmgrößen).
+- **Erkenntnisse / Grenzen:**
+  - Firestore begrenzt die Regelabfragen (`exists`) je Transaktion auf 20 (laut Firebase-Dokumentation für Mehrfachschreibvorgänge). Deshalb schreibt der Import **10 Buchungen je Block**. Ob mehr im Emulator gegangen wäre, wurde nicht ausprobiert.
+  - Der Import ist nicht atomar (30 Blöcke), aber **fortsetzbar**: Bei Abbruch (z. B. Netz) startet man ihn erneut, bereits vorhandene Buchungen werden übersprungen.
+  - Wie bei allen Zeitlimits (20 s) kann eine Transaktion nach einer „Keine Verbindung"-Meldung auf dem Server trotzdem angekommen sein; die Liste lädt beim nächsten Öffnen neu und zeigt den wahren Stand.
+  - Die Excel-Fehler (z. B. vermutlich falsches Jahr bei den Zeilen 104/105, in der App 15.01.2016) sind **unverändert** übernommen; du korrigierst sie in der App.
+  - Einnahmen und Ausgaben lassen sich beim Bearbeiten in die jeweils andere Art umwandeln; die Regeln prüfen die Kombination (Einnahme immer „beglichen").
+- **Nicht Teil von Phase 4:** Belege (Phase 6, Dateiablage), geplante Ausgaben (Phase 5).
 
 ### Phase 5 – Geplante Ausgaben
 - **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
@@ -627,5 +639,6 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
 | 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
-| 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | Phase 4: Excel und genaue E-Mail-Adressen von Tobias und Robert bereitstellen |
-| 4–12 | nicht begonnen | | |
+| 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
+| 4 Finanzen und Excel-Import | umgesetzt, Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); **Gerätetest G4-01 bis G4-16 und der Import in dein Projekt stehen aus** | 30.09.2026 | Regeln neu veröffentlichen, Tobias und Robert registriert, Importdatei `obelix-import.json` auf das Gerät legen |
+| 5–12 | nicht begonnen | | |

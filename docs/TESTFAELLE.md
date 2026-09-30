@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 30.09.2026 · Phase 3 umgesetzt, Gerätetest G3 offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 30.09.2026 · Phase 4 umgesetzt, Gerätetest G4 offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -17,9 +17,10 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
 | Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
-| Alle weiteren Bereiche (ab Phase 4) | ⬜ | ⬜ |
+| Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ⏳ 16 Fälle (G4-01 bis G4-16) |
+| Alle weiteren Bereiche (ab Phase 5) | ⬜ | ⬜ |
 
-**Automatische Prüfung insgesamt (GitHub, Commit `656d1e9`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (22 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 30/30 (siehe 2.5).
+**Automatische Prüfung insgesamt (GitHub, Commit `d870760`, Lauf 36734577761):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (49 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 45/45 (siehe 2.5).
 
 ---
 
@@ -45,6 +46,10 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | A-14 | Build der Debug-APK, Lint | GitHub Actions | ✅ |
 | A-15 | Zugangscode: erzeugte Codes haben 16 Zeichen, nur erlaubte Zeichen, sind verschieden; Normalisieren (Bindestriche, Groß-/Kleinschreibung), Format, Rundlauf | `AccessCodeTest` | ✅ |
 | A-16 | Eingabeprüfung Zugangscode (leer, falsches Format, mit Bindestrichen/Kleinbuchstaben gültig) | `AuthValidatorTest` | ✅ |
+| A-17 | Geld: „12,5", „1.234,56", „12.50", Tausenderpunkte, ungültige Eingaben (3 Nachkommastellen, Buchstaben, zu lang), Anzeige „1.234,56 €", negatives Vorzeichen | `MoneyTest` (4) | ✅ |
+| A-18 | Kontostand = Einnahmen − erstattete Ausgaben; offene und gesponserte Ausgaben ändern ihn nicht; offene Forderungen je Zahler; Stand nach Begleichung; Gesamtausgaben; leere Liste | `FinanceCalculatorTest` (6) | ✅ |
+| A-19 | Buchungsprüfung: Betrag > 0 und ≤ 1.000.000,00 €, Datum, Kategorie, Zahler bei Ausgabe, Länge Beschreibung/Kommentar, Kategoriename | `BookingValidatorTest` (11) | ✅ |
+| A-20 | Import: Datei lesen (nur synthetische Testdaten), falsche Version/kaputte Datei, Kontrollwerte, Abweichung erkannt, Zuordnung Zahler → Benutzer, Dokument-ID `xl-<Zeile>` | `ImportPlannerTest` (6) | ✅ |
 
 ### 2.2 Gerätetest Phase 1 – Projektbasis (✅ bestanden, 30.09.2026)
 
@@ -93,9 +98,32 @@ Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer 
 | G3-10 | Flugmodus an: als Admin Code erneuern bzw. Benutzer entfernen; außerdem eine Registrierung versuchen | „Keine Verbindung zum Server …", **keine** Erfolgsmeldung, nichts geändert. Flugmodus aus: Aktion funktioniert | ✅ (30.09.2026, Benutzer) |
 | G3-11 | App schließen und öffnen; Abmelden und wieder anmelden (ohne Code) | Direkt der Hauptbereich, Rolle stimmt | ✅ (30.09.2026, Benutzer) |
 
+### 2.4a Gerätetest Phase 4 – Finanzen und Excel-Import (⏳ offen)
+
+Voraussetzung: Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht, neue Debug-APK installiert, Robert (Heidi/Robert) hat sich mit Zugangscode registriert, Datei `obelix-import.json` liegt auf dem Gerät (nicht im Repository).
+
+| ID | Schritte | Erwartet | Status |
+|---|---|---|---|
+| G4-01 | Regeln veröffentlichen, APK installieren, Finanzen öffnen (noch leer) | Leerzustand „Noch keine Buchungen", Kontostand 0,00 €, keine Fake-Zahlen | ⏳ |
+| G4-02 | Einstellungen → Kategorie hinzufügen; gleichen Namen nochmal | Neue Kategorie erscheint; Duplikat wird abgelehnt | ⏳ |
+| G4-03 | Als ADMIN Kategorie umbenennen und deaktivieren; als MEMBER prüfen | ADMIN kann, MEMBER sieht keine Bearbeitung | ⏳ |
+| G4-04 | ADMIN: Einstellungen → Excel-Import → Datei wählen | Vorschau: 300 Buchungen, Einnahmen 69.617,94 €, Ausgaben 70.415,60 €, Kontostand 107,17 €, Robert offen 99,00 €, nach Begleichung 8,17 €, 25 übersprungene Zeilen aufgelistet | ⏳ |
+| G4-05 | Zuordnung: nichts gewählt bzw. beide Zahler dasselbe Konto | Import gesperrt mit Hinweis | ⏳ |
+| G4-06 | Zuordnung Anna/Tobias → Tobias, Heidi/Robert → Robert, Import bestätigen | Bestätigungsdialog, Fortschritt, „Import abgeschlossen: 300" | ⏳ |
+| G4-07 | Finanzen öffnen | Kontostand 107,17 €, „Ausgelegt von Robert 99,00 €", gesponsert 805,83 € | ⏳ |
+| G4-08 | Import erneut ausführen | 300 von 300 bereits vorhanden, Schaltfläche gesperrt, keine Dubletten | ⏳ |
+| G4-09 | Filter (Jahr, Art, Kategorie, Status) | Liste und Summen passen zum Filter | ⏳ |
+| G4-10 | Neue Ausgabe „offen" (Zahler Robert) anlegen | Forderung steigt, Kontostand unverändert | ⏳ |
+| G4-11 | „Als erstattet markieren" | Forderung sinkt, Kontostand sinkt um den Betrag | ⏳ |
+| G4-12 | Buchung bearbeiten; Einnahme mit „Keine Angabe" als Zahler anlegen | Änderung sichtbar; Einnahme wird gespeichert | ⏳ |
+| G4-13 | Testbuchung löschen (mit Bestätigung) | Kontostand wieder 107,17 € | ⏳ |
+| G4-14 | Flugmodus: Buchung speichern | Fehlermeldung, kein falscher Erfolg, nichts gespeichert | ⏳ |
+| G4-15 | Mit Robert anmelden | Sieht dieselben Buchungen und Summen | ⏳ |
+| G4-16 | Rundungsstichprobe und Regression: Anteil Schaden 1.361,47 €, Schneidebrett 6,30 €, 2xTöpfe 29,73 €; Einstellungen (Code, Benutzer, Abmelden) funktionieren wie zuvor | Werte stimmen, keine Regression | ⏳ |
+
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
-Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `e2b2483`: **30 von 30 bestanden**.
+Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `d870760`: **45 von 45 bestanden** (Phase 3: 30, Phase 4: 15).
 
 | ID | Prüft | Fälle |
 |---|---|---|
@@ -104,6 +132,8 @@ Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. 
 | R-03 | Angemeldet ohne Benutzerdokument sieht und ändert nichts, darf aber das **eigene** (noch fehlende) Dokument abfragen; entfernter Benutzer verliert den Zugriff; noch nicht freigegebene Sammlungen für alle gesperrt | 4 |
 | R-04 | Rollen: **keine Selbst-Beförderung**, MEMBER darf andere nicht ändern und den Code weder lesen noch ändern, eigener Name änderbar, ADMIN befördert/degradiert andere, ADMIN kann sich nicht selbst degradieren/entfernen, zwei ADMINs, Entfernen | 8 |
 | R-05 | Zugangscode: ADMIN liest und erneuert, falsches Format/Zusatzfelder/falscher Bearbeiter verboten, Löschen verboten, als Transaktion | 4 |
+| R-06 | Buchungen: gültig anlegen, Pflichtfelder/Betrag/Datum/Status/Art ungültig, falscher Ersteller/Zeitstempel, Ändern (Ersteller, Anlagezeit, importRef unveränderlich), Begleichen, Löschen, ohne Anmeldung/Freischaltung gesperrt, 300 Buchungen in Blöcken zu 10 | 10 |
+| R-07 | Kategorien: jeder Benutzer legt an (aktiv), nur ADMIN ändert Name/aktiv, Zusatzfelder verboten, Löschen verboten | 5 |
 
 Anforderung 43 (Haushalt A sieht nie Daten von Haushalt B) entfällt, weil es keine Haushalte mehr gibt (Entscheidung vom 30.09.2026). Der entsprechende Schutz ist jetzt: ohne gültigen Zugangscode kein Zugriff (R-01, R-03).
 
@@ -124,7 +154,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | Phase | Bereich | Geplante Testfälle | Art |
 |---|---|---|---|
 | 3 | Benutzer, Rollen, Sicherheitsregeln | **Umgesetzt**: Emulator-Tests R-01 bis R-05 ✅ (siehe 2.5), Unit-Tests A-15/A-16 ✅. Gerätetests G3-01 bis G3-11 ✅ (siehe 2.4) | Emulator (automatisch), Gerät |
-| 4 | Finanzen und Import | Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen −99,00 €, Kontostand nach Begleichung 8,17 €, 325 Buchungen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
+| 4 | Finanzen und Import | **Umgesetzt**: A-17 bis A-20 ✅, R-06/R-07 ✅, Gerätetests G4-01 bis G4-16 ⏳ (siehe 2.4a). Ursprünglich geplant: Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen 99,00 €, nach Begleichung 8,17 €, 300 importierbare Buchungen + 25 übersprungene Zeilen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
 | 5 | Geplante Ausgaben | Planung anlegen · „Gekauft" mit tatsächlichem Betrag (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €) · geplante Ausgabe erscheint danach nicht mehr offen · Kontostand ändert sich nur durch den Kauf · Abbruch ohne Netz erzeugt nichts Halbes | Unit, Gerät |
 | 6 | Dateiablage, Belege | Datei hochladen, anzeigen, löschen · Größe höchstens 8 MB, erlaubte Typen · Datei in Stücken korrekt zusammengesetzt · Zugriff ohne Freischaltung verboten · Abbruch hinterlässt keine Reste · Fotogröße messen | Unit, Emulator, Gerät |
 | 7 | Kalender | Termin anlegen, ändern, löschen · ungültiger Zeitraum (Ende vor Start) · **Überschneidung vor dem Speichern eindeutig angezeigt** (welcher Eintrag, wer, wann), Speichern nur nach Bestätigung · Randfälle: gleicher Tag, angrenzend, umschließend | Unit, Gerät |
@@ -150,3 +180,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | **Fehler beim Gerätetest gefunden (G3-01):** Konto ohne Freischaltung sah „Benutzerdaten konnten nicht geladen werden – Dafür fehlt dir die Berechtigung" statt „Zugangscode eingeben". Ursache: Regel erlaubte das Abfragen des eigenen, noch nicht vorhandenen Benutzerdokuments nicht. Behoben in `e2b2483`, Test R-03d ergänzt (30/30 grün). Regeln müssen neu veröffentlicht werden |
 | 30.09.2026 | Benutzer meldet G3-01 bis G3-03 als bestanden (Freischaltung mit Zugangscode, Rolle ADMIN per Konsole). Offen: G3-04 bis G3-11 |
 | 30.09.2026 | Benutzer meldet G3-04 bis G3-11 als bestanden. **Phase 3 vollständig abgenommen** |
+| 30.09.2026 | **Phase 4 umgesetzt** (Finanzen, Kategorien, Excel-Import in der App durch ADMIN, Import-Weg B). Automatisch grün: Bau, Lint, 49 Unit-Tests, 45 Regel-Tests (Commit `d870760`). Zwei Testfehler in den Regel-Tests (falscher Ersteller, falsch erwarteter Fehlerfall) wurden im Test behoben, nicht in den Regeln. Gerätefälle G4-01 bis G4-16 offen; Regeln müssen neu veröffentlicht werden |
