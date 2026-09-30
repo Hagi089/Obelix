@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 4: Freigabe erteilt, Phase 1 abgeschlossen) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+Stand: 30.09.2026 (Rev. 5: Phase 2 Authentifizierung umgesetzt) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -437,12 +437,25 @@ Abschlusskriterium: Freigabe durch dich.
 - **Festgelegte Versionen (geprüft am 30.09.2026):** AGP 9.3.3, Gradle 9.5.1, Kotlin 2.4.10, Compose BOM 2026.09.00, Navigation 2.10.2, Lifecycle 2.11.0, Firebase BoM 34.19.0, `minSdk 26`, `compileSdk 37` (von den AndroidX-Bibliotheken verlangt), `targetSdk 36`.
 - **Offene Punkte:** (1) `targetSdk` später auf 37 heben; (2) GitHub-Actions-Aktionen `setup-java@v4` und Node-20-Hinweis: kein Fehler, aber Update auf v5 sinnvoll; (3) Compose-Material-Icons-Erweiterung wird über `material-icons-extended 1.7.8` bezogen (Version nicht gesondert gegen die BOM geprüft, Build ist grün).
 
-### Phase 2 – Authentifizierung
+### Phase 2 – Authentifizierung ✅ (30.09.2026, Gerätetest durch den Benutzer steht aus)
 - **Ziel:** Registrierung, Login, Logout, Passwort-Reset.
 - **Dateien:** `AuthRepository`, `auth/*`, Navigation-Guard.
 - **Umsetzung:** Formulare mit Validierung (E-Mail, Passwortlänge), deutsche Fehlermeldungen (falsches Passwort, Netzwerk), Sitzung bleibt erhalten.
 - **Tests:** Registrierung, Login, Logout, Reset, falsches Passwort, Offline-Meldung.
 - **Abschluss:** Alle genannten Fälle manuell und per Test bestanden.
+- **Umgesetzt (Commit `432e9fa`, CI grün):** `AuthRepository` (Firebase Auth), Formulare Anmelden / Konto erstellen / Passwort zurücksetzen, Sitzungsstatus (ohne Anmeldung sieht man nur die Anmeldeseiten), Einstellungen mit Konto und „Abmelden", Fehlermeldungen auf Deutsch. Passwort mindestens 8 Zeichen. Bei „falsche E-Mail" und „falsches Passwort" erscheint dieselbe Meldung (verrät nicht, ob es ein Konto gibt); beim Passwort-Reset erscheint immer dieselbe neutrale Bestätigung.
+- **Automatisch geprüft (Unit-Tests in CI):** Validierung von E-Mail, Passwort und Name; Abbildung der Firebase-Fehler auf Meldungen (falsche Zugangsdaten, Konto existiert, zu schwaches Passwort, zu viele Versuche, kein Netz).
+- **Noch nicht geprüft – bitte auf dem Gerät testen** (mit der Debug-APK aus dem GitHub-Lauf, sie enthält jetzt die Firebase-Konfiguration):
+  1. Registrieren mit gültigen Daten → App zeigt danach den Hauptbereich; in der Firebase-Konsole (Authentication → Benutzer) erscheint das Konto.
+  2. Registrieren mit bereits vorhandener E-Mail → Meldung „Zu dieser E-Mail-Adresse gibt es bereits ein Konto".
+  3. Registrieren mit zu kurzem Passwort / ungültiger E-Mail / leerem Namen → Meldung am Feld, kein Serveraufruf.
+  4. Abmelden (Zahnrad → Abmelden) → Anmeldeseite; App schließen und neu öffnen → bleibt abgemeldet.
+  5. Anmelden mit richtigen Daten → Hauptbereich; App schließen und neu öffnen → bleibt angemeldet.
+  6. Anmelden mit falschem Passwort und mit unbekannter E-Mail → jeweils „E-Mail-Adresse oder Passwort ist falsch".
+  7. Passwort zurücksetzen → Bestätigungstext; E-Mail kommt an (Spam prüfen), Link setzt das Passwort, danach Anmeldung mit dem neuen Passwort.
+  8. Flugmodus an → oben erscheint der Offline-Hinweis; Anmelden zeigt „Keine Verbindung zum Server …", keine Erfolgsmeldung.
+  9. Passwort ein-/ausblenden funktioniert; Bildschirm drehen behält die Eingaben.
+- **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Die Datenrechte kommen in Phase 3 über die Firestore-Regeln (Zugriff nur mit Einladungscode). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
 ### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis)
 - **Ziel:** Haushalt anlegen/beitreten, Rollen, Rules mit Emulator-Tests.
@@ -584,6 +597,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 |---|---|---|---|
 | 1 | **Firebase Storage nur mit Blaze** | Konflikt mit Kostenvorgabe | Empfehlung Option F (Dateien in Firestore); Entscheidung 1 vor Phase 6 |
 | 2 | **Excel-Daten uneinheitlich** (veraltete Pivot, Rundungsreste, vermutlich falsches Jahr bei 2 Buchungen, Freitext-Felder) | Falscher Kontostand oder Importfehler | Kontrollwerte aus der Excel als Abnahmetest; Auffälligkeiten nicht stillschweigend „reparieren", sondern mit dir klären |
+| 2c | **`google-services.json` liegt im öffentlichen Repository** (am 30.09.2026 vom Benutzer über die Weboberfläche hochgeladen, Commit `740fd07`) | Die Datei enthält Projektnummer, App-ID und einen Android-API-Schlüssel. Das sind laut Firebase keine Geheimnisse, aber jeder kann damit Konten anlegen. Aus der Git-Historie lässt sich die Datei nicht mehr entfernen | API-Schlüssel in der Google Cloud Console auf Android-App `de.hagi089.obelix` beschränken; Datenschutz über Firestore-Regeln (Phase 3); keine echten Zugangsdaten oder Service-Account-Dateien ins Repository. Entscheidung offen, ob die Datei im Repository bleibt (Vorteil: CI-APK ist sofort testbar) |
 | 2b | **Öffentliches Repository und private Finanzdaten** | Namen/Beträge könnten versehentlich veröffentlicht werden | `private/` und `*.xlsx` in `.gitignore`; Analyse mit Namen nur im nicht-öffentlichen Claude-Projekt |
 | 3 | **Kein Android-SDK in dieser Sitzung; Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` blockiert** (geprüft) | Ich kann die App hier voraussichtlich **nicht kompilieren** | Build über GitHub Actions (öffentliches Repo, kostenlos) oder lokal bei dir; ich melde nichts als „kompiliert", was nicht tatsächlich gebaut wurde |
 | 4 | **Keine Geräte-/Firebase-Konsole-Zugriffe** | GPS, Kamera, echtes Firebase-Projekt nicht von mir testbar | Emulator-Tests für Rules; Gerätetests kennzeichne ich als „von dir zu prüfen" |
@@ -612,5 +626,6 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 |---|---|---|---|
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
 | 1 Projektbasis | abgeschlossen (CI grün) | 30.09.2026 | Gerätetest der APK durch den Benutzer; Firebase-Projekt anlegen |
-| 2 Authentifizierung | nächste Phase | | benötigt `google-services.json` |
-| 3–12 | nicht begonnen | | |
+| 2 Authentifizierung | umgesetzt, CI grün | 30.09.2026 | Gerätetest (9 Fälle, siehe Phase 2) durch den Benutzer |
+| 3 Haushalt, Rollen, Regeln | nächste Phase | | |
+| 4–12 | nicht begonnen | | |
