@@ -363,11 +363,11 @@ describe('R-06 Buchungen (transactions)', () => {
     await assertFails(setDoc(doc(db, 'transactions/x'), without(booking('member'), 'paidByUid')));
     await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { paidByUid: '' })));
     await assertSucceeds(setDoc(doc(db, 'transactions/i1'), without(booking('member', { type: 'INCOME', settlement: 'SETTLED' }), 'paidByUid')));
-    await assertSucceeds(setDoc(doc(db, 'transactions/i2'), booking('admin', { type: 'INCOME', settlement: 'SETTLED' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/i2'), booking('member', { paidByUid: 'admin', type: 'INCOME', settlement: 'SETTLED' })));
     await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { type: 'INCOME', settlement: 'OPEN' })));
     await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { type: 'INCOME', settlement: 'SPONSORED' })));
-    await assertSucceeds(setDoc(doc(db, 'transactions/s1'), booking('admin', { settlement: 'SPONSORED' })));
-    await assertSucceeds(setDoc(doc(db, 'transactions/s2'), booking('admin', { settlement: 'SETTLED' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/s1'), booking('member', { paidByUid: 'admin', settlement: 'SPONSORED' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/s2'), booking('member', { paidByUid: 'admin', settlement: 'SETTLED' })));
   });
 
   it('R-06f Audit: createdBy und createdAt lassen sich nicht fälschen', async () => {
@@ -394,7 +394,8 @@ describe('R-06 Buchungen (transactions)', () => {
     await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { importRef: 'xl-99' })));
     // Ungültige Werte auch beim Ändern verboten
     await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { amountCents: 0 })));
-    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { type: 'INCOME' })));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { settlement: 'PAID' })));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { type: 'INCOME', settlement: 'OPEN' })));
   });
 
   it('R-06h Löschen: jeder freigeschaltete Benutzer', async () => {
@@ -417,13 +418,18 @@ describe('R-06 Buchungen (transactions)', () => {
     }));
   });
 
-  it('R-06j Import: 100 Buchungen mit festen IDs in einer Transaktion (Chunk-Größe der App)', async () => {
+  it('R-06j Import: 300 Buchungen mit festen IDs in Blöcken à 10 (Blockgröße der App)', async () => {
     const db = as('admin');
-    await assertSucceeds(runTransaction(db, async (tx) => {
-      for (let i = 0; i < 100; i++) {
-        tx.set(doc(db, `transactions/xl-${i}`), booking('member', { importRef: `xl-${i}`, settlement: 'SETTLED' }));
-      }
-    }));
+    // Firestore begrenzt die Regelabfragen (exists) je Transaktion auf 20; die App schreibt deshalb 10 je Block.
+    for (let start = 0; start < 300; start += 10) {
+      await assertSucceeds(runTransaction(db, async (tx) => {
+        for (let i = start; i < start + 10; i++) {
+          tx.set(doc(db, `transactions/xl-${i}`), booking('member', { importRef: `xl-${i}`, settlement: 'SETTLED' }));
+        }
+      }));
+    }
+    const list = await assertSucceeds(getDocs(collection(db, 'transactions')));
+    if (list.size !== 300) throw new Error(`erwartet 300 Buchungen, gefunden ${list.size}`);
     // Wiederholter Import darf bestehende Buchungen nicht überschreiben
     await assertFails(runTransaction(db, async (tx) => {
       tx.set(doc(db, 'transactions/xl-0'), booking('member', { importRef: 'xl-0', amountCents: 1 }));

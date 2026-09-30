@@ -63,9 +63,10 @@ class FirestoreCategoryRepository(private val db: FirebaseFirestore) : CategoryR
                 result[name] = id
             }
         }
-        if (toCreate.isNotEmpty()) {
+        // Blöcke à 10: Firestore begrenzt die Regelabfragen je Transaktion auf 20 (siehe FinanceRepository).
+        toCreate.entries.chunked(CREATE_CHUNK_SIZE).forEach { chunk ->
             db.writeTransaction { tx ->
-                toCreate.forEach { (name, id) -> tx.set(col.document(id), createData(name.trim(), uid)) }
+                chunk.forEach { (name, id) -> tx.set(col.document(id), createData(name.trim(), uid)) }
             }
         }
         result
@@ -88,5 +89,6 @@ class FirestoreCategoryRepository(private val db: FirebaseFirestore) : CategoryR
 
     private companion object {
         const val COLLECTION = "categories"
+        const val CREATE_CHUNK_SIZE = 10
     }
 }

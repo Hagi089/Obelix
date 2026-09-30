@@ -148,7 +148,8 @@ class FirestoreFinanceRepository(private val db: FirebaseFirestore) : FinanceRep
 
     private companion object {
         const val COLLECTION = "transactions"
-        const val IMPORT_CHUNK_SIZE = 100
-        const val IMPORT_TIMEOUT_MS = 180_000L
+        /** Firestore begrenzt die Regelabfragen je Transaktion auf 20 (je Buchung eine): 10 sind sicher (Regel-Test R-06j). */
+        const val IMPORT_CHUNK_SIZE = 10
+        const val IMPORT_TIMEOUT_MS = 300_000L
     }
 }
