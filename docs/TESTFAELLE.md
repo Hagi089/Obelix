@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 30.09.2026 · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung: Gerätetest GU offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 30.09.2026 · Phase 5 (Geplante Ausgaben) umgesetzt, Gerätetest G5 offen · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung: Gerätetest GU offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -18,9 +18,11 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
 | Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
 | Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ✅ 16 von 16 (G4-01 bis G4-16) |
-| Alle weiteren Bereiche (ab Phase 5) | ⬜ | ⬜ |
+| Geplante Ausgaben (Phase 5, Version 08) | ✅ 14 neue Unit-Tests, ✅ 13 neue Regel-Tests (R-08) | ⏳ 0 von 12 (G5-01 bis G5-12) |
+| UI-Überarbeitung (Version 07) | ✅ Bau, Lint | ⏳ 0 von 10 (GU-01 bis GU-10), Ergebnisse noch nicht gemeldet |
+| Alle weiteren Bereiche (ab Phase 6) | ⬜ | ⬜ |
 
-**Automatische Prüfung insgesamt (GitHub, Commit `d870760`, Lauf 36734577761):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (49 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 45/45 (siehe 2.5).
+**Automatische Prüfung insgesamt (GitHub, Commit `@@SHA@@`, Lauf @@RUN@@):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (63 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 58/58 (siehe 2.5). Vorheriger Stand (Phase 4, Commit `d870760`): 49 Unit-Tests, 45 Regel-Tests.
 
 ---
 
@@ -50,6 +52,10 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | A-18 | Kontostand = Einnahmen − erstattete Ausgaben; offene und gesponserte Ausgaben ändern ihn nicht; offene Forderungen je Zahler; Stand nach Begleichung; Gesamtausgaben; leere Liste | `FinanceCalculatorTest` (6) | ✅ |
 | A-19 | Buchungsprüfung: Betrag > 0 und ≤ 1.000.000,00 €, Datum, Kategorie, Zahler bei Ausgabe, Länge Beschreibung/Kommentar, Kategoriename | `BookingValidatorTest` (11) | ✅ |
 | A-20 | Import: Datei lesen (nur synthetische Testdaten), falsche Version/kaputte Datei, Kontrollwerte, Abweichung erkannt, Zuordnung Zahler → Benutzer, Dokument-ID `xl-<Zeile>` | `ImportPlannerTest` (6) | ✅ |
+| A-21 | Geplante Ausgabe: Bezeichnung Pflicht und höchstens 200 Zeichen; Link optional, nur `http://`/`https://`, keine Leerzeichen, höchstens 500 Zeichen (ungültig: `ftp://`, `javascript:`, ohne Schema, mit Leerzeichen, `HTTPS://`) | `PlannedValidatorTest` (6) | ✅ |
+| A-22 | Kauf: **tatsächlicher** Betrag statt Schätzung (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €); Datum, Zahler, Kategorie, Abrechnung aus dem Dialog; Bezeichnung → Beschreibung, Kommentar bleibt, Verweis auf die Planung | `PurchasePlannerTest` (3) | ✅ |
+| A-23 | Kontostand ändert sich nur durch den Kauf (beglichen: −472 €; offen: Kontostand unverändert, Forderung 472 €); Summe/Anzahl zählen nur offene Planungen; nach dem Kauf zählt die Planung nicht mehr; leere Liste | `PurchasePlannerTest` (4) | ✅ |
+| A-24 | Von einer Bibliothek umhüllter Fehler (`AppException` als Ursache) behält seine Art; neue Fehlerart `CONFLICT` hat eine Meldung (über A-07) | `ErrorMapperTest` (1 neu) | ✅ |
 
 ### 2.2 Gerätetest Phase 1 – Projektbasis (✅ bestanden, 30.09.2026)
 
@@ -138,9 +144,28 @@ Bau und Lint grün (Commit `833599b`, Lauf 36739044165). Das Aussehen kann ich n
 | GU-10 | Einstellungen als MEMBER (Robert) und als ADMIN | Abschnitt „Kategorien" nur beim ADMIN; Import und Benutzerverwaltung weiterhin nur beim ADMIN | ⏳ |
 | GU-06 | Regression: Finanzen, Einstellungen, Abmelden und Anmelden, Zugangscode-Bildschirm (frisches Konto) | Verhalten wie zuvor | ⏳ |
 
+### 2.4c Gerätetest Phase 5 – Geplante Ausgaben (⏳ offen, Version 08)
+
+Bau, Lint, Unit- und Regel-Tests grün (Commit `@@SHA@@`). Das Verhalten auf dem Gerät und gegen dein echtes Firebase-Projekt kann ich nicht prüfen. **Voraussetzungen:** (1) die geänderten Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht (Firestore → Regeln), (2) alte App deinstallieren, neue Debug-APK aus dem obersten Lauf installieren, (3) in den Einstellungen unten steht „Version 08“. Vor den Kauftests den Kontostand notieren (zuletzt 107,17 €); Testbuchungen danach wieder löschen (G5-08).
+
+| ID | Schritte | Erwartet | Status |
+|---|---|---|---|
+| G5-01 | Finanzen öffnen, Schaltfläche „Geplante Ausgaben“ antippen (noch keine Planung) | Liste mit „Noch keine geplanten Ausgaben vorhanden.“, Offen geplant 0, Geschätzt gesamt 0,00 €, keine Fake-Daten; Zurück führt in die Finanzen | ⏳ |
+| G5-02 | „+“: Bezeichnung „Neue Batterie“, geschätzt 500,00 €, Datum, Priorität Hoch, gültiger Link, Kommentar; speichern | Zurück in der Liste, Eintrag unter „Geplant“ mit Datum, Priorität, „Erstellt von <du>“, 500,00 €; Summe 500,00 €; **Kontostand in Finanzen unverändert** | ⏳ |
+| G5-03 | Neu: Bezeichnung leer / Betrag 0, „abc“, „12,345“ / Link „abc“ oder „ftp://x“ / Kommentar über 500 Zeichen | Meldung am jeweiligen Feld, nichts gespeichert | ⏳ |
+| G5-04 | Planung öffnen, Bezeichnung und Betrag ändern, Priorität auf „Keine Angabe“ und Link leeren, speichern; erneut öffnen; mit Link: „Link öffnen“ | Änderungen sichtbar (auch das Entfernen von Priorität und Link); der Link öffnet den Browser | ⏳ |
+| G5-05 | Planung (500,00 €) öffnen → „Gekauft …“: tatsächlicher Betrag **472,00**, Datum, Bezahlt von, Kategorie wählen, Abrechnung „Beglichen“ → „Als gekauft buchen“ | Dialog schließt, Liste: Planung **nicht mehr unter „Geplant“**, Summe sinkt um 500,00 €; unter „Gekauft“ sichtbar. Finanzen: neue Ausgabe **472,00 €** (nicht 500,00 €), Beschreibung = Bezeichnung, Kontostand sinkt um 472,00 € | ⏳ |
+| G5-06 | Zweite Planung kaufen mit Abrechnung „Offen“ (Zahler Robert) | Kontostand unverändert, „Ausgelegt von Robert“ steigt um den tatsächlichen Betrag | ⏳ |
+| G5-07 | Gekaufte Planung öffnen (Filter „Gekauft“) | Nur Anzeige (keine Eingabefelder), „Gekauft am … für 472,00 €“, „Buchung ansehen“ öffnet die Buchung; dort ist die Art (Ausgabe/Einnahme) gesperrt, Hinweis „Diese Buchung stammt aus einer geplanten Ausgabe.“ | ⏳ |
+| G5-08 | Die Buchung aus G5-05 löschen (Dialog nennt die Planung) | Kontostand wieder wie vor G5-05; Planung erscheint wieder unter „Geplant“ (Summe wieder +500,00 €) und lässt sich erneut kaufen | ⏳ |
+| G5-09 | Eine offene Planung löschen (Bestätigung); eine gekaufte Planung löschen | Planung weg; bei der gekauften bleibt die Buchung in den Finanzen bestehen | ⏳ |
+| G5-10 | Flugmodus an: Planung speichern; „Gekauft“ bestätigen; löschen | Fehlermeldung („Keine Verbindung zum Server …“), keine Erfolgsmeldung. Flugmodus aus, Liste neu öffnen: **keine** neue Buchung, Planung unverändert „Geplant“ | ⏳ |
+| G5-11 | (optional, zwei Geräte/Benutzer) Beide öffnen dieselbe Planung; Gerät A kauft; danach kauft Gerät B | Gerät B bekommt eine Fehlermeldung (idealerweise „Der Stand hat sich zwischenzeitlich geändert …“); es gibt nur **eine** Buchung. Robert sieht dieselben Planungen wie du | ⏳ |
+| G5-12 | Regression: Finanzen (Kontostand, Filter, Buchung anlegen/bearbeiten/löschen, „Als erstattet markieren“), Einstellungen, Kategorien (ADMIN), Abmelden/Anmelden; Excel-Import **nicht** wiederholen | Verhalten wie zuvor; Kontostand nach Aufräumen der Testbuchungen wieder 107,17 € | ⏳ |
+
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
-Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `d870760`: **45 von 45 bestanden** (Phase 3: 30, Phase 4: 15).
+Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `@@SHA@@`: **58 von 58 bestanden** (Phase 3: 30, Phase 4: 15, Phase 5: 13).
 
 | ID | Prüft | Fälle |
 |---|---|---|
@@ -151,6 +176,7 @@ Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. 
 | R-05 | Zugangscode: ADMIN liest und erneuert, falsches Format/Zusatzfelder/falscher Bearbeiter verboten, Löschen verboten, als Transaktion | 4 |
 | R-06 | Buchungen: gültig anlegen, Pflichtfelder/Betrag/Datum/Status/Art ungültig, falscher Ersteller/Zeitstempel, Ändern (Ersteller, Anlagezeit, importRef unveränderlich), Begleichen, Löschen, ohne Anmeldung/Freischaltung gesperrt, 300 Buchungen in Blöcken zu 10 | 10 |
 | R-07 | Kategorien: jeder Benutzer legt an (aktiv), nur ADMIN ändert Name/aktiv, Zusatzfelder verboten, Löschen verboten | 5 |
+| R-08 | Geplante Ausgaben: anlegen/lesen (auch optionale Felder), ohne Anmeldung/Freischaltung gesperrt, Validierung (Titel, Betrag, Datum, Status, Priorität, Link, Kommentar, Audit, Zusatzfelder, Grenzwerte), Bearbeiten (Audit, Herkunft; Priorität/Link entfernen), **Kauf nur zusammen mit der passenden Buchung** (tatsächlicher Betrag 472 € bleibt, Schätzung 500 € unverändert), PURCHASED ohne/mit falscher Buchung verboten, Buchung mit `plannedExpenseId` nur zusammen mit dem Kauf, doppelter Kauf und Änderung gekaufter Planung verboten, Wiederöffnen nur beim Löschen der Buchung im selben Schritt, `plannedExpenseId` unveränderlich, Löschen (Buchung bleibt), Regression Import (300 Buchungen in Blöcken zu 10) | 13 |
 
 Anforderung 43 (Haushalt A sieht nie Daten von Haushalt B) entfällt, weil es keine Haushalte mehr gibt (Entscheidung vom 30.09.2026). Der entsprechende Schutz ist jetzt: ohne gültigen Zugangscode kein Zugriff (R-01, R-03).
 
@@ -158,6 +184,7 @@ Anforderung 43 (Haushalt A sieht nie Daten von Haushalt B) entfällt, weil es ke
 
 ### 2.6 Bekannte Lücken der Tests
 - Die Abläufe `AccessCodeViewModel`, `SessionViewModel` und `SettingsViewModel` haben keine automatischen Tests, weil die Coroutine-Testbibliothek noch nicht eingebunden ist; sie werden durch G3-01 bis G3-11 geprüft.
+- Der Doppelkauf-Schutz **in der App** (Transaktion liest den Status und bricht ab) lässt sich ohne echtes Firestore nicht automatisch testen; die Regeln verbieten den zweiten Kauf zusätzlich (R-08h). Die App-Ebene prüft G5-11.
 - Die Regel-Tests wurden nicht durch bewusst kaputt gemachte Regeln gegengeprüft (Mutationsprüfung). Fehlgeschlagene Zugriffe zählen im Test nur als bestanden, wenn der Server „Berechtigung verweigert" meldet; die Erfolgsfälle sichern ab, dass die Regeln nicht einfach alles ablehnen.
 - Die ViewModels (Anmeldeablauf) haben noch keine automatischen Tests, weil die Coroutine-Testbibliothek noch nicht eingebunden ist. Der Ablauf wird bisher nur durch G2-01 bis G2-08 geprüft.
 - Kein automatischer Bedienungstest der Oberfläche (Compose-UI-Test). Der Bau in der Cloud kann keinen Emulator starten.
@@ -172,7 +199,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 |---|---|---|---|
 | 3 | Benutzer, Rollen, Sicherheitsregeln | **Umgesetzt**: Emulator-Tests R-01 bis R-05 ✅ (siehe 2.5), Unit-Tests A-15/A-16 ✅. Gerätetests G3-01 bis G3-11 ✅ (siehe 2.4) | Emulator (automatisch), Gerät |
 | 4 | Finanzen und Import | **Umgesetzt**: A-17 bis A-20 ✅, R-06/R-07 ✅, Gerätetests G4-01 bis G4-16 ✅ (siehe 2.4a). Ursprünglich geplant: Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen 99,00 €, nach Begleichung 8,17 €, 300 importierbare Buchungen + 25 übersprungene Zeilen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
-| 5 | Geplante Ausgaben | Planung anlegen · „Gekauft" mit tatsächlichem Betrag (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €) · geplante Ausgabe erscheint danach nicht mehr offen · Kontostand ändert sich nur durch den Kauf · Abbruch ohne Netz erzeugt nichts Halbes | Unit, Gerät |
+| 5 | Geplante Ausgaben | **Umgesetzt**: A-21 bis A-24 ✅, R-08 ✅, Gerätetests G5-01 bis G5-12 ⏳ (siehe 2.4c). Geplant war: Planung anlegen · „Gekauft" mit tatsächlichem Betrag (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €) · geplante Ausgabe erscheint danach nicht mehr offen · Kontostand ändert sich nur durch den Kauf · Abbruch ohne Netz erzeugt nichts Halbes | Unit, Emulator, Gerät |
 | 6 | Dateiablage, Belege | Datei hochladen, anzeigen, löschen · Größe höchstens 8 MB, erlaubte Typen · Datei in Stücken korrekt zusammengesetzt · Zugriff ohne Freischaltung verboten · Abbruch hinterlässt keine Reste · Fotogröße messen | Unit, Emulator, Gerät |
 | 7 | Kalender | Termin anlegen, ändern, löschen · ungültiger Zeitraum (Ende vor Start) · **Überschneidung vor dem Speichern eindeutig angezeigt** (welcher Eintrag, wer, wann), Speichern nur nach Bestätigung · Randfälle: gleicher Tag, angrenzend, umschließend | Unit, Gerät |
 | 8 | Auffälligkeiten | Erstellen, bearbeiten, erledigen, wieder öffnen · Filter Alle/Offen/Erledigt, Standard „Offen" · löschen mit Bestätigung | Unit, Gerät |
@@ -201,3 +228,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | Benutzer meldet G4-01 bis G4-16 als bestanden. **Phase 4 abgenommen.** Zwischenfall beim Import: eine ältere Importdatei (Zahler Tobias/Robert, Zeile 170 als gesponserte Einnahme) wurde von der App zu Recht abgelehnt; mit der richtigen Datei lief der Import |
 | 30.09.2026 | UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen. Bau, Lint, 49 Unit-Tests, 45 Regel-Tests grün (Commit `833599b`). Gerätefälle GU-01 bis GU-06 offen |
 | 30.09.2026 | Version 07: Hell-/Dunkelmodus-Umschalter, Versionsanzeige, Kategorien nur für ADMIN. Bau, Lint, Tests grün (Commit `5543941`). Gerätefälle GU-07 bis GU-10 offen |
+| 30.09.2026 | **Phase 5 umgesetzt** (Geplante Ausgaben, Version 08): Sammlung `plannedExpenses`, Kauf in einer Transaktion (tatsächlicher Betrag), Liste/Formular/Dialog, Regeln. Automatisch grün: Bau, Lint, 63 Unit-Tests (14 neu), 58 Regel-Tests (13 neu, R-08) (Commit `@@SHA@@`, Lauf @@RUN@@; Zwischenstand `29eea16`, Lauf 36743091193: gleiche Ergebnisse, R-08d danach um einen Fall erweitert). Gerätefälle G5-01 bis G5-12 offen; Regeln müssen neu veröffentlicht werden. Gerätetest GU (Version 07): Ergebnisse dem Entwickler noch nicht gemeldet, bleibt offen |

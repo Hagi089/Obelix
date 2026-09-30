@@ -631,6 +631,8 @@ describe('R-08 Geplante Ausgaben (plannedExpenses)', () => {
     await seedPlanned();
     await assertSucceeds(updateDoc(doc(as('admin'), 'plannedExpenses/p1'), planEdit('admin', { estimatedAmountCents: 45000, priority: 'LOW' })));
     await assertSucceeds(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { link: 'http://example.org' })));
+    // Optionale Felder wieder entfernen (so schreibt die App, wenn Priorität und Link geleert werden)
+    await assertSucceeds(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { priority: deleteField(), link: deleteField() })));
     await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), { title: 'ohne Audit' }));
     await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('admin')));
     await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { updatedAt: Timestamp.now() })));

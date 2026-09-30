@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 10: **Phase 4 abgenommen** – Gerätetest G4-01 bis G4-16 bestanden; UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, nächste Phase 5).
+Stand: 30.09.2026 (Rev. 11: **Phase 5 – Geplante Ausgaben umgesetzt** (Version 08), Bau und Tests grün, Gerätetest G5 offen; Phase 4 abgenommen; UI-Überarbeitung gebaut, Gerätetest GU offen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, Phase 5 wartet auf Gerätetest, nächste Phase 6).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -34,6 +34,9 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 18 | Kontostand-Berechnung (Phase 4) | Clientseitig aus **einer** Abfrage aller Buchungen je Öffnen des Finanzbereichs (~300 Lesevorgänge bei 50.000 pro Tag im Spark-Kontingent). Firestore-Aggregationen (`sum()`) nicht nötig; ob sie einen zusätzlichen Index bräuchten, wurde nicht geprüft. |
 | 19 | Filter „Zeitraum" (Phase 4) | Als **Jahresfilter** umgesetzt (einfachste Lösung, Auslegung des Plans). |
 | 20 | Einnahmen mit Person (Phase 4) | „Bezahlt durch" der Excel wird bei Einnahmen zum **Einzahler** (`paidByUid`, in der App „Eingezahlt von", optional). |
+| 21 | Geplante Ausgaben: Einstieg (Phase 5) | Unterbereich des Finanzbereichs: Schaltfläche „Geplante Ausgaben“ in der Finanzübersicht öffnet die Liste (Vorschlag des Plans, Abschnitt 8; keine siebte Hauptnavigation). Filter **Geplant** (Standard) / **Gekauft** / **Alle**. Die Summe der offenen Schätzungen steht in der Liste, **nicht** im Kontostand (Anforderung 16). |
+| 22 | Kauf einer Planung (Phase 5) | Der Dialog „Gekauft“ fragt tatsächlichen Betrag (vorbelegt mit der Schätzung), Kaufdatum (heute), Bezahlt von (angemeldeter Benutzer), Kategorie (Pflicht, keine Vorbelegung) und Abrechnung (vorbelegt „Offen“, wie im Buchungsformular). Bezeichnung und Kommentar der Planung werden Beschreibung und Kommentar der Ausgabe. Eine gekaufte Planung ist nicht mehr änderbar (nur ansehen, Buchung öffnen, löschen). |
+| 23 | Buchung aus einem Kauf löschen (Phase 5, **Annahme, nicht ausdrücklich beschlossen**) | Wird die aus einem Kauf entstandene Buchung gelöscht, setzt die App die Planung im selben Schritt wieder auf **Geplant**; sonst wäre der Betrag weder geplant noch ausgegeben. Der Löschdialog weist darauf hin. Löschen der *Planung* lässt die Buchung bestehen. Eine solche Buchung bleibt eine Ausgabe (Art nicht änderbar). |
 
 **Annahmen, die ich getroffen habe (bitte widersprechen, falls falsch):**
 - Übernommen werden die **12 tatsächlich verwendeten** Kategorien, unverändert (auch „Werkstatt" neben „TÜV/Werkstatt"). Die nie benutzten `Look`-Einträge werden nicht angelegt, sie können über die Einstellungen ergänzt werden.
@@ -247,18 +250,18 @@ Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Fire
 | plannedExpenseId | String | nur bei Umwandlung |
 | Audit | | ja |
 
-**PlannedExpense**
+**PlannedExpense** (umgesetzt in Phase 5)
 | Feld | Typ | Pflicht |
 |---|---|---|
-| title | String | ja |
-| estimatedAmountCents | Long > 0 | ja |
-| plannedDate | String (Tag) | ja |
-| status | `PLANNED` \| `PURCHASED` | ja (UI: GEPLANT/GEKAUFT) |
+| title | String, 1–200 Zeichen | ja |
+| estimatedAmountCents | Long, 1 bis 100.000.000 (1.000.000,00 €) | ja |
+| plannedDate | String (Tag) | ja (Vorbelegung: heute) |
+| status | `PLANNED` \| `PURCHASED` | ja (UI: GEPLANT/GEKAUFT); beim Anlegen immer `PLANNED` |
 | priority | `LOW`\|`MEDIUM`\|`HIGH` | nein |
-| link | String (URL) | nein |
-| comment | String | nein |
-| purchasedTransactionId | String | gesetzt bei Kauf |
-| Audit | | ja |
+| link | String, muss mit `http://` oder `https://` beginnen, keine Leerzeichen, höchstens 500 Zeichen | nein |
+| comment | String, höchstens 500 Zeichen (leer erlaubt, Feld immer vorhanden) | ja (Feld), Inhalt optional |
+| purchasedTransactionId | String | genau bei `PURCHASED` (Verweis auf die Buchung) |
+| Audit (`createdAt/By`, bei Änderung `updatedAt/By`) | | ja |
 
 **Repair (Auffälligkeit)**
 | Feld | Typ | Pflicht |
@@ -295,7 +298,7 @@ Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Fire
 ### Wichtige Datenflüsse
 
 1. **Bestand:** Anfangsbestand ist 0 (laut Excel). Bestand = Σ Einnahmen + Σ Ausgaben mit `SETTLED` (entspricht der Excel-Formel „Kontostand aktuell"). Zusätzlich: offene Forderungen je Benutzer = Σ `OPEN`-Ausgaben je Zahler; Kontostand nach Begleichung = Bestand + offene Forderungen. Berechnung über Firestore-Aggregationsabfragen (`sum()`) oder clientseitig. Geplante Ausgaben zählen nicht. Hinweis: Die Anforderung nennt „Anfangsbestand + Einnahmen − Ausgaben"; der Abrechnungsstatus ist eine Erweiterung aus der Excel, die bestätigt werden muss.
-2. **Geplant → gekauft:** Ein einziger Firestore-Batch (atomar): neue `transactions`-Ausgabe mit tatsächlichem Betrag + `plannedExpenses.status = PURCHASED` + `purchasedTransactionId`. Bei fehlender Verbindung schlägt der Batch fehl; es entsteht nichts Halbes.
+2. **Geplant → gekauft (umgesetzt in Phase 5):** Eine einzige Firestore-**Transaktion**: liest die Planung (Status muss noch `PLANNED` sein), legt die `transactions`-Ausgabe mit **tatsächlichem** Betrag und `plannedExpenseId` an und setzt `plannedExpenses.status = PURCHASED` mit `purchasedTransactionId`. Bei fehlender Verbindung oder gleichzeitigem Kauf von einem zweiten Gerät entsteht nichts Halbes und keine zweite Ausgabe. **Buchung löschen:** Verweist sie auf eine Planung, öffnet dieselbe Transaktion die Planung wieder (`PLANNED`, `purchasedTransactionId` entfernt).
 3. **Kalender-Überschneidung:** Abfrage `startDate ≤ neuesEnde`, danach Filter `endDate ≥ neuerStart` im Client (Firestore kann nicht zwei Bereichsfilter auf verschiedenen Feldern). Bei Treffer Warnung, danach Speichern nur nach ausdrücklicher Bestätigung (Entscheidung 5). Bei geringer Datenmenge ist die Race-Condition zwischen zwei gleichzeitigen Nutzern akzeptabel; das wird dokumentiert, nicht verschwiegen.
 4. **Stellplatz mit Fotos:** Fotos werden zuerst hochgeladen, danach wird das Firestore-Dokument geschrieben; bei Abbruch werden hochgeladene Dateien wieder gelöscht. Die 3-Foto-Grenze wird in UI **und** Rules erzwungen.
 
@@ -396,6 +399,7 @@ Alle Regeln liegen versioniert in `firebase/`. Sie werden **zusammen mit dem jew
 - **Code erneuern** (nur ADMIN, in den Einstellungen): neuer Code in `config/access`, der alte ist sofort ungültig. Bereits registrierte Benutzer behalten ihren Zugriff.
 - **Erster ADMIN:** einmalig in der Firebase-Konsole: `config/access` mit einem Code anlegen, in der App registrieren, dann im eigenen `users`-Dokument `role` auf `ADMIN` setzen (Anleitung `FIREBASE-EINRICHTUNG.md`, Abschnitt 8). In der App kann sich niemand selbst zum ADMIN machen.
 - **Grenzen (ehrlich):** Firebase Auth kann das bloße Anlegen eines Kontos ohne Blaze nicht sperren. Ein Fremder kann kurz ein leeres Konto anlegen, hat aber keinerlei Datenzugriff; die App löscht es bei falschem Code wieder. Ein **weitergegebener Code** gilt, bis der ADMIN ihn erneuert. Gegenmaßnahme: ADMIN sieht alle Benutzer, kann Unbekannte entfernen und danach den Code erneuern. Jeder Benutzer kann in `users` den Code sehen, mit dem sich andere registriert haben; das ist höchstens ein früherer oder der aktuelle Code, den ohnehin alle Benutzer bekommen haben.
+- **Ab Phase 5 freigegeben:** `plannedExpenses` (Lesen/Anlegen/Löschen für alle Benutzer; Validierung `validPlanned`). Der Kauf (`PLANNED` → `PURCHASED`) ist nur erlaubt, wenn im selben Schritt die passende Buchung entsteht (`existsAfter`/`getAfter`: Buchung existiert, ist eine Ausgabe und verweist mit `plannedExpenseId` auf die Planung; nur `status`, `purchasedTransactionId`, `updatedAt/By` ändern sich). Umgekehrt gibt es eine Buchung mit `plannedExpenseId` nur zusammen mit dem Kauf; `plannedExpenseId` ist unveränderlich und nur bei Ausgaben erlaubt. Eine gekaufte Planung ist nicht änderbar; sie wird nur wieder geöffnet, wenn ihre Buchung im selben Schritt gelöscht wird.
 - Die fachlichen Sammlungen (Kalender, …) sind bis zu ihrer jeweiligen Phase komplett gesperrt (auch für ADMINs), damit nichts versehentlich offen ist. **Ab Phase 4 freigegeben:** `transactions` (Lesen/Anlegen/Ändern/Löschen für alle Benutzer; Validierung: Pflichtfelder, `amountCents` ganze Zahl 1 bis 100.000.000, Datumsformat, Status, Einnahme immer `SETTLED`, Ausgabe braucht Zahler, `createdBy/At` und `updatedBy/At` erzwungen, `importRef` unveränderlich) und `categories` (Lesen/Anlegen alle, Ändern nur ADMIN, Löschen nie).
 
 **Storage-Regeln (falls Storage):** Zugriff nur für registrierte Benutzer (Storage-Regeln können Firestore per `firestore.exists()` abfragen); Größen- und `contentType`-Limits.
@@ -497,12 +501,22 @@ Abschlusskriterium: Freigabe durch dich.
 - **Kategorien nur für ADMIN:** Der Abschnitt „Kategorien" in den Einstellungen wird nur ADMINs angezeigt (Entscheidung des Benutzers, 30.09.2026). Die Firestore-Regeln erlauben weiterhin jedem Benutzer das Anlegen (R-07); Mitglieder haben in der App aber keinen Weg dafür. Regeln bewusst nicht verschärft (nicht verlangt).
 - Nicht geprüft (Gerätetest GU): Aussehen auf verschiedenen Launchern und Formen, Lesbarkeit der Karte im hellen und dunklen Modus. Bildgrößen: Hintergrund 169 KB, Icon-Vordergrund 270 KB.
 
-### Phase 5 – Geplante Ausgaben
-- **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
-- **Dateien:** `PlannedExpense`, `PlannedExpenseRepository`, `planned/*`, Rules.
-- **Umsetzung:** Liste/Formular; „Gekauft" fragt tatsächlichen Betrag, Kaufdatum, bezahlt von (Benutzer), Kategorie, Abrechnungsstatus ab und erzeugt die Ausgabe in einem atomaren Batch.
-- **Tests:** 500 € geplant / 472 € gekauft ⇒ Ausgabe 472 €; geplant erscheint danach nicht mehr offen; Kontostand ändert sich nur durch den Kauf (und nur bei Status „erstattet"); ohne Netz entsteht nichts Halbes.
-- **Abschluss:** Alle Fälle bestanden.
+### Phase 5 – Geplante Ausgaben ✅ umgesetzt (30.09.2026, Version 08), Gerätetest G5 offen
+- **Ziel:** Planung, „Gekauft“-Workflow mit tatsächlichem Betrag.
+- **Umgesetzt (Commit `29eea16`):**
+  - `firebase/firestore.rules`: Sammlung `plannedExpenses` (`validPlanned`), Buchungen mit optionalem, unveränderlichem `plannedExpenseId` (siehe Abschnitt 7). Regel-Tests R-08 (13 Fälle).
+  - `data/planned/`: `PlannedExpense`, `PlannedInput`, `PurchaseInput`, `PlannedStatus`, `Priority` (Models), `PlannedValidator` (Titel, Link; Betrag/Datum/Kommentar über `BookingValidator`), `PurchasePlanner` (Kauf → Buchung mit tatsächlichem Betrag) und `PlannedCalculator` (Anzahl und Summe der offenen Planungen), `PlannedExpenseRepository` (`loadAll`, `get`, `create`, `update`, `purchase`, `delete`; alle Schreibvorgänge als Transaktion).
+  - Geändert: `FinanceRepository.delete(id, plannedExpenseId, uid)` öffnet die Planung wieder (Entscheidung 23); `bookingCreateData` als gemeinsame Funktion; `Booking`/`BookingInput` mit `plannedExpenseId`; neue Fehlerart `AppError.CONFLICT` („Stand hat sich geändert“), `ErrorMapper` erkennt umhüllte `AppException`.
+  - Oberfläche (`ui/planned/`): Liste (Summe der offenen Schätzungen, Filter Geplant/Gekauft/Alle, Ladezustand, Fehler mit „Erneut versuchen“, Leerzustände), Formular (anlegen, bearbeiten, löschen mit Bestätigung, Link öffnen), Dialog „Gekauft“, Anzeige gekaufter Planungen mit Verweis auf die Buchung. Einstieg: Schaltfläche „Geplante Ausgaben“ im Finanzbereich; im Buchungsformular ist die Art einer aus einem Kauf entstandenen Buchung gesperrt und der Löschdialog erwähnt die Planung.
+  - Version 08 (`versionCode 8`).
+- **Automatisch geprüft (GitHub Actions, Commit `29eea16`, Lauf 36743091193):** Android-Bau, Lint und **63 Unit-Tests** grün (14 neu: Validierung, Kauf 500 € → 472 €, Kontostand nur durch den Kauf, Summe der offenen Planungen, Fehlerabbildung); **58 Regel-Tests** im Emulator grün (13 neu, R-08). Details: [`TESTFAELLE.md`](TESTFAELLE.md). Stand der Regel-Tests nach der Ergänzung von R-08d: siehe Änderungsprotokoll in `TESTFAELLE.md`.
+- **Noch nicht geprüft (von dir zu prüfen, Tests G5-01 bis G5-12):** Regeln in der Firebase-Konsole **neu veröffentlichen**; Bedienung auf dem Gerät; Verhalten gegen dein echtes Projekt; Darstellung (Dialog, Datumsauswahl, Auswahlfelder); Kauf gleichzeitig von zwei Geräten (G5-11).
+- **Erkenntnisse / Grenzen:**
+  - Der Schutz vor Doppelkauf hat zwei Ebenen: Die Transaktion der App liest den Status und bricht bei `PURCHASED` mit „Stand hat sich geändert“ ab; die Regeln verbieten zusätzlich jeden zweiten Kauf (R-08h). Die App-Ebene (Ausnahme in der Firestore-Transaktion) ist nicht automatisch testbar und wird durch G5-11 geprüft. Ist die Meldung dort nur allgemein („unerwarteter Fehler“), ist trotzdem nichts doppelt gebucht.
+  - Wird eine Planung gelöscht, während ihre Buchung besteht, bleibt in der Buchung ein Verweis auf eine nicht mehr vorhandene Planung. Das ist harmlos; beim späteren Löschen dieser Buchung wird nur die Buchung gelöscht (der Löschdialog nennt die Planung dann trotzdem).
+  - Bearbeitet man eine gekaufte Buchung (Betrag, Datum, …), ändert das die Planung nicht; die Schätzung bleibt als Historie.
+  - Kein automatischer Test der Oberfläche und der Transaktion gegen echtes Firestore (kein Emulator für die App in der Cloud-Sitzung).
+- **Nicht Teil von Phase 5:** Dashboard-Zähler für offene Anschaffungen (Phase 11); Belege (Phase 6).
 
 ### Phase 6 – Dateiablage und Belege
 - **Voraussetzung:** Entscheidung 1.
@@ -650,4 +664,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
 | 4 Finanzen und Excel-Import | ✅ abgenommen: Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); Gerätetest G4-01 bis G4-16 bestanden (Benutzer, 30.09.2026), Import in das echte Projekt durchgeführt | 30.09.2026 | – |
-| 5–12 | nicht begonnen | | |
+| 5 Geplante Ausgaben | umgesetzt (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 offen**, Regeln müssen neu veröffentlicht werden | 30.09.2026 | Gerätetest G5, GU (UI-Überarbeitung) |
+| 6–12 | nicht begonnen | | |
