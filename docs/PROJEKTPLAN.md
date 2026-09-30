@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 11: **Phase 5 – Geplante Ausgaben abgenommen** (Version 08), Bau und Tests grün, Gerätetest G5-01 bis G5-12 bestanden; Phase 4 abgenommen; UI-Überarbeitung abgenommen (Gerätetest GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, Phase 5 abgenommen, nächste Phase 6).
+Stand: 30.09.2026 (Rev. 12: **Phase 6 – Dateiablage und Belege umgesetzt** (Version 09), Bau, Lint und Tests grün, **Gerätetest G6-01 bis G6-14 offen**; Phase 5 abgenommen (G5 bestanden); Phase 4 abgenommen; UI-Überarbeitung abgenommen (GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 5 abgenommen, Phase 6 wartet auf den Gerätetest, danach Phase 7).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -37,6 +37,12 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 21 | Geplante Ausgaben: Einstieg (Phase 5) | Unterbereich des Finanzbereichs: Schaltfläche „Geplante Ausgaben“ in der Finanzübersicht öffnet die Liste (Vorschlag des Plans, Abschnitt 8; keine siebte Hauptnavigation). Filter **Geplant** (Standard) / **Gekauft** / **Alle**. Die Summe der offenen Schätzungen steht in der Liste, **nicht** im Kontostand (Anforderung 16). |
 | 22 | Kauf einer Planung (Phase 5) | Der Dialog „Gekauft“ fragt tatsächlichen Betrag (vorbelegt mit der Schätzung), Kaufdatum (heute), Bezahlt von (angemeldeter Benutzer), Kategorie (Pflicht, keine Vorbelegung) und Abrechnung (vorbelegt „Offen“, wie im Buchungsformular). Bezeichnung und Kommentar der Planung werden Beschreibung und Kommentar der Ausgabe. Eine gekaufte Planung ist nicht mehr änderbar (nur ansehen, Buchung öffnen, löschen). |
 | 23 | Buchung aus einem Kauf löschen (Phase 5, **Annahme, nicht ausdrücklich beschlossen**) | Wird die aus einem Kauf entstandene Buchung gelöscht, setzt die App die Planung im selben Schritt wieder auf **Geplant**; sonst wäre der Betrag weder geplant noch ausgegeben. Der Löschdialog weist darauf hin. Löschen der *Planung* lässt die Buchung bestehen. Eine solche Buchung bleibt eine Ausgabe (Art nicht änderbar). |
+| 24 | Dateiablage (Phase 6) | Option F umgesetzt: `files/{fileId}` (Name, Typ, Größe, Anzahl Stücke, `createdAt`, `createdBy`) und `files/{fileId}/chunks/{n}` (Feld `data`, Stücke zu **900 KiB = 921.600 Byte**, höchstens **10 Stücke**, höchstens **8 MiB = 8.388.608 Byte**). Erlaubt sind nur **JPEG und PDF**. Dateien sind unveränderlich (kein Update), lesen/löschen dürfen alle Benutzer. Das Lesen der Stücke ist nur beim Öffnen eines Belegs nötig (kein Vorladen). |
+| 25 | Beleg-Verweis (Phase 6) | Der Beleg steht als Map `receipt` **`{fileId, name, contentType, sizeBytes}`** in der Ausgabe (statt `{path, …}` des ersten Entwurfs; der Verweis auf eine Datei ist ihre ID, kein Pfad). **Jede Datei gehört zu genau einer Buchung** und entsteht in **derselben Transaktion** wie diese (Regeln: `!exists` vor, `getAfter` nach dem Schreiben). Daher gibt es weder eine Datei ohne Verweis noch einen Verweis ohne Datei. Nur Ausgaben dürfen einen Beleg haben. |
+| 26 | Bilder und PDFs (Phase 6) | Bilder werden beim Auswählen dekodiert (`inSampleSize`, nie das ganze Originalbild im Speicher), nach EXIF gedreht, auf höchstens **1800 px** an der langen Seite verkleinert (nie vergrößert), auf weißem Grund als **JPEG mit 80 %** gespeichert (Endung wird `.jpg`). Quellbilder bis 30 MB. **PDFs bleiben unverändert**, höchstens 8 MiB. Die Datei wird **vor dem Speichern** aufbereitet; Name und Größe stehen im Formular. |
+| 27 | Beleg ersetzen/entfernen (Phase 6, **Annahme, nicht ausdrücklich beschlossen**) | **Ersetzen:** Schritt 1 = eine Transaktion (neue Datei + Buchung), Schritt 2 = danach Löschen der alten Datei in eigener Transaktion (`deleteQuietly`). Scheitert nur Schritt 2 (App wird beendet, Netz weg), bleibt eine unsichtbare Datei zurück; die Buchung ist trotzdem richtig. **Entfernen** und **Buchung löschen** löschen die Datei in derselben Transaktion. **Wird eine Ausgabe in eine Einnahme umgewandelt, wird ihr Beleg beim Speichern entfernt** (Einnahmen haben keinen Beleg; das Formular weist darauf hin). |
+| 28 | Zeitlimit Dateivorgänge (Phase 6) | Schreiben und Lesen von Dateien: **120 s** statt 20 s (`FileLimits.TIMEOUT_MS`), weil 8 MiB im Mobilfunknetz länger dauern. Firestore erlaubt Transaktionen bis 270 s. Läuft die Zeit ab, kann die Transaktion auf dem Server trotzdem angekommen sein (wie bei allen Zeitlimits, Phase 4). |
+| 29 | Anzeige und Kamera (Phase 6, **Annahme**) | Bilder werden in der App angezeigt, **PDFs in einer anderen App** (FileProvider, Cache-Ordner `receipts/`, es wird nur die zuletzt geöffnete Datei behalten): keine PDF-Bibliothek, keine zusätzlichen Abhängigkeiten. Datei wählen mit dem Systemdialog (`OpenDocument`, keine Berechtigung nötig). **Keine Kamera-Aufnahme in Phase 6** (bräuchte Kamera-Berechtigung und Dateizugriff für das Foto): Fotos aus der Galerie/Dateiablage; die Kamera kommt mit Phase 9 (Stellplatzfotos). Kein Zoom im Bildschirm „Beleg“ (nur Scrollen). |
 
 **Annahmen, die ich getroffen habe (bitte widersprechen, falls falsch):**
 - Übernommen werden die **12 tatsächlich verwendeten** Kategorien, unverändert (auch „Werkstatt" neben „TÜV/Werkstatt"). Die nie benutzten `Look`-Einträge werden nicht angelegt, sie können über die Einstellungen ergänzt werden.
@@ -201,7 +207,8 @@ repairs/{id}
 campsites/{id}
 documents/{id}
 categories/{id}                               → Finanzkategorien (aus Excel zu befüllen)
-files/{fileId}/chunks/{n}                     → Dateiablage (Option F)
+files/{fileId}                                → Dateiablage (Option F): Metadaten
+files/{fileId}/chunks/{n}                     → Dateiablage (Option F): Stücke, n = 0 bis 9
 ```
 
 Abweichung von der Beispielstruktur der Anforderungen (`households/{householdId}/…`): Es gibt **keinen Haushalt** (Entscheidung 2b vom 30.09.2026). Alle Sammlungen liegen auf oberster Ebene und gehören allen registrierten Benutzern gemeinsam. Die Anforderung erlaubt Verbesserungen ausdrücklich; `householdId` entfällt.
@@ -246,9 +253,21 @@ Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Fire
 | importRef | String | nur bei importierten Buchungen: `xl-<Excel-Zeile>` (zugleich Dokument-ID); unveränderlich |
 | description | String | ja |
 | comment | String | nein |
-| receipt | Map {path, contentType, sizeBytes} | nein (nur Ausgabe) |
+| receipt | Map {fileId, name, contentType, sizeBytes} (Phase 6, Entscheidung 25) | nein (nur Ausgabe); `fileId` verweist auf `files/{fileId}`, Datei und Verweis entstehen in derselben Transaktion |
 | plannedExpenseId | String | nur bei Umwandlung |
 | Audit | | ja |
+
+**File** – `files/{fileId}` (umgesetzt in Phase 6)
+| Feld | Typ | Bemerkung |
+|---|---|---|
+| name | String | 1–200 Zeichen, ohne Pfad |
+| contentType | String | `image/jpeg` oder `application/pdf` |
+| sizeBytes | Long | 1 bis 8.388.608 |
+| chunkCount | Int | 1 bis 10, muss zu `sizeBytes` passen (`ceil(sizeBytes / 921.600)`) |
+| createdAt | Timestamp | Server (`request.time`) |
+| createdBy | String | uid des Benutzers |
+
+**Chunk** – `files/{fileId}/chunks/{n}`: genau ein Feld `data` (Bytes, 1 bis 921.600 Byte); die IDs sind `"0"` bis `"9"`. Alle Stücke außer dem letzten sind voll (921.600 Byte).
 
 **PlannedExpense** (umgesetzt in Phase 5)
 | Feld | Typ | Pflicht |
@@ -372,9 +391,10 @@ Firebase Spark bleibt für alles andere (Anmeldung und Daten) **kostenlos und oh
 Damit ist die Anwendung **vollständig kostenlos auf Firebase Spark**, mit einer Anmeldung und einem Rechtesystem.
 
 ### Datei-Ablage (unabhängig vom Speicherort)
-- Pfad: `campsites/{campsiteId}/{photoId}.jpg`, `receipts/{transactionId}/{name}`, `documents/{docId}/{name}`.
-- Nie öffentliche URLs speichern; nur den Pfad im Firestore-Dokument.
-- Grenzen: Fotos nach Kompression typisch ~200–500 KB (Annahme, wird in Phase 6 gemessen); Dokumente/Belege begrenzt auf Bild oder PDF, bei Option F max. 8 MB je Datei.
+- **Umgesetzt in Phase 6 (Entscheidung 24 bis 29):** Dateien liegen in `files/{fileId}` mit Stücken in `files/{fileId}/chunks/{n}`; der Verweis (`fileId`, Name, Typ, Größe) steht im jeweiligen Fachdokument (Belege: `transactions.receipt`). Die früher geplanten Pfade (`receipts/{transactionId}/…`) entfallen.
+- Nie öffentliche URLs speichern; nur den Verweis im Firestore-Dokument.
+- Grenzen: Belege begrenzt auf JPEG oder PDF, **8 MiB je Datei**. Die Fotogröße nach der Kompression (Annahme früher 200–500 KB) wurde **noch nicht gemessen**: Das Formular zeigt Name und Größe der aufbereiteten Datei, der Benutzer meldet sie in G6-02.
+- **Kontingent (Spark, rechnerisch, nicht gemessen):** Eine Datei mit 10 Stücken kostet beim Anlegen 11 Schreib- und beim Öffnen 11 Lesevorgänge (Stücke + Metadaten), bei 20.000 Schreib- und 50.000 Lesevorgängen pro Tag.
 
 ---
 
@@ -399,6 +419,8 @@ Alle Regeln liegen versioniert in `firebase/`. Sie werden **zusammen mit dem jew
 - **Code erneuern** (nur ADMIN, in den Einstellungen): neuer Code in `config/access`, der alte ist sofort ungültig. Bereits registrierte Benutzer behalten ihren Zugriff.
 - **Erster ADMIN:** einmalig in der Firebase-Konsole: `config/access` mit einem Code anlegen, in der App registrieren, dann im eigenen `users`-Dokument `role` auf `ADMIN` setzen (Anleitung `FIREBASE-EINRICHTUNG.md`, Abschnitt 8). In der App kann sich niemand selbst zum ADMIN machen.
 - **Grenzen (ehrlich):** Firebase Auth kann das bloße Anlegen eines Kontos ohne Blaze nicht sperren. Ein Fremder kann kurz ein leeres Konto anlegen, hat aber keinerlei Datenzugriff; die App löscht es bei falschem Code wieder. Ein **weitergegebener Code** gilt, bis der ADMIN ihn erneuert. Gegenmaßnahme: ADMIN sieht alle Benutzer, kann Unbekannte entfernen und danach den Code erneuern. Jeder Benutzer kann in `users` den Code sehen, mit dem sich andere registriert haben; das ist höchstens ein früherer oder der aktuelle Code, den ohnehin alle Benutzer bekommen haben.
+- **Ab Phase 6 freigegeben (Dateien):** `files/{fileId}` (Lesen einzelner Dateien `get` für alle Benutzer, `list` verboten; Anlegen nur mit gültigen Metadaten, `createdBy == auth.uid`, `createdAt == request.time` und **vorhandenem letzten Stück im selben Schreibvorgang** (`existsAfter`, Index aus einer Listenkonstante, weil Zahlen nicht in Pfade eingesetzt werden können); kein Stück über `chunkCount` hinaus; kein Update; Löschen für alle Benutzer) und `files/{fileId}/chunks/{chunkId}` (Lesen für alle Benutzer; Anlegen nur ID `0` bis `9`, genau das Feld `data`, 1 bis 921.600 Byte; kein Update; Löschen für alle Benutzer). Buchungen dürfen das Feld `receipt` nur bei Ausgaben tragen (`validReceiptRef`); eine **neue** Datei darf nur referenziert werden, wenn sie vorher nicht existierte und Name, Typ und Größe der Metadaten übereinstimmen (`newReceiptOk`, **Einmalverwendung**: niemand kann einen Beleg auf eine fremde, schon vorhandene Datei zeigen lassen). Beim Ändern bleibt der Beleg unverändert, wird entfernt oder durch eine neue Datei ersetzt.
+- **Budget der Regelabfragen je Transaktion (Grenze 20, laut Firebase-Dokumentation für Mehrfachschreibvorgänge):** Stück: 1 (`isUser`) · Metadaten: 3 · Buchung mit neuem Beleg: 3. Eine Datei mit 10 Stücken samt Buchung ergibt rund 16, **ohne** auf Zwischenspeicherung der Regelauswertung zu zählen. Der Emulator hat diesen Fall bestanden (R-09b); ob die echte Datenbank genauso zählt, ist **von mir nicht prüfbar** (G6-06 mit einem PDF von fast 8 MB).
 - **Ab Phase 5 freigegeben:** `plannedExpenses` (Lesen/Anlegen/Löschen für alle Benutzer; Validierung `validPlanned`). Der Kauf (`PLANNED` → `PURCHASED`) ist nur erlaubt, wenn im selben Schritt die passende Buchung entsteht (`existsAfter`/`getAfter`: Buchung existiert, ist eine Ausgabe und verweist mit `plannedExpenseId` auf die Planung; nur `status`, `purchasedTransactionId`, `updatedAt/By` ändern sich). Umgekehrt gibt es eine Buchung mit `plannedExpenseId` nur zusammen mit dem Kauf; `plannedExpenseId` ist unveränderlich und nur bei Ausgaben erlaubt. Eine gekaufte Planung ist nicht änderbar; sie wird nur wieder geöffnet, wenn ihre Buchung im selben Schritt gelöscht wird.
 - Die fachlichen Sammlungen (Kalender, …) sind bis zu ihrer jeweiligen Phase komplett gesperrt (auch für ADMINs), damit nichts versehentlich offen ist. **Ab Phase 4 freigegeben:** `transactions` (Lesen/Anlegen/Ändern/Löschen für alle Benutzer; Validierung: Pflichtfelder, `amountCents` ganze Zahl 1 bis 100.000.000, Datumsformat, Status, Einnahme immer `SETTLED`, Ausgabe braucht Zahler, `createdBy/At` und `updatedBy/At` erzwungen, `importRef` unveränderlich) und `categories` (Lesen/Anlegen alle, Ändern nur ADMIN, Löschen nie).
 
@@ -518,12 +540,24 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test der Oberfläche und der Transaktion gegen echtes Firestore (kein Emulator für die App in der Cloud-Sitzung).
 - **Nicht Teil von Phase 5:** Dashboard-Zähler für offene Anschaffungen (Phase 11); Belege (Phase 6).
 
-### Phase 6 – Dateiablage und Belege
-- **Voraussetzung:** Entscheidung 1.
+### Phase 6 – Dateiablage und Belege ✅ umgesetzt (30.09.2026, Version 09), Bau und Tests grün, **Gerätetest G6-01 bis G6-14 offen**
 - **Ziel:** Gemeinsame Dateiablage (`FileStore`), Bildverkleinerung, Belege an Ausgaben.
-- **Dateien:** `FileStore`, `ImageCompressor`, Rules für Dateien, Beleg-UI in `finance/*`.
-- **Tests:** Upload/Anzeige/Löschen, Größen- und Typgrenzen, Zugriff ohne Freischaltung verboten, Abbruch ohne Netz hinterlässt keine Reste.
-- **Abschluss:** Alle Fälle bestanden; gemessene Fotogröße im Plan nachgetragen.
+- **Umgesetzt (Commit `5956f25`):**
+  - `firebase/firestore.rules`: `files` und `chunks`, Beleg in Buchungen (siehe Abschnitt 7, Entscheidung 24 bis 29). Regel-Tests R-09 (18 Fälle).
+  - `data/files/`: `FileLimits` (alle Grenzen an einer Stelle), `FileChunker` (teilen/zusammensetzen mit Prüfung), `FileModels` (`NewFile`, `FileRef`), `FileValidator` (Größe, Typ, Dateiname), `ImageScaling` (Zielgröße, `inSampleSize`), `FileSize` (deutsche Größenanzeige), `FileStore` (Schnittstelle + `FirestoreFileStore`: `load`, `stageUpload`, `stageDelete`, `deleteQuietly`), `LocalFileReader` (Datei einlesen, Bilder verkleinern, EXIF, PDF begrenzen), `ReceiptCache` (PDF für die externe App).
+  - Geändert: `FinanceRepository` (`create(…, receipt)`, `update(…, receipt: ReceiptChange)`, `delete` löscht die Datei mit; alles in **einer** Transaktion; Ersetzen in zwei Schritten), `Booking.receipt`, `ReceiptChange` (Behalten/Entfernen/Ersetzen), `AppError.FILE_CORRUPT`, `AppContainer`.
+  - Oberfläche: Abschnitt „Beleg“ im Buchungsformular (hinzufügen, ansehen, ersetzen, entfernen, rückgängig, Fortschritt, Fehler, Hinweis auf die Grenzen; nur bei Ausgaben oder wenn schon ein Beleg besteht), neuer Bildschirm „Beleg“ (`ReceiptRoute`: Laden, Fehler mit Wiederholen, Bild, PDF-Hinweis mit „PDF öffnen“); FileProvider im Manifest (`res/xml/file_paths.xml`, nur `receipts/` im Cache).
+  - Version 09 (`versionCode 9`).
+- **Automatisch geprüft (GitHub Actions, Commit `5956f25`, Lauf 36748194004):** Android-Bau, Lint und Unit-Tests grün; **76 von 76 Regel-Tests** im Emulator (18 neu, R-09). Die Zahl der Unit-Tests **96** (63 + 33 neu) ist aus den Quelltexten gezählt; die CI-Anzeige der Testanzahl ist von hier aus nicht lesbar. Details: [`TESTFAELLE.md`](TESTFAELLE.md).
+- **Noch nicht geprüft (von dir zu prüfen, Tests G6-01 bis G6-14):** Regeln in der Firebase-Konsole **neu veröffentlichen**; Auswahl von Bildern und PDFs auf dem Gerät; Verkleinerung und EXIF-Drehung bei echten Fotos; Öffnen einer PDF in einer externen App; Dauer von Hoch- und Herunterladen im Mobilfunknetz; **gemessene Fotogröße** (Formular zeigt sie); ob die Transaktion mit 10 Stücken gegen die **echte** Datenbank durchgeht (Emulator: ja); Darstellung (Abschnitt „Beleg“, Bildschirm „Beleg“, Hell/Dunkel).
+- **Erkenntnisse / Grenzen:**
+  - Firestore begrenzt die Regelabfragen je Schreibvorgang auf 20; die Regeln sind deshalb so gebaut, dass ein Stück nur einen Zugriff kostet und nur das **letzte** Stück geprüft wird. Fehlt ein mittleres Stück, merkt das die App beim Öffnen (`FILE_CORRUPT`, „Die Datei ist unvollständig gespeichert …“) – die App schreibt immer alle Stücke in einer Transaktion, sodass das nur bei einem manipulierten Client vorkommen kann.
+  - Ersetzen in zwei Schritten (Entscheidung 27): in seltenen Fällen bleibt eine unsichtbare alte Datei im Speicher; sie zählt zum Kontingent, stört aber sonst nicht. Kein Aufräumwerkzeug (nicht verlangt).
+  - Transaktionen werden bis 270 s zugelassen; das App-Zeitlimit für Dateien beträgt 120 s.
+  - Das Ansehen lädt immer vom Server (kein Zwischenspeicher, wie im ganzen Projekt): offline gibt es eine Fehlermeldung mit „Erneut versuchen“.
+  - Kein Kamera-Direktzugriff, kein Zoom, keine Vorschau im Formular (nur Name und Größe): Verbesserungsvorschläge, nicht umgesetzt (Abschnitt 13).
+  - Kein automatischer Test der Bildverkleinerung und der Transaktion gegen echtes Firestore (kein Gerät/Emulator für die App in der Cloud-Sitzung): nur der Rechenteil (`ImageScaling`) ist getestet.
+- **Nicht Teil von Phase 6:** Stellplatzfotos (Phase 9), Dokumente (Phase 10), Büroklammer-Symbol in der Buchungsliste (Vorschlag).
 
 ### Phase 7 – Kalender
 - **Ziel:** Nutzung eintragen, bearbeiten, löschen, Überschneidung.
@@ -652,6 +686,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 - Kategorien-Verwaltung durch ADMIN in der App, falls sich die Excel-Struktur ändert.
 - Export der Finanzdaten als CSV (nicht in den Anforderungen; nur bei Bedarf).
+- Belege: Büroklammer-Symbol in der Buchungsliste bei Buchungen mit Beleg; Zoomen im Bildschirm „Beleg“; Kamera-Aufnahme direkt im Formular (Phase 9 bringt die Kamera für Stellplätze, dann auch hier möglich); Vorschau des Bildes im Formular; Aufräumen unsichtbarer Dateien (nur falls jemals nötig).
 
 ---
 
@@ -665,4 +700,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
 | 4 Finanzen und Excel-Import | ✅ abgenommen: Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); Gerätetest G4-01 bis G4-16 bestanden (Benutzer, 30.09.2026), Import in das echte Projekt durchgeführt | 30.09.2026 | – |
 | 5 Geplante Ausgaben | abgenommen (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 bestanden (abgenommen)** | 30.09.2026 | – |
-| 6–12 | nicht begonnen | | |
+| 6 Dateiablage und Belege | umgesetzt (Version 09): Bau, Lint und Unit-Tests grün (96 aus den Quellen gezählt), **76 Regel-Tests grün** (Commit `5956f25`, Lauf 36748194004); **Gerätetest G6-01 bis G6-14 offen** | 30.09.2026 | Regeln in der Konsole neu veröffentlichen; Fotogröße messen (G6-02); 10-Stücke-Transaktion gegen echte Datenbank (G6-06) |
+| 7–12 | nicht begonnen | | |

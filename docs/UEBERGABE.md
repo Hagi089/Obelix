@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · **Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden)** · danach: **Phase 6 – Dateiablage und Belege**
+Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · **Phase 6 – Dateiablage und Belege umgesetzt (Version 09), Gerätetest G6 offen** · danach: **Phase 7 – Kalender**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -17,12 +17,13 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
 | UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ✅ Gerätetest GU-01 bis GU-10 bestanden |
 | 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ✅ Gerätetest G5-01 bis G5-12 bestanden |
-| **6** | **Dateiablage und Belege** | **⬜ nächste Phase** (Phase 5 abgenommen) |
-| 7–12 | Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
+| 6 | Dateiablage und Belege (Version 09) | ✅ umgesetzt, Bau, Lint, 96 Unit-Tests (aus den Quellen gezählt) und 76 Regel-Tests grün (Commit `5956f25`) · ⏳ Gerätetest G6-01 bis G6-14 offen |
+| **7** | **Kalender** | **⬜ nächste Phase** (nach Abnahme von Phase 6, Gerätetest G6) |
+| 8–12 | Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
-- 63 automatische Unit-Tests, Build und Lint sowie 58 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
+- 96 automatische Unit-Tests (aus den Quelltexten gezählt), Build und Lint sowie 76 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
 - **Die Regeln wirken erst, wenn du sie in der Firebase-Konsole veröffentlichst**, und der erste Zugangscode sowie deine Admin-Rolle werden einmalig von Hand angelegt: `docs/FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8. Bis dahin ist die Datenbank komplett gesperrt.
 
 ## 2. Wichtigste Entscheidungen (Kurzfassung, Details im Plan)
@@ -63,6 +64,16 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Neu im Code:** `data/planned/*` (Modelle, `PlannedValidator`, `PurchasePlanner`, `PlannedCalculator`, Repository), `ui/planned/*`, `AppError.CONFLICT`, gemeinsame Funktion `bookingCreateData` und Sammlungsnamen in `FinanceRepository.kt`, `AppContainer.plannedExpenseRepository`.
 - **Abgenommen:** Gerätetest G5-01 bis G5-12 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4c). Hinweis (gilt weiter bei jeder Regeländerung): **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jeder Zugriff auf `plannedExpenses` mit „Dafür fehlt dir die Berechtigung" fehl. Alte App vor der Installation deinstallieren. Dashboard-Zähler für offene Anschaffungen folgen in Phase 11.
 
+## 3d. Phase 6 – Dateiablage und Belege (30.09.2026, Details: Plan, Phase 6 und Entscheidungen 24 bis 29)
+- **Umgesetzt (Commit `5956f25`, Version 09):** Dateien gestückelt in Firestore (Option F). `files/{fileId}` (Name, Typ, Größe, Stückzahl, `createdAt/By`) und `files/{fileId}/chunks/{0..9}` (Feld `data`); Stücke zu 900 KiB (921.600 Byte), höchstens 10 Stücke, höchstens 8 MiB, nur JPEG und PDF. Beleg an Ausgaben: Feld `receipt` = `{fileId, name, contentType, sizeBytes}` (nicht `path`). Regeln + Tests R-09.
+- **Eine Transaktion für Buchung und Datei:** `FirestoreFinanceRepository.create/update/delete` schreiben Buchung und Datei in **einer** `runTransaction` (`FileStore.stageUpload/stageDelete`). Jede Datei gehört zu genau einer Buchung (Regeln: `!exists` vor, `getAfter` nach dem Schreiben, `newReceiptOk`). **Ersetzen** = zwei Schritte: neue Datei + Buchung, danach `deleteQuietly` der alten (scheitert nur dieser Teil, bleibt eine unsichtbare Datei). Die alte Datei wird **in der Transaktion** gelesen (`tx.get`), nicht aus dem Bildschirmzustand.
+- **Bilder/PDF:** `AndroidFileReader` (`OpenDocument`, keine Berechtigung): Bilder mit `inSampleSize` dekodiert, EXIF gedreht, höchstens 1800 px, weißer Grund, JPEG 80 %, Quelle bis 30 MB; PDF unverändert bis 8 MiB. PDF wird über FileProvider (`${applicationId}.fileprovider`, Cache-Ordner `receipts/`) in einer externen App geöffnet. Grenzen an einer Stelle: `FileLimits`; Zeitlimit für Dateivorgänge 120 s.
+- **Fallstrick Regelabfragen:** Je Transaktion höchstens 20. Stück = 1 Zugriff (`isUser`), Metadaten = 3, Buchung mit Beleg = 3 → rund 16 bei 10 Stücken, ohne Zwischenspeicherung der Regelauswertung gerechnet. Zahlen lassen sich in Regelpfade nicht einsetzen: Stück-IDs kommen aus Listenkonstanten, indiziert mit `chunkCount - 1`. Nur das letzte Stück wird geprüft (`existsAfter`); mittlere Stücke prüft die App beim Zusammensetzen (`FILE_CORRUPT`).
+- **Annahmen des Entwicklers (nicht ausdrücklich beschlossen):** Einnahme-Umwandlung entfernt den Beleg; PDF extern statt in der App; keine Kamera in Phase 6 (kommt mit Phase 9); kein Zoom; Dateiname wird bei Bildern `.jpg`.
+- **Von mir nicht prüfbar (Gerätetest G6-01 bis G6-14, [`TESTFAELLE.md`](TESTFAELLE.md), 2.4d):** Bild/PDF auswählen, Verkleinerung und Drehung, PDF öffnen, Dauer im Mobilfunk, **gemessene Fotogröße** (das Formular zeigt sie; bitte melden), 10-Stücke-Transaktion gegen die **echte** Datenbank (Emulator: bestanden). Hinweis: **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jedes Speichern eines Belegs fehl. Alte App vor der Installation deinstallieren; unten in den Einstellungen steht „Version 09“.
+- **Neu im Code:** `data/files/*` (siehe Plan, Phase 6), `ui/finance/ReceiptScreen.kt` und `ReceiptViewModel.kt`, Abschnitt „Beleg“ in `BookingFormScreen`/`BookingFormViewModel`, `Booking.receipt`, `ReceiptChange`, `AppError.FILE_CORRUPT`, `AppContainer.fileStore/localFileReader/receiptCache`, `ReceiptRoute` in `ui/navigation/`, Manifest und `res/xml/file_paths.xml`.
+- **Vorschläge (nicht umgesetzt):** Büroklammer-Symbol in der Buchungsliste, Zoom im Bildschirm „Beleg“, Kamera-Aufnahme im Formular (mit Phase 9).
+
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
   `curl https://api.github.com/repos/Hagi089/Obelix/check-runs/<JOB-ID>/annotations` (Job-ID über `/actions/runs/<RUN-ID>/jobs`). Die Rohlogs sind nicht erreichbar.
@@ -75,6 +86,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Regel-Tests:** Bei Schreibtests muss `createdBy` der angemeldeten uid entsprechen, sonst schlägt der Test aus dem falschen Grund fehl.
 - **Android:** kein `readNBytes` (erst Android 13), `import` ist ein weiches Schlüsselwort (Methode `importBookings`).
 - **Transaktionen mit mehreren Dokumenten (Phase 5):** In Firestore-Transaktionen erst lesen (`tx.get`), dann schreiben. Regeln mit `existsAfter`/`getAfter` prüfen den Zustand **nach** dem gesamten Schreibvorgang; so verknüpfen sie Planung und Buchung. Die Regel-Tests bilden die Schreibform der App nach (gleiche Felder wie `bookingCreateData` und `PlannedExpenseRepository`); ändert sich eine Schreibform in der App, muss der Test mitgezogen werden. Eine in der Transaktion geworfene `AppException` kommt direkt oder als Ursache an; `ErrorMapper.classify` behandelt beides.
+- **Dateien in Firestore (Phase 6):** Firestore-Dokument höchstens 1 MiB, Anfrage höchstens 10 MiB, Transaktion bis 270 s (60 s Leerlauf); die App-Standardgrenze von 20 s ist für Dateien zu kurz (`FileLimits.TIMEOUT_MS` = 120 s). Der Emulator-Test R-09b schreibt die größte Datei mit Buchung in einer Transaktion; ob die echte Datenbank dasselbe Regelbudget ansetzt, prüft G6-06. Ein Test, der mehrere Firestore-Instanzen in einer Transaktion nutzt, schlägt fehl – der Regel-Test benutzt dafür eine einzige `adminDb`.
 - **`google-services.json`** liegt (vom Benutzer hochgeladen) im öffentlichen Repository unter `app/`. Kein Geheimnis im Firebase-Sinn, aber jeder kann damit Konten anlegen; die Daten schützen die Regeln (Phase 3).
 - Versionen (geprüft 30.09.2026): AGP 9.3.3, Gradle 9.5.1, Kotlin 2.4.10, Compose BOM 2026.09.00, Navigation 2.10.2, Lifecycle 2.11.0, Firebase BoM 34.19.0, `compileSdk 37`, `targetSdk 36`, `minSdk 26`. Bei AGP 9 wird das Kotlin-Plugin **nicht** mehr separat angewendet.
 
@@ -87,6 +99,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 15b | „Verantwortung" aus der Excel | ✅ erledigt: an den Kommentar angehängt |
 | 15c | Nullbeträge der Excel (25 Zeilen) | ✅ erledigt: nicht importiert, in der Vorschau aufgelistet |
 | – | API-Schlüssel in der Google Cloud Console auf die App beschränken | braucht festen Debug-Schlüssel (SHA-1); CI erzeugt bei jedem Bau einen neuen. Vorschlag: festen Debug-Schlüssel für CI anlegen (nur zum Testen, keine Geheimnisse) |
+| 6a | Belege: Büroklammer in der Liste, Zoom, Kamera-Aufnahme (Kamera mit Phase 9) | Büroklammer und Zoom auf Wunsch; Kamera in Phase 9 |
+| 6b | Fotogröße nach der Kompression (Annahme 200–500 KB) | mit G6-02 messen und im Plan nachtragen |
 | – | `targetSdk` von 36 auf 37 | später |
 | – | ViewModel-Tests (Coroutine-Testbibliothek einbinden), jetzt auch für Einrichtung und Einstellungen | bei Gelegenheit |
 | – | Mutationsprüfung der Regel-Tests (Regel bewusst schwächen, Test muss rot werden) | bei Gelegenheit |
@@ -102,7 +116,7 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den neuen Chat (Phase 6)
+## 7. Prompt für den neuen Chat (Phase 7)
 
 Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Trage die Testergebnisse ein, bevor du ihn sendest.
 
@@ -113,9 +127,9 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 5 abgenommen. Phase 5 (Geplante Ausgaben) ist Version 08 (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün); Gerätetest G5-01 bis G5-12 bestanden; die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht. Gerätetest GU-01 bis GU-10 (Version 07): bestanden.
+Stand: Phase 1 bis 5 abgenommen. Phase 6 (Dateiablage und Belege) ist Version 09 (Commit 5956f25; Bau, Lint, 96 Unit-Tests, 76 Regel-Tests grün). Gerätetest G6-01 bis G6-14: <HIER ERGEBNIS EINTRAGEN: bestanden / Abweichungen>. Gemessene Fotogröße nach der Kompression: <KB eintragen>. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht: <ja/nein>.
 
-Auftrag jetzt: PHASE 6 – Dateiablage und Belege gemäß Plan (Dateien gestückelt in Firestore, Option F). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
+Auftrag jetzt: PHASE 7 – Kalender gemäß Plan (Überschneidung vor dem Speichern eindeutig anzeigen, Speichern nur nach ausdrücklicher Bestätigung). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
-Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 09, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
+Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 10, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
 ```
