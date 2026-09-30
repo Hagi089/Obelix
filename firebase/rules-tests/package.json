@@ -1,0 +1,13 @@
+{
+  "name": "obelix-rules-tests",
+  "private": true,
+  "type": "module",
+  "description": "Automatische Tests der Firestore-Sicherheitsregeln (Firebase Emulator)",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "^3.0.2",
+    "firebase": "^11.0.0"
+  }
+}

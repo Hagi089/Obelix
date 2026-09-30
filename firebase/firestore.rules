@@ -1,0 +1,232 @@
+rules_version = '2';
+
+// OBELIX – Firestore-Sicherheitsregeln (Phase 3: Haushalt, Rollen, Zugangscodes).
+// Konzept und Begründung: docs/PROJEKTPLAN.md, Abschnitt „Security-Konzept".
+//
+// Grundsatz: Alles, was hier nicht ausdrücklich erlaubt ist, ist verboten.
+// Fachliche Sammlungen (Finanzen, Kalender, …) werden erst mit ihrer Phase freigegeben,
+// jeweils über isMember(hid) bzw. isAdmin(hid).
+//
+// Zugriff auf Haushaltsdaten hängt ausschließlich am Mitglieds-Dokument
+// households/{hid}/members/{uid}, nie am Zeiger users/{uid}.
+//
+// Zugangscodes (Dokumente invites/{code}):
+//  - JOIN: der gemeinsame Haushalts-Code. Gültig ist nur der Code, der in households/{hid}.inviteCode steht.
+//  - CREATE_HOUSEHOLD: Start-Code für den ersten Haushalt. Wird von Hand in der Firebase-Konsole angelegt
+//    und ist einmalig (usedBy) und optional befristet (expiresAt).
+// Beitritt und Haushalt-Anlegen sind je ein einziger Batch; die Regeln prüfen ihn mit get()/getAfter().
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ---------- Pfade ----------
+    function householdPath(hid) {
+      return /databases/$(database)/documents/households/$(hid);
+    }
+    function memberPath(hid, memberUid) {
+      return /databases/$(database)/documents/households/$(hid)/members/$(memberUid);
+    }
+    function userPath(userUid) {
+      return /databases/$(database)/documents/users/$(userUid);
+    }
+    function invitePath(code) {
+      return /databases/$(database)/documents/invites/$(code);
+    }
+
+    // ---------- Rollen ----------
+    function signedIn() {
+      return request.auth != null;
+    }
+    function isMember(hid) {
+      return signedIn() && exists(memberPath(hid, request.auth.uid));
+    }
+    function isAdmin(hid) {
+      return isMember(hid) && get(memberPath(hid, request.auth.uid)).data.role == 'ADMIN';
+    }
+
+    // ---------- Validierung ----------
+    function validText(value, maxLength) {
+      return value is string && value.size() >= 1 && value.size() <= maxLength;
+    }
+    function validPartyId(value) {
+      return value is string && value in ['A', 'B'];
+    }
+    function validParties(parties) {
+      return parties is list && parties.size() == 2
+        && parties[0] is map && parties[0].keys().hasOnly(['id', 'name'])
+        && parties[0].id == 'A' && validText(parties[0].name, 40)
+        && parties[1] is map && parties[1].keys().hasOnly(['id', 'name'])
+        && parties[1].id == 'B' && validText(parties[1].name, 40);
+    }
+    function notExpired(inviteData) {
+      return !('expiresAt' in inviteData) || inviteData.expiresAt > request.time;
+    }
+    // Code-Format: 16 Zeichen ohne I, L, O, 0, 1 (siehe Plan).
+    function validCodeFormat(code) {
+      return code.size() == 16 && code.matches('[A-HJKMNP-Z2-9]+');
+    }
+
+    // ---------- Beitritt (gemeinsamer Code) ----------
+    function joinAllowed(hid) {
+      let code = request.resource.data.inviteCode;
+      return request.resource.data.role == 'MEMBER'
+        && get(invitePath(code)).data.type == 'JOIN'
+        && get(invitePath(code)).data.householdId == hid
+        && get(householdPath(hid)).data.inviteCode == code;
+    }
+
+    // ---------- Haushalt anlegen (Start-Code) ----------
+    function createHouseholdAllowed(hid) {
+      let code = request.resource.data.inviteCode;
+      return request.resource.data.role == 'ADMIN'
+        && !exists(householdPath(hid))
+        && getAfter(householdPath(hid)).data.createdBy == request.auth.uid
+        && get(invitePath(code)).data.type == 'CREATE_HOUSEHOLD'
+        && get(invitePath(code)).data.get('usedBy', null) == null
+        && notExpired(get(invitePath(code)).data)
+        && getAfter(invitePath(code)).data.usedBy == request.auth.uid
+        && getAfter(invitePath(code)).data.householdId == hid;
+    }
+
+    // =====================================================================
+    // users/{uid}: Zeiger Benutzer -> Haushalt. Nur der Benutzer selbst.
+    // =====================================================================
+    match /users/{userId} {
+      allow get: if signedIn() && userId == request.auth.uid;
+
+      // Nur zusammen mit dem Mitglieds-Dokument im selben Batch; nur einmal anlegbar.
+      allow create: if signedIn() && userId == request.auth.uid
+        && request.resource.data.keys().hasOnly(['householdId', 'displayName', 'createdAt'])
+        && request.resource.data.keys().hasAll(['householdId', 'displayName', 'createdAt'])
+        && request.resource.data.householdId is string
+        && validText(request.resource.data.displayName, 50)
+        && request.resource.data.createdAt == request.time
+        && existsAfter(memberPath(request.resource.data.householdId, userId));
+
+      // Nur der Anzeigename; der Haushalt ist danach unveränderlich.
+      allow update: if signedIn() && userId == request.auth.uid
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+        && validText(request.resource.data.displayName, 50);
+
+      // Nur ein ADMIN des Haushalts, und nie den eigenen Zeiger.
+      allow delete: if signedIn() && userId != request.auth.uid
+        && isAdmin(resource.data.householdId);
+    }
+
+    // =====================================================================
+    // households/{hid}
+    // =====================================================================
+    match /households/{hid} {
+      allow get: if isMember(hid);
+
+      // Anlegen nur zusammen mit ADMIN-Mitglied und Start-Code (Prüfung im Mitglieds-Dokument).
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['name', 'parties', 'inviteCode', 'createdBy', 'createdAt'])
+        && request.resource.data.keys().hasAll(['name', 'parties', 'inviteCode', 'createdBy', 'createdAt'])
+        && validText(request.resource.data.name, 60)
+        && validParties(request.resource.data.parties)
+        && request.resource.data.inviteCode == null
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && getAfter(memberPath(hid, request.auth.uid)).data.role == 'ADMIN';
+
+      // ADMIN: Name und aktiven Code ändern. Ein neuer Code muss im selben Batch als
+      // invites-Dokument dieses Haushalts angelegt werden. Die Parteien sind unveränderlich.
+      allow update: if isAdmin(hid)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'inviteCode'])
+        && validText(request.resource.data.name, 60)
+        && (
+          request.resource.data.inviteCode == resource.data.inviteCode
+          || request.resource.data.inviteCode == null
+          || (
+            request.resource.data.inviteCode is string
+            && getAfter(invitePath(request.resource.data.inviteCode)).data.type == 'JOIN'
+            && getAfter(invitePath(request.resource.data.inviteCode)).data.householdId == hid
+          )
+        );
+
+      allow delete: if false;
+
+      // -------------------------------------------------------------
+      // households/{hid}/members/{memberId}
+      // -------------------------------------------------------------
+      match /members/{memberId} {
+        allow get, list: if isMember(hid);
+
+        // Beitritt (MEMBER, gemeinsamer Code) oder Gründung (ADMIN, Start-Code).
+        // Rolle und Haushalt kommen zwingend aus dem Code; das users-Dokument muss im Batch mitkommen.
+        allow create: if signedIn() && memberId == request.auth.uid
+          && request.resource.data.keys().hasOnly(['role', 'partyId', 'displayName', 'inviteCode', 'createdAt'])
+          && request.resource.data.keys().hasAll(['role', 'partyId', 'displayName', 'inviteCode', 'createdAt'])
+          && validPartyId(request.resource.data.partyId)
+          && validText(request.resource.data.displayName, 50)
+          && request.resource.data.inviteCode is string
+          && request.resource.data.createdAt == request.time
+          && getAfter(userPath(request.auth.uid)).data.householdId == hid
+          && (joinAllowed(hid) || createHouseholdAllowed(hid));
+
+        // ADMIN: Rolle und Partei ändern. Die eigene Rolle darf ein ADMIN nicht ändern
+        // (dadurch bleibt immer mindestens ein ADMIN). Jedes Mitglied: nur den eigenen Anzeigenamen.
+        allow update: if signedIn() && (
+          (
+            isAdmin(hid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role', 'partyId'])
+            && request.resource.data.role in ['ADMIN', 'MEMBER']
+            && validPartyId(request.resource.data.partyId)
+            && (memberId != request.auth.uid || request.resource.data.role == resource.data.role)
+          )
+          || (
+            memberId == request.auth.uid
+            && isMember(hid)
+            && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
+            && validText(request.resource.data.displayName, 50)
+          )
+        );
+
+        // ADMIN entfernt Mitglieder, nie sich selbst.
+        allow delete: if isAdmin(hid) && memberId != request.auth.uid;
+      }
+    }
+
+    // =====================================================================
+    // invites/{code}
+    // =====================================================================
+    match /invites/{code} {
+      // Nötig, damit ein Beitretender aus dem Code den Haushalt findet. Auflisten ist verboten.
+      // Der Code ist nicht erratbar (rund 79 Bit); im Dokument steht nur die zufällige Haushalts-ID.
+      allow get: if signedIn();
+
+      allow list: if signedIn() && isAdmin(resource.data.householdId);
+
+      // ADMIN legt einen neuen gemeinsamen Code an (gleichzeitig wird households.inviteCode gesetzt).
+      allow create: if signedIn()
+        && request.resource.data.keys().hasOnly(['type', 'householdId', 'parties', 'createdBy', 'createdAt'])
+        && request.resource.data.keys().hasAll(['type', 'householdId', 'parties', 'createdBy', 'createdAt'])
+        && request.resource.data.type == 'JOIN'
+        && request.resource.data.householdId is string
+        && isAdmin(request.resource.data.householdId)
+        && validCodeFormat(code)
+        && request.resource.data.parties == get(householdPath(request.resource.data.householdId)).data.parties
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && getAfter(householdPath(request.resource.data.householdId)).data.inviteCode == code;
+
+      // Einlösen des Start-Codes: einmalig, nicht abgelaufen, nur zusammen mit dem neuen Haushalt.
+      allow update: if signedIn()
+        && resource.data.type == 'CREATE_HOUSEHOLD'
+        && resource.data.get('usedBy', null) == null
+        && notExpired(resource.data)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['usedBy', 'usedAt', 'householdId'])
+        && request.resource.data.usedBy == request.auth.uid
+        && request.resource.data.usedAt == request.time
+        && request.resource.data.householdId is string
+        && !exists(householdPath(request.resource.data.householdId))
+        && getAfter(householdPath(request.resource.data.householdId)).data.createdBy == request.auth.uid;
+
+      // ADMIN widerruft/entfernt gemeinsame Codes seines Haushalts.
+      allow delete: if signedIn()
+        && resource.data.type == 'JOIN'
+        && isAdmin(resource.data.householdId);
+    }
+  }
+}
