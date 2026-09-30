@@ -12,7 +12,7 @@ if (file("google-services.json").exists()) {
 
 android {
     namespace = "de.hagi089.obelix"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         applicationId = "de.hagi089.obelix"
