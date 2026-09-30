@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "577604454731",
+    "project_id": "obelix-daf7c",
+    "storage_bucket": "obelix-daf7c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:577604454731:android:e1637156124441282dc0ce",
+        "android_client_info": {
+          "package_name": "de.hagi089.obelix"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBlc2zLtgVAxC8GIHsxM98z-KZK0IadzCw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
