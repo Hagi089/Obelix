@@ -23,7 +23,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 
 ## 2. Wichtigste Entscheidungen (Kurzfassung, Details im Plan)
 - **Kosten:** alles kostenlos, Firebase Spark, keine Kreditkarte, kein Blaze. Firebase Storage entfällt; **Dateien liegen in Stücken (~900 KB) in Firestore**, höchstens 8 MB je Datei.
-- **Haushalt:** Beitritt per **Einladungscode**. Rollen `ADMIN` und `MEMBER`. **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog).
+- **Haushalt und Registrierung:** Registrierung nur mit **Zugangscode**, den der Benutzer manuell verteilt (serverseitig per Firestore-Regeln, kein Cloud Function). Modell offen: Einmalcode mit Ablauf (empfohlen) oder ein gemeinsamer Code. Rollen `ADMIN` und `MEMBER`. **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog).
 - **Zahler:** „Bezahlt von" = **Partei** (zwei Parteien im Haushalt). Abrechnungsstatus je Ausgabe: `OPEN`, `SETTLED`, `SPONSORED`.
 - **Beträge:** Cent, genau 2 Nachkommastellen. Excel-Import (325 Buchungen) einmalig, Fehler der Excel werden unverändert übernommen und vom Benutzer korrigiert.
 - **Kalender:** Überschneidungen sind speicherbar, müssen aber **vor dem Speichern** eindeutig angezeigt werden.
@@ -33,7 +33,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 
 ## 3. Was Phase 3 leisten soll (Ziel laut Plan)
 1. Erster Benutzer legt einen Haushalt an und ist ADMIN.
-2. Weitere Personen treten mit einem vom ADMIN erzeugten Einladungscode bei (MEMBER).
+2. Weitere Personen können sich nur mit einem gültigen Zugangscode registrieren und treten so bei (MEMBER).
 3. Zwei Parteien im Haushalt; jedes Mitglied gehört zu einer Partei.
 4. ADMIN verwaltet Mitglieder und Rollen (Einstellungen).
 5. **Firestore-Sicherheitsregeln** (`firebase/firestore.rules`) mit Tests im Firebase-Emulator: kein Zugriff ohne Anmeldung; nur Mitglieder sehen Daten ihres Haushalts; Selbst-Beförderung zum ADMIN verboten; **Haushalt A sieht nie Daten von Haushalt B**.
@@ -88,7 +88,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 Stand: Phase 1 (Projektbasis) und Phase 2 (Authentifizierung) sind umgesetzt und von mir auf dem Gerät erfolgreich getestet (G1-01 bis G2-09). Der Bau in GitHub Actions ist grün. Das Firebase-Projekt (obelix-daf7c, Spark-Tarif, Firestore in europe-west3, Produktionsmodus, E-Mail/Passwort aktiv) steht und ist in der App verbunden.
 
 Auftrag jetzt: PHASE 3 – Haushalt, Rollen und Firestore-Sicherheitsregeln. Setze sie gemäß Plan um:
-- Erster Benutzer legt einen Haushalt an und ist ADMIN. Weitere Personen treten per Einladungscode bei (MEMBER), den der ADMIN erzeugt.
+- Erster Benutzer legt einen Haushalt an und ist ADMIN. Registrierung ist nur mit Zugangscode möglich (Pflichtfeld im Registrierungsformular, serverseitig durch Regeln erzwungen); der erste ADMIN startet über ein manuell in der Firebase-Konsole angelegtes Code-Dokument, weitere Codes erzeugt der ADMIN in der App. Beitretende sind MEMBER. Zu klären: Einmalcode mit Ablauf (empfohlen) oder ein gemeinsamer Code.
 - Haushalt hat zwei Parteien; jedes Mitglied gehört zu einer Partei.
 - ADMIN verwaltet Mitglieder und Rollen in den Einstellungen.
 - Sicherheitsregeln (firebase/firestore.rules) mit automatisierten Tests: ohne Anmeldung kein Zugriff, nur Mitglieder sehen Daten ihres Haushalts, keine Selbst-Beförderung zum ADMIN, Haushalt A sieht nie Daten von Haushalt B. Bitte ohne Cloud Functions und ohne Blaze-Tarif.
@@ -102,5 +102,5 @@ Wichtige Rahmenbedingungen:
 - Die Excel-Datei ist nicht im Repository (privat). Für die Finanzphase (Phase 4) hänge ich sie dann erneut an. Die Analyse steht im Projekt-Dokument "Excel-Analyse".
 - Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage.
 
-Fange bitte mit einem kurzen Plan für Phase 3 an (Datenmodell, Regeln, Einladungscode-Ablauf ohne Cloud Functions, Testansatz) und stelle mir nur Fragen, die wirklich meine Entscheidung brauchen. Der Einladungscode-Ablauf ist die sicherheitskritischste Stelle: entwirf ihn zuerst und zeige mir das Ergebnis, bevor du ihn umsetzt.
+Fange bitte mit einem kurzen Plan für Phase 3 an (Datenmodell, Regeln, Zugangscode-Registrierung ohne Cloud Functions, Testansatz) und stelle mir nur Fragen, die wirklich meine Entscheidung brauchen. Der Zugangscode-Ablauf (Registrierung nur mit Code) ist die sicherheitskritischste Stelle: entwirf ihn zuerst und zeige mir das Ergebnis, bevor du ihn umsetzt.
 ```

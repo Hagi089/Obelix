@@ -22,7 +22,7 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 14 | Reihenfolge | **Finanzen werden vorgezogen** (direkt nach Haushalt/Rollen), geplante Ausgaben direkt danach. |
 | 1 | Dateispeicher | **Option F:** Dateien gestückelt in Firestore (Spark, ohne Kreditkarte). Bestätigt am 30.09.2026. |
 | 2 | Firebase-Projekt | Legt der Benutzer selbst an, Region **Deutschland (`europe-west3`, Frankfurt)**. Anleitung: `docs/FIREBASE-EINRICHTUNG.md`. |
-| 2b | Haushaltsbeitritt | **Einladungscode.** |
+| 2b | Haushaltsbeitritt und Registrierung | **Zugangscode (Einladungscode) ist Pflicht für die Registrierung.** Ohne gültigen Code kann sich niemand registrieren bzw. erhält keinen Datenzugriff. Der Code wird manuell an Personen verteilt. Durchsetzung serverseitig über Firestore-Regeln (Phase 3). Modell (Einmalcode mit Ablauf vs. ein gemeinsamer Code) wartet auf Bestätigung des Benutzers. |
 | 4 | Löschen | **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog). Entsprechend werden die Rules gebaut. |
 | 5 | Kalender-Überschneidung | Speichern bleibt **erlaubt**, aber die Überschneidung muss **vor dem Speichern** geprüft und **eindeutig angezeigt** werden (welcher Eintrag, welche Person, welcher Zeitraum); Speichern nur nach ausdrücklicher Bestätigung. |
 | 7 | Navigation | **Sechs Bereiche** (Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente), Einstellungen über Zahnrad. |
@@ -390,7 +390,7 @@ Alle Regeln liegen versioniert in `firebase/`. Sie werden **zusammen mit dem jew
 - Validierung in den Regeln: Pflichtfelder, Typen, `amountCents > 0`, `endDate ≥ startDate`, `photos.size() ≤ 3`, Enum-Werte.
 - `members`: Rolle nur durch ADMIN änderbar; niemand kann sich selbst zum ADMIN machen; der letzte ADMIN darf nicht entfernt werden (im Client abgesichert, Grenze der Rules dokumentieren).
 - `users/{uid}`: nur der Benutzer selbst.
-- Haushalt anlegen bzw. beitreten: siehe Entscheidung 2b – **ohne Cloud Functions** (die brauchen Blaze) muss der Beitritt allein über Rules abgesichert werden, z. B. über Einladungscode-Dokument. Das ist die technisch heikelste Stelle der Security und wird in Phase 3 zuerst entworfen und getestet.
+- Haushalt anlegen bzw. beitreten und Registrierung nur mit Zugangscode: siehe Entscheidung 2b – **ohne Cloud Functions** (die brauchen Blaze) muss der Beitritt allein über Rules abgesichert werden: Code-Dokument `invites/{code}`, das nur per Direktzugriff (get, kein list) lesbar ist; die Mitgliedschaft (`members/{uid}`) darf nur angelegt werden, wenn der Code existiert, unbenutzt und nicht abgelaufen ist. Die App legt das Auth-Konto an, löst den Code ein und löscht das Konto wieder, falls der Code ungültig ist. Der erste ADMIN wird über ein manuell in der Firebase-Konsole angelegtes Code-Dokument gestartet. Ein reines Auth-Konto ohne Mitgliedschaft hat keinerlei Datenzugriff. Das ist die technisch heikelste Stelle der Security und wird in Phase 3 zuerst entworfen und getestet.
 
 **Storage-Regeln (falls Storage):** Zugriff nur, wenn `request.auth != null` und Mitglied des Haushalts im Pfad (Storage-Regeln können Firestore per `firestore.exists()` abfragen); Größen- und `contentType`-Limits.
 
@@ -448,12 +448,12 @@ Abschlusskriterium: Freigabe durch dich.
 - **Umgesetzt (Commit `432e9fa`, CI grün):** `AuthRepository` (Firebase Auth), Formulare Anmelden / Konto erstellen / Passwort zurücksetzen, Sitzungsstatus (ohne Anmeldung sieht man nur die Anmeldeseiten), Einstellungen mit Konto und „Abmelden", Fehlermeldungen auf Deutsch. Passwort mindestens 8 Zeichen. Bei „falsche E-Mail" und „falsches Passwort" erscheint dieselbe Meldung (verrät nicht, ob es ein Konto gibt); beim Passwort-Reset erscheint immer dieselbe neutrale Bestätigung.
 - **Automatisch geprüft (Unit-Tests in CI):** Validierung von E-Mail, Passwort und Name; Abbildung der Firebase-Fehler auf Meldungen (falsche Zugangsdaten, Konto existiert, zu schwaches Passwort, zu viele Versuche, kein Netz).
 - **Gerätetest:** Alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) hat der Benutzer am 30.09.2026 erfolgreich getestet, siehe [`TESTFAELLE.md`](TESTFAELLE.md).
-- **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Die Datenrechte kommen in Phase 3 über die Firestore-Regeln (Zugriff nur mit Einladungscode). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
+- **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Der **Zugangscode für die Registrierung ist der Kern von Phase 3** (Zugriff nur mit Code, serverseitig über Firestore-Regeln). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
 ### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis)
 - **Ziel:** Haushalt anlegen/beitreten, Rollen, Rules mit Emulator-Tests.
 - **Dateien:** `HouseholdRepository`, Modelle `User/Household/Member`, `firestore.rules`, `rules-tests/*`, Einstellungen/Benutzerverwaltung.
-- **Umsetzung:** Erster Benutzer legt Haushalt an und ist ADMIN; Beitrittsmechanismus (Entscheidung 2b); ADMIN verwaltet Mitglieder/Rollen.
+- **Umsetzung:** Registrierungsformular mit Pflichtfeld „Zugangscode“; Code-Prüfung serverseitig (Regeln, Entscheidung 2b); erster Benutzer legt mit Start-Code den Haushalt an und ist ADMIN; ADMIN erzeugt weitere Codes in der App und verwaltet Mitglieder/Rollen. Rest-Risiko: fremde Personen können ein leeres Auth-Konto anlegen (kein Datenzugriff); Gegenmaßnahme optional per API-Key-Einschränkung.
 - **Tests:** MEMBER vs. ADMIN, **zwei-Haushalte-Isolation**, Selbst-Beförderung verboten.
 - **Abschluss:** Rules-Tests grün; manuelle Prüfung gegen das echte Projekt mit zwei Testkonten.
 
@@ -554,7 +554,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 *Frühere Empfehlung (durch F ersetzt):* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Option E ist die ernsthafte Alternative, wenn dir große PDFs wichtig sind und du kein Blaze willst – dann aber bitte bewusst, weil sie das Fundament ändert. Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
 *Unsicherheit:* Die tatsächliche Kompressionsgröße der Fotos (Annahme 200–500 KB) und die tatsächliche Nutzung des Kontingents sind nicht gemessen – das prüfe ich in Phase 6, bevor Fotos und Dokumente folgen. (Die Spark-Kontingente selbst wurden am 30.09.2026 in der Firebase-Doku geprüft.)
 
-**2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei (Vorschlag: Einladungscode, den der ADMIN erzeugt)?
+**2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei? **Entschieden:** nur mit manuell verteiltem Zugangscode (2b). Offen: Einmalcode pro Person mit Ablauf (empfohlen) oder ein gemeinsamer Code.
 
 **3. Karte** – Vorschlag: OpenStreetMap-Kacheln mit einer Open-Source-Bibliothek (Kandidaten: osmdroid, MapLibre; Pflegezustand und Lizenz prüfe ich in Phase 9). Google Maps SDK **nicht** ohne Prüfung, da API-Schlüssel und Abrechnungskonto nötig sein können (nicht verifiziert). Die OSM-Nutzungsrichtlinien für Kacheln erlauben nur moderate Nutzung – für eine kleine Familien-App vermutlich unkritisch, das ist nicht geprüft.
 
@@ -607,7 +607,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 ## 13. Verbesserungsvorschläge (nicht umgesetzt, nur zur Entscheidung)
 
-- Einladung per Code statt offener Registrierung (siehe 2b) – ist Teil des Plans, sobald bestätigt.
+- Einladung per Code statt offener Registrierung (siehe 2b) – vom Benutzer gefordert, Teil von Phase 3.
 - Kategorien-Verwaltung durch ADMIN in der App, falls sich die Excel-Struktur ändert.
 - Export der Finanzdaten als CSV (nicht in den Anforderungen; nur bei Bedarf).
 
@@ -620,5 +620,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
 | 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
-| 3 Haushalt, Rollen, Regeln | nächste Phase | | |
+| 3 Haushalt, Rollen, Regeln, Zugangscode-Registrierung | nächste Phase | | Zugangscode-Modell wartet auf Bestätigung |
 | 4–12 | nicht begonnen | | |
