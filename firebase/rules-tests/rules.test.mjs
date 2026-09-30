@@ -170,8 +170,8 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
   it('R-03c noch nicht freigegebene Sammlungen sind für alle gesperrt', async () => {
     for (const uid of ['admin', 'member']) {
       const db = as(uid);
-      await assertFails(setDoc(doc(db, 'transactions/t1'), { amountCents: 100 }));
-      await assertFails(getDoc(doc(db, 'transactions/t1')));
+      await assertFails(setDoc(doc(db, 'calendarEntries/t1'), { amountCents: 100 }));
+      await assertFails(getDoc(doc(db, 'calendarEntries/t1')));
       await assertFails(setDoc(doc(db, 'irgendwas/x'), { a: 1 }));
       await assertFails(setDoc(doc(db, 'config/other'), { a: 1 }));
     }
@@ -259,6 +259,232 @@ describe('R-05 Zugangscode verwalten (nur ADMIN)', () => {
     const db = as('admin');
     await assertSucceeds(runTransaction(db, async (tx) => {
       tx.set(doc(db, 'config/access'), newCode('admin', CODE_NEW));
+    }));
+  });
+});
+
+// =====================================================================
+// Phase 4: Finanzen. Testdaten nur für den Emulator.
+
+/** Was die App beim Anlegen einer Buchung schreibt (FinanceRepository.create). */
+function booking(uid, o = {}) {
+  return {
+    type: 'EXPENSE',
+    date: '2026-09-30',
+    amountCents: 4700,
+    categoryId: 'cat1',
+    paidByUid: uid,
+    settlement: 'OPEN',
+    description: 'Diesel',
+    comment: '',
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+/** Entfernt Felder (undefined ist in Firestore-Dokumenten nicht erlaubt). */
+function without(obj, ...keys) {
+  const copy = { ...obj };
+  for (const key of keys) delete copy[key];
+  return copy;
+}
+
+async function seedBooking(id = 'b1', o = {}) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `transactions/${id}`), {
+      ...without(booking('member'), 'createdAt'),
+      createdAt: Timestamp.now(),
+      ...o,
+    });
+  });
+}
+
+function edit(uid, o = {}) {
+  return { description: 'Geändert', updatedAt: serverTimestamp(), updatedBy: uid, ...o };
+}
+
+describe('R-06 Buchungen (transactions)', () => {
+  it('R-06a MEMBER und ADMIN dürfen Ausgaben und Einnahmen anlegen und lesen', async () => {
+    for (const uid of ['member', 'admin']) {
+      const db = as(uid);
+      await assertSucceeds(setDoc(doc(db, `transactions/e-${uid}`), booking(uid)));
+      await assertSucceeds(setDoc(doc(db, `transactions/i-${uid}`), booking(uid, { type: 'INCOME', settlement: 'SETTLED' })));
+      await assertSucceeds(getDoc(doc(db, `transactions/e-${uid}`)));
+    }
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'transactions')));
+    if (list.size !== 4) throw new Error(`erwartet 4 Buchungen, gefunden ${list.size}`);
+  });
+
+  it('R-06b ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedBooking();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'transactions/b1')));
+      await assertFails(getDocs(collection(db, 'transactions')));
+      await assertFails(setDoc(doc(db, 'transactions/neu'), booking('nobody')));
+      await assertFails(updateDoc(doc(db, 'transactions/b1'), edit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'transactions/b1')));
+    }
+  });
+
+  it('R-06c Betrag: muss eine ganze Zahl in Cent größer als 0 und höchstens 1.000.000,00 sein', async () => {
+    const db = as('member');
+    for (const amountCents of [0, -100, 12.5, '47', null, 100000001]) {
+      await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { amountCents })));
+    }
+    await assertSucceeds(setDoc(doc(db, 'transactions/ok1'), booking('member', { amountCents: 1 })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/ok2'), booking('member', { amountCents: 100000000 })));
+  });
+
+  it('R-06d Pflichtfelder, Formate und Werte werden geprüft', async () => {
+    const db = as('member');
+    const bad = [
+      without(booking('member'), 'description'),
+      without(booking('member'), 'comment'),
+      without(booking('member'), 'categoryId'),
+      without(booking('member'), 'date'),
+      booking('member', { description: '' }),
+      booking('member', { description: 'x'.repeat(201) }),
+      booking('member', { comment: 'x'.repeat(501) }),
+      booking('member', { date: '30.09.2026' }),
+      booking('member', { date: '2026-9-30' }),
+      booking('member', { type: 'TRANSFER' }),
+      booking('member', { settlement: 'PAID' }),
+      booking('member', { categoryId: '' }),
+      booking('member', { extra: 1 }),
+      booking('member', { importRef: 'x'.repeat(21) }),
+    ];
+    for (const data of bad) await assertFails(setDoc(doc(db, 'transactions/x'), data));
+    await assertSucceeds(setDoc(doc(db, 'transactions/ok'), booking('member', { comment: 'x'.repeat(500), description: 'y'.repeat(200) })));
+  });
+
+  it('R-06e Ausgabe braucht einen Zahler; Einnahme nicht; Einnahmen sind immer SETTLED', async () => {
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'transactions/x'), without(booking('member'), 'paidByUid')));
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { paidByUid: '' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/i1'), without(booking('member', { type: 'INCOME', settlement: 'SETTLED' }), 'paidByUid')));
+    await assertSucceeds(setDoc(doc(db, 'transactions/i2'), booking('admin', { type: 'INCOME', settlement: 'SETTLED' })));
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { type: 'INCOME', settlement: 'OPEN' })));
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { type: 'INCOME', settlement: 'SPONSORED' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/s1'), booking('admin', { settlement: 'SPONSORED' })));
+    await assertSucceeds(setDoc(doc(db, 'transactions/s2'), booking('admin', { settlement: 'SETTLED' })));
+  });
+
+  it('R-06f Audit: createdBy und createdAt lassen sich nicht fälschen', async () => {
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { createdBy: 'admin' })));
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { createdAt: Timestamp.fromDate(new Date('2020-01-01')) })));
+    await assertFails(setDoc(doc(db, 'transactions/x'), booking('member', { updatedBy: 'member', updatedAt: serverTimestamp() })));
+  });
+
+  it('R-06g Ändern: jeder Benutzer darf, updatedBy/updatedAt Pflicht, Herkunft unveränderlich', async () => {
+    await seedBooking('b1', { importRef: 'xl-15' });
+    // Fremde Buchung ändern (jeder darf), vollständig geprüft wie in der App (Feldaktualisierung).
+    await assertSucceeds(updateDoc(doc(as('admin'), 'transactions/b1'), edit('admin', { amountCents: 5000 })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', {
+      settlement: 'SETTLED', settledAt: serverTimestamp(), settledBy: 'member',
+    })));
+    // Pflicht: updatedBy = eigene uid, updatedAt = Serverzeit
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), { description: 'ohne Audit' }));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('admin')));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { updatedAt: Timestamp.now() })));
+    // Unveränderlich: createdBy, createdAt, importRef
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { createdAt: serverTimestamp() })));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { importRef: 'xl-99' })));
+    // Ungültige Werte auch beim Ändern verboten
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { amountCents: 0 })));
+    await assertFails(updateDoc(doc(as('member'), 'transactions/b1'), edit('member', { type: 'INCOME' })));
+  });
+
+  it('R-06h Löschen: jeder freigeschaltete Benutzer', async () => {
+    await seedBooking('b1');
+    await seedBooking('b2');
+    await assertSucceeds(deleteDoc(doc(as('member'), 'transactions/b1')));
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'transactions/b2')));
+  });
+
+  it('R-06i Anlegen und Ändern als Transaktion (wie in der App)', async () => {
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'transactions/t1'), booking('member'));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.update(doc(db, 'transactions/t1'), edit('member', { settlement: 'SETTLED', settledAt: serverTimestamp(), settledBy: 'member' }));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.delete(doc(db, 'transactions/t1'));
+    }));
+  });
+
+  it('R-06j Import: 100 Buchungen mit festen IDs in einer Transaktion (Chunk-Größe der App)', async () => {
+    const db = as('admin');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      for (let i = 0; i < 100; i++) {
+        tx.set(doc(db, `transactions/xl-${i}`), booking('member', { importRef: `xl-${i}`, settlement: 'SETTLED' }));
+      }
+    }));
+    // Wiederholter Import darf bestehende Buchungen nicht überschreiben
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'transactions/xl-0'), booking('member', { importRef: 'xl-0', amountCents: 1 }));
+    }));
+  });
+});
+
+// =====================================================================
+describe('R-07 Kategorien (categories)', () => {
+  const category = (uid, o = {}) => ({ name: 'Inventar', active: true, createdAt: serverTimestamp(), createdBy: uid, ...o });
+  const rename = (uid, o = {}) => ({ name: 'Neu', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+
+  async function seedCategory(id = 'c1') {
+    await testEnv.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), `categories/${id}`), {
+        name: 'Inventar', active: true, createdAt: Timestamp.now(), createdBy: 'admin',
+      });
+    });
+  }
+
+  it('R-07a jeder freigeschaltete Benutzer liest und legt Kategorien an', async () => {
+    await assertSucceeds(setDoc(doc(as('member'), 'categories/c1'), category('member')));
+    await assertSucceeds(setDoc(doc(as('admin'), 'categories/c2'), category('admin', { name: 'Elektro' })));
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'categories')));
+    if (list.size !== 2) throw new Error(`erwartet 2 Kategorien, gefunden ${list.size}`);
+    await assertFails(getDocs(collection(anon(), 'categories')));
+    await assertFails(getDocs(collection(as('nobody'), 'categories')));
+    await assertFails(setDoc(doc(as('nobody'), 'categories/c3'), category('nobody')));
+  });
+
+  it('R-07b Validierung beim Anlegen (Name, active, Audit, Zusatzfelder)', async () => {
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { name: '' })));
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { name: 'x'.repeat(51) })));
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { active: false })));
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { createdBy: 'admin' })));
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { type: 'EXPENSE' })));
+    await assertFails(setDoc(doc(db, 'categories/x'), category('member', { createdAt: Timestamp.now() })));
+  });
+
+  it('R-07c umbenennen und (de)aktivieren nur ADMIN', async () => {
+    await seedCategory();
+    await assertFails(updateDoc(doc(as('member'), 'categories/c1'), rename('member')));
+    await assertFails(updateDoc(doc(as('member'), 'categories/c1'), rename('member', { active: false })));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'categories/c1'), rename('admin')));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'categories/c1'), rename('admin', { name: 'Neu', active: false })));
+    await assertFails(updateDoc(doc(as('admin'), 'categories/c1'), rename('admin', { name: '' })));
+    await assertFails(updateDoc(doc(as('admin'), 'categories/c1'), rename('admin', { createdBy: 'member' })));
+    await assertFails(updateDoc(doc(as('admin'), 'categories/c1'), { name: 'ohne Audit' }));
+  });
+
+  it('R-07d Kategorien werden nie gelöscht', async () => {
+    await seedCategory();
+    await assertFails(deleteDoc(doc(as('admin'), 'categories/c1')));
+    await assertFails(deleteDoc(doc(as('member'), 'categories/c1')));
+  });
+
+  it('R-07e Import legt mehrere Kategorien in einer Transaktion an', async () => {
+    const db = as('admin');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      for (let i = 0; i < 12; i++) tx.set(doc(db, `categories/imp-${i}`), category('admin', { name: `K${i}` }));
     }));
   });
 });

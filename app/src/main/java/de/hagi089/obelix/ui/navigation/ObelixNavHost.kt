@@ -9,10 +9,18 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.toRoute
 import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.ui.screens.SectionNotAvailableScreen
 import de.hagi089.obelix.ui.screens.SettingsScreen
+import de.hagi089.obelix.ui.finance.BookingFormScreen
+import de.hagi089.obelix.ui.finance.BookingFormViewModel
+import de.hagi089.obelix.ui.finance.FinanceScreen
+import de.hagi089.obelix.ui.finance.FinanceViewModel
+import de.hagi089.obelix.ui.importing.ImportScreen
+import de.hagi089.obelix.ui.importing.ImportViewModel
+import de.hagi089.obelix.ui.settings.CategoriesViewModel
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
 @Composable
@@ -31,7 +39,45 @@ fun ObelixNavHost(
         // Die Bereiche werden in den jeweiligen Phasen umgesetzt (docs/PROJEKTPLAN.md).
         composable<DashboardRoute> { SectionNotAvailableScreen() }
         composable<CalendarRoute> { SectionNotAvailableScreen() }
-        composable<FinanceRoute> { SectionNotAvailableScreen() }
+        composable<FinanceRoute> {
+            val financeViewModel: FinanceViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { FinanceViewModel(container.financeRepository, container.categoryRepository, container.userRepository) }
+                },
+            )
+            FinanceScreen(
+                viewModel = financeViewModel,
+                onAdd = { navController.navigate(BookingFormRoute()) },
+                onOpen = { id -> navController.navigate(BookingFormRoute(bookingId = id)) },
+            )
+        }
+        composable<BookingFormRoute> { entry ->
+            val route = entry.toRoute<BookingFormRoute>()
+            val formViewModel: BookingFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        BookingFormViewModel(
+                            bookingId = route.bookingId,
+                            uid = user.uid,
+                            finance = container.financeRepository,
+                            categories = container.categoryRepository,
+                            users = container.userRepository,
+                        )
+                    }
+                },
+            )
+            BookingFormScreen(viewModel = formViewModel, onFinished = { navController.navigateUp() })
+        }
+        composable<ImportRoute> {
+            val importViewModel: ImportViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        ImportViewModel(user.uid, container.financeRepository, container.categoryRepository, container.userRepository)
+                    }
+                },
+            )
+            ImportScreen(viewModel = importViewModel)
+        }
         composable<TasksRoute> { SectionNotAvailableScreen() }
         composable<CampsitesRoute> { SectionNotAvailableScreen() }
         composable<DocumentsRoute> { SectionNotAvailableScreen() }
@@ -39,7 +85,16 @@ fun ObelixNavHost(
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory { initializer { SettingsViewModel(container.userRepository, user.uid) } },
             )
-            SettingsScreen(viewModel = settingsViewModel, user = user, onSignOut = onSignOut)
+            val categoriesViewModel: CategoriesViewModel = viewModel(
+                factory = viewModelFactory { initializer { CategoriesViewModel(container.categoryRepository, user.uid) } },
+            )
+            SettingsScreen(
+                viewModel = settingsViewModel,
+                categoriesViewModel = categoriesViewModel,
+                user = user,
+                onSignOut = onSignOut,
+                onOpenImport = { navController.navigate(ImportRoute) },
+            )
         }
     }
 }

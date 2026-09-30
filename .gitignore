@@ -26,3 +26,6 @@ node_modules/
 firebase-debug.log
 firestore-debug.log
 ui-debug.log
+
+# Import-Dateien enthalten private Buchungsdaten – niemals committen
+obelix-import*.json

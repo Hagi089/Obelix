@@ -1,11 +1,11 @@
 rules_version = '2';
 
-// OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode).
+// OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
 // Grundsatz: Alles, was hier nicht ausdrücklich erlaubt ist, ist verboten.
-// Fachliche Sammlungen (Finanzen, Kalender, …) werden erst mit ihrer Phase freigegeben,
+// Fachliche Sammlungen (Finanzen ab Phase 4, Kalender, …) werden erst mit ihrer Phase freigegeben,
 // jeweils über isUser() bzw. isAdmin().
 //
 // Zugriff hat nur, wer ein Benutzerdokument users/{uid} besitzt. Dieses lässt sich nur mit dem
@@ -36,6 +36,32 @@ service cloud.firestore {
     // 16 Zeichen ohne I, L, O, 0, 1 (passt zu AccessCode.kt).
     function validCodeFormat(code) {
       return code is string && code.size() == 16 && code.matches('[A-HJKMNP-Z2-9]+');
+    }
+    // Kalendertag als yyyy-MM-dd (Format; ob der Tag existiert, prüft die App).
+    function validDay(value) {
+      return value is string && value.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$');
+    }
+    // Buchung (Einnahme oder Ausgabe). Betrag in Cent, größer als 0, höchstens 1.000.000,00 EUR
+    // (passt zu Money.MAX_CENTS). Einnahmen sind immer SETTLED, Ausgaben brauchen einen Zahler.
+    function validBooking(d) {
+      return d.keys().hasOnly(['type', 'date', 'amountCents', 'categoryId', 'paidByUid', 'settlement',
+                               'description', 'comment', 'settledAt', 'settledBy', 'importRef',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['type', 'date', 'amountCents', 'categoryId', 'settlement', 'description',
+                            'comment', 'createdAt', 'createdBy'])
+        && d.type in ['INCOME', 'EXPENSE']
+        && validDay(d.date)
+        && d.amountCents is int && d.amountCents > 0 && d.amountCents <= 100000000
+        && validText(d.categoryId, 100)
+        && validText(d.description, 200)
+        && d.comment is string && d.comment.size() <= 500
+        && d.settlement in ['OPEN', 'SETTLED', 'SPONSORED']
+        && (d.type == 'EXPENSE' || d.settlement == 'SETTLED')
+        && (!('paidByUid' in d) || validText(d.paidByUid, 128))
+        && (d.type == 'INCOME' || 'paidByUid' in d)
+        && (!('importRef' in d) || validText(d.importRef, 20))
+        && (!('settledBy' in d) || validText(d.settledBy, 128))
+        && (!('settledAt' in d) || d.settledAt is timestamp);
     }
 
     // =====================================================================
@@ -84,6 +110,57 @@ service cloud.firestore {
         && request.resource.data.keys().hasOnly(['code', 'updatedBy', 'updatedAt'])
         && request.resource.data.keys().hasAll(['code', 'updatedBy', 'updatedAt'])
         && (request.resource.data.code == null || validCodeFormat(request.resource.data.code))
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if false;
+    }
+
+    // =====================================================================
+    // transactions/{id}: Einnahmen und Ausgaben (Phase 4). Alle Benutzer dürfen lesen, anlegen,
+    // ändern und löschen (Entscheidung 4). Audit-Felder werden erzwungen.
+    // =====================================================================
+    match /transactions/{bookingId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validBooking(request.resource.data)
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isUser()
+        && validBooking(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.get('importRef', null) == resource.data.get('importRef', null)
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // categories/{id}: Finanzkategorien. Anlegen darf jeder Benutzer, umbenennen und
+    // (de)aktivieren nur ADMIN. Kategorien werden nie gelöscht, damit alte Buchungen gültig bleiben.
+    // =====================================================================
+    match /categories/{categoryId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && request.resource.data.keys().hasOnly(['name', 'active', 'createdAt', 'createdBy'])
+        && request.resource.data.keys().hasAll(['name', 'active', 'createdAt', 'createdBy'])
+        && validText(request.resource.data.name, 50)
+        && request.resource.data.active == true
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['name', 'active', 'updatedAt', 'updatedBy'])
+        && validText(request.resource.data.name, 50)
+        && request.resource.data.active is bool
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time;
 

@@ -21,6 +21,12 @@ import kotlinx.serialization.Serializable
 @Serializable data object DocumentsRoute
 @Serializable data object SettingsRoute
 
+/** Formular für eine Buchung; bookingId = null legt eine neue an. */
+@Serializable data class BookingFormRoute(val bookingId: String? = null)
+
+/** Einmaliger Excel-Import (nur ADMIN, aus den Einstellungen). */
+@Serializable data object ImportRoute
+
 /** Die sechs Hauptbereiche der Navigationsleiste (Entscheidung vom 30.09.2026). */
 enum class TopLevelDestination(
     val route: Any,

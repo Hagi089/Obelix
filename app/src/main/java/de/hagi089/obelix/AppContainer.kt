@@ -11,6 +11,10 @@ import de.hagi089.obelix.core.network.NetworkMonitor
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
+import de.hagi089.obelix.data.finance.CategoryRepository
+import de.hagi089.obelix.data.finance.FinanceRepository
+import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
+import de.hagi089.obelix.data.finance.FirestoreFinanceRepository
 import de.hagi089.obelix.data.user.FirestoreUserRepository
 import de.hagi089.obelix.data.user.UserRepository
 
@@ -31,6 +35,10 @@ class AppContainer(context: Context) {
     val authRepository: AuthRepository by lazy { FirebaseAuthRepository(auth) }
 
     val userRepository: UserRepository by lazy { FirestoreUserRepository(firestore) }
+
+    val financeRepository: FinanceRepository by lazy { FirestoreFinanceRepository(firestore) }
+
+    val categoryRepository: CategoryRepository by lazy { FirestoreCategoryRepository(firestore) }
 
     /** Übergabe von Code und Name zwischen Registrierungsformular und Codebildschirm. */
     val registrationHandoff = RegistrationHandoff()

@@ -49,6 +49,7 @@ import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.data.user.AccessCode
 import de.hagi089.obelix.data.user.Role
 import de.hagi089.obelix.data.user.UserProfile
+import de.hagi089.obelix.ui.settings.CategoriesViewModel
 import de.hagi089.obelix.ui.settings.SettingsUiState
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
@@ -61,8 +62,10 @@ private sealed interface Confirm {
 @Composable
 fun SettingsScreen(
     viewModel: SettingsViewModel,
+    categoriesViewModel: CategoriesViewModel,
     user: AuthUser,
     onSignOut: () -> Unit,
+    onOpenImport: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -107,7 +110,17 @@ fun SettingsScreen(
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         }
+        if (profile != null) {
+            HorizontalDivider()
+            CategorySection(viewModel = categoriesViewModel, isAdmin = profile.isAdmin)
+        }
         if (profile?.isAdmin == true) {
+            HorizontalDivider()
+            SectionTitle(R.string.settings_import)
+            Text(text = stringResource(R.string.settings_import_intro), style = MaterialTheme.typography.bodyMedium)
+            OutlinedButton(onClick = onOpenImport, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(stringResource(R.string.settings_import_open))
+            }
             HorizontalDivider()
             CodeSection(state, onRenew = { confirm = Confirm.RenewCode })
             HorizontalDivider()

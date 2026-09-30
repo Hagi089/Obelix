@@ -102,4 +102,104 @@
     <string name="settings_user_remove_title">Benutzer entfernen?</string>
     <string name="settings_user_remove_text">%1$s verliert den Zugriff auf die Daten. Mit dem aktuellen Zugangscode kann die Person sich erneut freischalten.</string>
     <string name="settings_user_remove_confirm">Entfernen</string>
+
+    <!-- Allgemein (Phase 4) -->
+    <string name="action_save">Speichern</string>
+    <string name="action_delete">Löschen</string>
+    <string name="action_ok">OK</string>
+    <string name="select_please">Bitte wählen</string>
+    <string name="select_none">Keine Angabe</string>
+
+    <!-- Finanzen -->
+    <string name="finance_add">Buchung hinzufügen</string>
+    <string name="finance_form_title">Buchung</string>
+    <string name="finance_balance">Kontostand</string>
+    <string name="finance_open_claims">Offene Forderungen</string>
+    <string name="finance_no_open_claims">Keine offenen Forderungen.</string>
+    <string name="finance_paid_out_by">Ausgelegt von %1$s</string>
+    <string name="finance_after_settlement">Kontostand nach Begleichung</string>
+    <string name="finance_income_total">Einnahmen gesamt</string>
+    <string name="finance_expense_total">Ausgaben gesamt (auch gesponsert)</string>
+    <string name="finance_sponsored_part">davon gesponsert</string>
+    <string name="finance_empty">Noch keine Buchungen vorhanden.</string>
+    <string name="finance_empty_filtered">Keine Buchungen für diesen Filter.</string>
+    <string name="finance_unknown_user">Unbekannter Benutzer</string>
+    <string name="finance_unknown_category">Unbekannte Kategorie</string>
+    <string name="finance_delete_title">Buchung löschen?</string>
+    <string name="finance_delete_text">Die Buchung wird endgültig gelöscht und der Kontostand ändert sich entsprechend.</string>
+    <string name="filter_all">Alle</string>
+    <string name="filter_income">Einnahmen</string>
+    <string name="filter_expense">Ausgaben</string>
+    <string name="filter_payer">Zahler</string>
+    <string name="filter_year">Jahr</string>
+
+    <!-- Buchungsformular -->
+    <string name="type_expense">Ausgabe</string>
+    <string name="type_income">Einnahme</string>
+    <string name="field_date">Datum</string>
+    <string name="field_amount">Betrag</string>
+    <string name="field_category">Kategorie</string>
+    <string name="field_paid_by">Bezahlt von</string>
+    <string name="field_paid_in_by">Eingezahlt von</string>
+    <string name="field_settlement">Abrechnung</string>
+    <string name="field_description">Beschreibung</string>
+    <string name="field_comment">Kommentar (optional)</string>
+    <string name="settlement_open">Offen</string>
+    <string name="settlement_settled">Beglichen</string>
+    <string name="settlement_sponsored">Gesponsert</string>
+    <string name="settlement_help">Offen: privat ausgelegt, noch nicht erstattet. Beglichen: über das gemeinsame Konto bezahlt oder erstattet, zählt zum Kontostand. Gesponsert: wird nicht erstattet, zählt nicht zum Kontostand.</string>
+    <string name="action_mark_settled">Als erstattet markieren</string>
+
+    <!-- Validierung Finanzen -->
+    <string name="error_amount_required">Bitte gib einen Betrag ein.</string>
+    <string name="error_amount_invalid">Bitte gib einen gültigen Betrag mit höchstens zwei Nachkommastellen ein, z. B. 12,50.</string>
+    <string name="error_amount_positive">Der Betrag muss größer als 0 sein.</string>
+    <string name="error_amount_too_high">Der Betrag darf höchstens 1.000.000,00 € betragen.</string>
+    <string name="error_date_required">Bitte wähle ein gültiges Datum.</string>
+    <string name="error_category_required">Bitte wähle eine Kategorie.</string>
+    <string name="error_payer_required">Bitte wähle, wer bezahlt hat.</string>
+    <string name="error_description_required">Bitte gib eine Beschreibung ein.</string>
+    <string name="error_description_too_long">Die Beschreibung darf höchstens 200 Zeichen lang sein.</string>
+    <string name="error_comment_too_long">Der Kommentar darf höchstens 500 Zeichen lang sein.</string>
+    <string name="error_category_name_required">Bitte gib einen Namen ein.</string>
+    <string name="error_category_name_too_long">Der Name darf höchstens 50 Zeichen lang sein.</string>
+    <string name="error_category_name_exists">Diese Kategorie gibt es schon.</string>
+
+    <!-- Einstellungen: Kategorien und Import -->
+    <string name="settings_categories">Kategorien</string>
+    <string name="settings_categories_intro">Kategorien für Einnahmen und Ausgaben. Neue Kategorien kannst du selbst anlegen.</string>
+    <string name="settings_categories_intro_admin">Kategorien für Einnahmen und Ausgaben. Als Admin kannst du sie umbenennen und deaktivieren. Deaktivierte Kategorien bleiben bei alten Buchungen erhalten.</string>
+    <string name="settings_category_add">Kategorie hinzufügen</string>
+    <string name="settings_category_rename">Umbenennen</string>
+    <string name="settings_category_deactivate">Deaktivieren</string>
+    <string name="settings_category_activate">Aktivieren</string>
+    <string name="settings_category_inactive">Deaktiviert</string>
+    <string name="settings_category_actions">Aktionen für %1$s</string>
+    <string name="field_category_name">Name der Kategorie</string>
+    <string name="settings_import">Excel-Import</string>
+    <string name="settings_import_intro">Einmaliger Import der bisherigen Buchungen aus der Excel-Datei.</string>
+    <string name="settings_import_open">Import öffnen</string>
+
+    <!-- Excel-Import -->
+    <string name="import_title">Excel-Import</string>
+    <string name="import_intro">Wähle die Importdatei (obelix-import.json). Vor dem Schreiben werden die Kennzahlen aus der Datei mit den erwarteten Kontrollwerten verglichen. Es wird nichts geschrieben, bevor du bestätigst.</string>
+    <string name="import_choose_file">Importdatei wählen</string>
+    <string name="import_check_title">Prüfung der Datei</string>
+    <string name="import_count">Buchungen</string>
+    <string name="import_open_claim">Offene Forderung %1$s</string>
+    <string name="import_check_ok">Alle Kontrollwerte stimmen mit den erwarteten Werten überein.</string>
+    <string name="import_check_failed">Die Kontrollwerte stimmen nicht überein. Der Import ist gesperrt:</string>
+    <string name="import_skipped_title">Nicht importiert (%1$d)</string>
+    <string name="import_skipped_line">Zeile %1$d: %2$s (%3$s)</string>
+    <string name="import_map_title">Zahler zuordnen</string>
+    <string name="import_map_intro">Ordne jeden Zahler der Excel einem Benutzerkonto zu. Beide Personen müssen dafür bereits registriert sein.</string>
+    <string name="import_payer_label">Excel-Zahler „%1$s“</string>
+    <string name="import_map_distinct">Jeder Zahler braucht ein anderes Konto.</string>
+    <string name="import_already">%1$d von %2$d Buchungen sind bereits importiert und werden übersprungen.</string>
+    <string name="import_progress">%1$d von %2$d Buchungen geschrieben</string>
+    <string name="import_done">Import abgeschlossen: %1$d Buchungen geschrieben. Kontrolliere die Zahlen im Bereich Finanzen.</string>
+    <string name="import_start">%1$d Buchungen importieren</string>
+    <string name="import_confirm_title">Import starten?</string>
+    <string name="import_confirm_text">Es werden %1$d Buchungen angelegt. Bereits importierte Buchungen werden nicht doppelt angelegt.</string>
+    <string name="import_confirm_button">Importieren</string>
 </resources>

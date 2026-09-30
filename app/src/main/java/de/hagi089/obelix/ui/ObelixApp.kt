@@ -42,6 +42,8 @@ import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.ui.auth.AuthScreens
 import de.hagi089.obelix.ui.auth.AuthViewModel
 import de.hagi089.obelix.ui.components.OfflineBanner
+import de.hagi089.obelix.ui.navigation.BookingFormRoute
+import de.hagi089.obelix.ui.navigation.ImportRoute
 import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.SettingsRoute
 import de.hagi089.obelix.ui.navigation.TopLevelDestination
@@ -121,8 +123,9 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
-    val isSettings = currentDestination?.hasRoute(SettingsRoute::class) == true
     val currentTopLevel = TopLevelDestination.entries.firstOrNull { currentDestination.isIn(it) }
+    // Alles außer den sechs Hauptbereichen (Einstellungen, Buchungsformular, Import) ist ein Unterbildschirm mit Zurück-Pfeil.
+    val isSubScreen = currentDestination != null && currentTopLevel == null
 
     NavigationSuiteScaffold(
         navigationSuiteItems = {
@@ -141,14 +144,16 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                 TopAppBar(
                     title = {
                         val titleRes = when {
-                            isSettings -> R.string.nav_settings
+                            currentDestination?.hasRoute(SettingsRoute::class) == true -> R.string.nav_settings
+                            currentDestination?.hasRoute(BookingFormRoute::class) == true -> R.string.finance_form_title
+                            currentDestination?.hasRoute(ImportRoute::class) == true -> R.string.import_title
                             currentTopLevel != null -> currentTopLevel.labelRes
                             else -> R.string.app_name
                         }
                         Text(stringResource(titleRes))
                     },
                     navigationIcon = {
-                        if (isSettings) {
+                        if (isSubScreen) {
                             IconButton(onClick = { navController.navigateUp() }) {
                                 Icon(
                                     imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -158,7 +163,7 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                         }
                     },
                     actions = {
-                        if (!isSettings) {
+                        if (!isSubScreen) {
                             IconButton(onClick = { navController.navigate(SettingsRoute) { launchSingleTop = true } }) {
                                 Icon(
                                     imageVector = Icons.Filled.Settings,
