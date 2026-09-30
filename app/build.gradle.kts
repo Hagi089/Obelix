@@ -18,8 +18,8 @@ android {
         applicationId = "de.hagi089.obelix"
         minSdk = 26
         targetSdk = 36
-        versionCode = 11
-        versionName = "11" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
+        versionCode = 12
+        versionName = "12" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
     }
 
     buildTypes {

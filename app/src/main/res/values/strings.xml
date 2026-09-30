@@ -291,8 +291,8 @@
         <item>Sa</item>
         <item>So</item>
     </string-array>
-    <string name="calendar_legend">Belegte Tage sind farbig markiert. Tage, an denen mehrere Einträge zusammentreffen, sind rot.</string>
-    <string name="calendar_day_status_occupied">belegt</string>
+    <string name="calendar_legend">Belegte Tage haben die Farbe der Person. Tage, an denen mehrere Einträge zusammentreffen, sind rot.</string>
+    <string name="calendar_day_status_occupied">belegt von %1$s</string>
     <string name="calendar_day_status_overlap">mehrfach belegt</string>
     <string name="calendar_day_status_today">heute</string>
     <string name="calendar_current_title">Aktuell in Nutzung</string>

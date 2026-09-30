@@ -38,6 +38,19 @@ object CalendarMonth {
         return counts
     }
 
+    /** Einträge je Tag des Monats (nur belegte Tage), nach Start, Ende und Kennung sortiert. */
+    fun occupants(entries: List<CalendarEntry>, month: YearMonth): Map<LocalDate, List<CalendarEntry>> {
+        val sorted = CalendarOverlap.find(entries, month.atDay(1).toString(), month.atEndOfMonth().toString())
+        val result = HashMap<LocalDate, List<CalendarEntry>>()
+        for (day in 1..month.lengthOfMonth()) {
+            val date = month.atDay(day)
+            val iso = date.toString()
+            val onDay = sorted.filter { it.startDate <= iso && iso <= it.endDate }
+            if (onDay.isNotEmpty()) result[date] = onDay
+        }
+        return result
+    }
+
     /** Einträge, die am [today] laufen („aktuelle Nutzung“). */
     fun current(entries: List<CalendarEntry>, today: LocalDate): List<CalendarEntry> =
         CalendarOverlap.find(entries, today.toString(), today.toString())

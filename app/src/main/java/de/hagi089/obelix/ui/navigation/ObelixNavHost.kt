@@ -54,7 +54,7 @@ fun ObelixNavHost(
         composable<DashboardRoute> { SectionNotAvailableScreen() }
         composable<CalendarRoute> {
             val calendarViewModel: CalendarViewModel = viewModel(
-                factory = viewModelFactory { initializer { CalendarViewModel(container.calendarRepository) } },
+                factory = viewModelFactory { initializer { CalendarViewModel(container.calendarRepository, container.userRepository) } },
             )
             CalendarScreen(
                 viewModel = calendarViewModel,

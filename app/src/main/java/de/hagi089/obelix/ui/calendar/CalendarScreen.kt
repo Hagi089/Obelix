@@ -4,6 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -13,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
@@ -57,6 +60,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.hagi089.obelix.R
 import de.hagi089.obelix.data.calendar.CalendarEntry
 import de.hagi089.obelix.data.calendar.CalendarMonth
+import de.hagi089.obelix.data.calendar.PersonColor
 import de.hagi089.obelix.ui.finance.formatDay
 import java.time.LocalDate
 import java.time.YearMonth
@@ -76,6 +80,20 @@ internal fun periodText(startDate: String, endDate: String): String =
 @Composable
 internal fun entryDetails(entry: CalendarEntry): String =
     listOfNotNull(periodText(entry.startDate, entry.endDate), entry.destination).joinToString(" · ")
+
+private fun PersonColor.asColor(): Color = Color(background)
+
+/** Farbiger Punkt vor einem Namen; die Farbe ist nur Zusatz, der Name steht immer daneben. */
+@Composable
+private fun ColorDot(color: PersonColor?, modifier: Modifier = Modifier) {
+    Box(
+        modifier = modifier
+            .size(12.dp)
+            .clip(CircleShape)
+            .background(color?.asColor() ?: Color.Transparent)
+            .clearAndSetSemantics { },
+    )
+}
 
 private fun monthTitle(month: YearMonth): String =
     month.month.getDisplayName(TextStyle.FULL, Locale.GERMAN) + " " + month.year
@@ -122,7 +140,9 @@ fun CalendarScreen(
 @Composable
 private fun CalendarContent(state: CalendarState, viewModel: CalendarViewModel, onOpen: (String) -> Unit) {
     val monthEntries = remember(state.entries, state.month) { state.monthEntries }
-    val occupancy = remember(state.entries, state.month) { state.occupancy }
+    val occupants = remember(state.entries, state.month) { state.occupants }
+    val colors = remember(state.entries, state.users) { state.colors }
+    val legend = remember(state.entries, state.users) { state.legend }
     val current = remember(state.entries, state.today) { state.current }
     LazyColumn(
         modifier = Modifier.fillMaxSize(),
@@ -140,10 +160,11 @@ private fun CalendarContent(state: CalendarState, viewModel: CalendarViewModel, 
                 )
             }
         }
-        if (current.isNotEmpty()) item { CurrentUsageCard(current, onOpen) }
+        if (current.isNotEmpty()) item { CurrentUsageCard(current, colors, onOpen) }
         item { MonthHeader(state = state, viewModel = viewModel) }
-        item { MonthGrid(state = state, occupancy = occupancy) }
+        item { MonthGrid(state = state, occupants = occupants, colors = colors) }
         item { Text(text = stringResource(R.string.calendar_legend), style = MaterialTheme.typography.bodySmall) }
+        if (legend.isNotEmpty()) item { PersonLegend(legend) }
         item {
             Text(
                 text = stringResource(R.string.calendar_list_title, monthTitle(state.month)),
@@ -162,7 +183,7 @@ private fun CalendarContent(state: CalendarState, viewModel: CalendarViewModel, 
             }
         } else {
             items(monthEntries, key = { it.id }) { entry ->
-                EntryRow(entry = entry, onClick = { onOpen(entry.id) })
+                EntryRow(entry = entry, color = colors[entry.personUid], onClick = { onOpen(entry.id) })
                 HorizontalDivider()
             }
         }
@@ -170,7 +191,7 @@ private fun CalendarContent(state: CalendarState, viewModel: CalendarViewModel, 
 }
 
 @Composable
-private fun CurrentUsageCard(current: List<CalendarEntry>, onOpen: (String) -> Unit) {
+private fun CurrentUsageCard(current: List<CalendarEntry>, colors: Map<String, PersonColor>, onOpen: (String) -> Unit) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
@@ -182,11 +203,34 @@ private fun CurrentUsageCard(current: List<CalendarEntry>, onOpen: (String) -> U
                 modifier = Modifier.semantics { heading() },
             )
             current.forEach { entry ->
-                Text(
-                    text = stringResource(R.string.calendar_row_person_period, entry.personName, entryDetails(entry)),
-                    style = MaterialTheme.typography.bodyLarge,
+                Row(
                     modifier = Modifier.fillMaxWidth().clickable { onOpen(entry.id) }.heightIn(min = 48.dp).padding(vertical = 12.dp),
-                )
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    ColorDot(colors[entry.personUid])
+                    Text(
+                        text = stringResource(R.string.calendar_row_person_period, entry.personName, entryDetails(entry)),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PersonLegend(legend: List<Pair<String, PersonColor>>) {
+    FlowRow(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        legend.forEach { (name, color) ->
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                ColorDot(color)
+                Text(text = name, style = MaterialTheme.typography.bodySmall)
             }
         }
     }
@@ -212,11 +256,11 @@ private fun MonthHeader(state: CalendarState, viewModel: CalendarViewModel) {
 }
 
 @Composable
-private fun MonthGrid(state: CalendarState, occupancy: Map<LocalDate, Int>) {
+private fun MonthGrid(state: CalendarState, occupants: Map<LocalDate, List<CalendarEntry>>, colors: Map<String, PersonColor>) {
     val weeks = remember(state.month) { CalendarMonth.weeks(state.month) }
     val weekdays = stringArrayResource(R.array.calendar_weekdays_short)
-    val occupiedText = stringResource(R.string.calendar_day_status_occupied)
     val overlapText = stringResource(R.string.calendar_day_status_overlap)
+    val occupiedFormat = stringResource(R.string.calendar_day_status_occupied)
     val todayText = stringResource(R.string.calendar_day_status_today)
     Column(modifier = Modifier.fillMaxWidth()) {
         Row(modifier = Modifier.fillMaxWidth()) {
@@ -232,12 +276,14 @@ private fun MonthGrid(state: CalendarState, occupancy: Map<LocalDate, Int>) {
         weeks.forEach { week ->
             Row(modifier = Modifier.fillMaxWidth()) {
                 week.forEach { date ->
-                    val count = date?.let { occupancy[it] } ?: 0
+                    val onDay = date?.let { occupants[it] }.orEmpty()
                     DayCell(
                         date = date,
-                        count = count,
+                        count = onDay.size,
+                        personName = onDay.singleOrNull()?.personName,
+                        personColor = onDay.singleOrNull()?.let { colors[it.personUid] },
                         isToday = date == state.today,
-                        occupiedText = occupiedText,
+                        occupiedFormat = occupiedFormat,
                         overlapText = overlapText,
                         todayText = todayText,
                         modifier = Modifier.weight(1f).aspectRatio(1f),
@@ -252,8 +298,10 @@ private fun MonthGrid(state: CalendarState, occupancy: Map<LocalDate, Int>) {
 private fun DayCell(
     date: LocalDate?,
     count: Int,
+    personName: String?,
+    personColor: PersonColor?,
     isToday: Boolean,
-    occupiedText: String,
+    occupiedFormat: String,
     overlapText: String,
     todayText: String,
     modifier: Modifier = Modifier,
@@ -267,6 +315,7 @@ private fun DayCell(
     val foreground: Color
     when {
         count >= 2 -> { background = colors.errorContainer; foreground = colors.onErrorContainer }
+        count == 1 && personColor != null -> { background = personColor.asColor(); foreground = Color(personColor.content) }
         count == 1 -> { background = colors.primaryContainer; foreground = colors.onPrimaryContainer }
         else -> { background = Color.Transparent; foreground = colors.onSurface }
     }
@@ -275,7 +324,7 @@ private fun DayCell(
         formatDay(date.toString()),
         when {
             count >= 2 -> overlapText
-            count == 1 -> occupiedText
+            count == 1 -> occupiedFormat.format(personName.orEmpty())
             else -> null
         },
         if (isToday) todayText else null,
@@ -299,9 +348,10 @@ private fun DayCell(
 }
 
 @Composable
-private fun EntryRow(entry: CalendarEntry, onClick: () -> Unit) {
+private fun EntryRow(entry: CalendarEntry, color: PersonColor?, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
+        leadingContent = { ColorDot(color) },
         headlineContent = { Text(entry.personName) },
         supportingContent = { Text(entryDetails(entry)) },
     )
