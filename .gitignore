@@ -1,0 +1,22 @@
+# Private Projektdaten (Excel, Analysen mit Namen/Beträgen) – niemals committen
+private/
+*.xlsx
+*.xls
+*.xlsm
+
+# Firebase / Secrets
+google-services.json
+*.jks
+*.keystore
+local.properties
+.env
+.env.*
+serviceAccount*.json
+
+# Build / IDE
+.gradle/
+build/
+.idea/
+*.iml
+captures/
+.DS_Store

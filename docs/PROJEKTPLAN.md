@@ -1,6 +1,8 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+Stand: 30.09.2026 (Rev. 2: Excel analysiert, Supabase geprüft) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+
+> Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
 Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des GitHub-Repositorys `Hagi089/Obelix`.
 
@@ -14,7 +16,7 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | Klon | erfolgreich, Meldung „empty repository" |
 | Remote-Refs (`git ls-remote`) | **keine** – kein Branch, kein Commit, keine Tags |
 | Dateien | **keine** (weder Kotlin, Compose, Gradle, Manifest, Ressourcen, Firebase-Konfiguration, Tests, README noch `.gitignore`) |
-| Excel-Datei | **nicht gefunden** – weder im Repository noch im Upload-Bereich der Sitzung (Suche nach `*.xlsx`, `*.xls`, `*.xlsm`) |
+| Excel-Datei | Zunächst nicht vorhanden; am 30.09.2026 nachgereicht (`Einkausliste_WoMo_v2_1.xlsx`), liegt lokal in `private/` (per `.gitignore` vom Commit ausgeschlossen). Analyse: Abschnitt 3 |
 | Dokumentation | Nur das Projektwissen „Anforderungen" (im Claude-Projekt, nicht im Repo) |
 
 **Schlussfolgerung:** Es gibt keinen wiederverwendbaren Code. Das Projekt beginnt bei null. Der Grundsatz „vorhandenen Code erhalten" greift hier nicht, weil nichts vorhanden ist. Es wird also nichts ersetzt oder gelöscht.
@@ -37,7 +39,7 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | Projektbasis | Kotlin, Compose, Material 3, Gradle, Navigation | fehlt | Kein Projekt |
 | Authentifizierung | E-Mail/Passwort, Login, Logout, Passwort zurücksetzen (Firebase Auth) | fehlt | |
 | Benutzer | Mehrere Benutzer, Haushalt (`householdId`), Rollen ADMIN/MEMBER | fehlt | |
-| Finanzen | Einnahmen, Ausgaben, Kategorien, „Bezahlt von", Bestand = Anfangsbestand + Einnahmen − Ausgaben, Belege | fehlt | **Excel fehlt**, Kategorien/Anfangsbestand unbekannt |
+| Finanzen | Einnahmen, Ausgaben, Kategorien, „Bezahlt von", Bestand = Anfangsbestand + Einnahmen − Ausgaben, Belege | fehlt | Excel analysiert; Struktur bekannt (Abschnitt 3); Deutung „Kosten beglichen" muss bestätigt werden |
 | Geplante Ausgaben | Status GEPLANT/GEKAUFT, Umwandlung in echte Ausgabe mit tatsächlichem Betrag | fehlt | |
 | Kalender | Nutzungseinträge, Überschneidungswarnung | fehlt | |
 | Reparaturen | Auffälligkeiten, OFFEN/ERLEDIGT, Filter, Wiedereröffnen | fehlt | |
@@ -54,15 +56,43 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 
 ## 3. Excel-Analyse
 
-**Ergebnis: Die Excel-Datei wurde nicht gefunden und muss vor der Finanzimplementierung bereitgestellt werden.**
+Datei `Einkausliste_WoMo_v2_1.xlsx`, vollständig gelesen (Werte und Formeln), Kennzahlen nachgerechnet. Detailfassung mit Namen und Beträgen: nicht-öffentlich (siehe Kopf). Nichts wurde geschätzt oder korrigiert.
 
-Es wurde nichts analysiert, geschätzt oder erfunden. Daraus folgt für die Planung:
+**Aufbau (3 Blätter)**
+| Blatt | Inhalt |
+|---|---|
+| `Datenerfassung` | Datenbasis: 325 Buchungen (Zeilen 4–328), Zeitraum 01/2016 bis 08/2026, Spalten A–H, **keine Formeln** |
+| `Kontostand` | 5 Kennzahlen-Formeln, eine Pivot-Tabelle, eine „Kosten pro Tag"-Rechnung |
+| `Look` | Werteliste der Kategorien (15 Einträge) |
 
-- Kategorien, Personen, Anfangsbestand, Budgets, Zeiträume und wiederkehrende Kosten sind **unbekannt**.
-- Das Finanz-Datenmodell (Abschnitt 5) ist bewusst generisch gehalten: Kategorien sind Daten in einer Sammlung `categories`, nicht im Code fest verdrahtet. Die Excel-Struktur wird dort später eingetragen.
-- **Phase 4 (Finanzen) startet erst, wenn die Excel-Datei vorliegt und analysiert ist.** Alle anderen Phasen sind davon unabhängig.
-- Pflichtinhalt der späteren Excel-Analyse: Tabellenblätter, Spalten, Formeln, Kategorien, Personen, Anfangsbestand, wiederkehrende Kosten, Zeiträume.
-- Offen: Ob die Excel-Daten in die App **importiert** werden sollen (einmalig) oder die App nur ab jetzt neu erfasst. Das steht nicht in den Anforderungen (Entscheidung 6).
+**Spalten der Datenbasis:** `erledigt` (ja/nein) · `Kategorie` · `Was` · `Verantwortung` (Freitext) · `Preis` (negativ = Ausgabe, positiv = Einzahlung) · `Anschaffungsdatum` · `Bezahlt durch` · `Kosten beglichen`.
+
+**Personen:** Zwei **Parteien** (zwei Paare, vier Personen) besitzen das Wohnmobil gemeinsam. „Bezahlt durch" kennt nur die zwei Parteien, nicht einzelne Personen. „Verantwortung" ist Freitext mit 10 Schreibweisen.
+
+**Kategorien:** 12 in den Daten verwendet: Einzahlung, Inventar, Lfd. Verbrauchsgüter, Reparatur, Elektro, Versicherung/Steuer, TÜV/Werkstatt, Sonstiges, Mobiliar aussen, Mobiliar innen, Wohnmobilkauf, Werkstatt. `Look` enthält zusätzlich Bad, Erstanschaffung, Küche und „Schalfen" (vermutlich Tippfehler), die nie benutzt wurden; „Werkstatt" fehlt dort. Kategorien sind in der Excel nicht durchgängig erzwungen.
+
+**Anfangsbestand:** Es gibt **keinen separaten Anfangsbestand.** Die beiden ersten Buchungen sind die Anfangszahlungen als normale „Einzahlung". Rechnerischer Anfangsbestand = 0.
+
+**Kennzahlen-Logik (Blatt `Kontostand`)**
+- *Kontostand aktuell* = Summe aller Beträge mit „Kosten beglichen = ja" (nachgerechnet, stimmt mit der Datei überein).
+- *Offene Forderungen je Partei* = Summe der Beträge je Zahler mit „beglichen = nein".
+- *Kontostand nach Forderungsbegleichung* = Kontostand + offene Forderungen.
+- *Forecast* = Summe der Posten mit „erledigt = nein" (aktuell keine vorhanden; künftig = geplante Ausgaben).
+- *Kosten pro Tag / pro Nutzungstag*: Ausgaben ÷ Tage seit Kauf, mit fest eingetippter Annahme „Nutzung an 15 % der Tage". **Nicht in den Anforderungen** → wird nicht umgesetzt, nur als Vorschlag geführt.
+
+**Bedeutung von „Kosten beglichen" (aus den Formeln abgeleitet, muss bestätigt werden):** `ja` = über das gemeinsame Konto abgewickelt, zählt zum Kontostand · `nein` = eine Partei hat privat ausgelegt, offene Forderung · `gesponsert` / `wird gesponsert` = wird nicht erstattet, zählt nicht zum Kontostand · leer = nur bei Preis 0.
+
+**Wiederkehrende Kosten:** Keine eigene Spalte. Erkennbar sind jährlich Versicherung und KFZ-Steuer (Kategorie „Versicherung/Steuer", 24 Buchungen) sowie unregelmäßig TÜV/Werkstatt. Die Anforderungen verlangen keine automatische Wiederholung; deshalb bleiben sie normale Buchungen.
+
+**Auffälligkeiten (nicht korrigiert):**
+1. Die **Pivot-Tabelle ist veraltet** (fehlt die neueste Zeile). Dadurch ist „Summe Ausgaben" und „Kosten pro Tag" etwas zu niedrig; der Kontostand ist nicht betroffen.
+2. **Uneinheitliche Formelbereiche** (bis Zeile 401 bzw. nur bis 296, Daten bis 328).
+3. Zwei Buchungen tragen ein vermutlich falsches Jahr (stehen zwischen Einträgen von Ende 2016, sind auf Januar 2016 datiert); 31 Zeilen sind nicht chronologisch.
+4. Fünf Beträge haben mehr als zwei Nachkommastellen → Rundungsregel für den Import nötig.
+5. Zwei positive Beträge außerhalb der Kategorie „Einzahlung" (Sonderleistungen) → in OBELIX Einnahmen.
+6. 25 Buchungen mit Preis 0 (Inventarliste) sind keine Finanzbewegungen.
+
+**Folgerungen für das Datenmodell (in Abschnitt 5 eingearbeitet):** kein `openingBalance`; „Partei" als Zahler; Abrechnungsstatus je Buchung (`SETTLED`/`OPEN`/`SPONSORED`); Kategorien als Daten aus den 12 verwendeten Werten. **Kontrollwerte für den Import-Test** liegen in der nicht-öffentlichen Detailfassung (Kontostand, offene Forderungen, Summen, Buchungsanzahl).
 
 ---
 
@@ -151,14 +181,14 @@ Abweichung von der Beispielstruktur der Anforderungen: Ein Top-Level-Dokument `u
 | Feld | Typ | Bemerkung |
 |---|---|---|
 | name | String | Pflicht |
-| openingBalanceCents | Long | **Wert erst aus Excel** – kein Standardwert erfunden; Feld wird erst mit Phase 4 gesetzt |
-| openingBalanceDate | String (Tag) | wie oben |
+| parties | Liste {id, name} | Die zwei Parteien des Wohnmobils (aus der Excel: zwei Paare). Bezahlt-von verweist hierauf. **Entscheidung 11** |
 | createdAt/By | | Audit |
 
 **Member** – `households/{hid}/members/{uid}`
 | Feld | Typ | Bemerkung |
 |---|---|---|
 | role | String | `ADMIN` \| `MEMBER`, Pflicht |
+| partyId | String | Zugehörige Partei (Pflicht, falls Parteien-Modell bestätigt) |
 | displayName | String | Pflicht |
 | createdAt | Timestamp | |
 
@@ -178,7 +208,8 @@ Abweichung von der Beispielstruktur der Anforderungen: Ein Top-Level-Dokument `u
 | date | String (Tag) | ja |
 | amountCents | Long, > 0 | ja |
 | categoryId | String → `categories` | ja |
-| paidByUid / paidByName | String | Ausgabe: ja; Einnahme: optional |
+| paidByPartyId (+ optional paidByUid) | String | Ausgabe: ja; Einnahme: optional (Excel kennt nur die Partei) |
+| settlement | `SETTLED` \| `OPEN` \| `SPONSORED` | Ausgabe: ja. Abbildung von „Kosten beglichen" (ja / nein / gesponsert). **Entscheidung 12** |
 | description | String | ja |
 | comment | String | nein |
 | receipt | Map {path, contentType, sizeBytes} | nein (nur Ausgabe) |
@@ -228,11 +259,11 @@ Abweichung von der Beispielstruktur der Anforderungen: Ein Top-Level-Dokument `u
 | file | Map {path, contentType, sizeBytes} | ja |
 | uploadedBy (uid + Name), uploadedAt | | ja |
 
-**Category** – `categories/{id}`: `name`, `type` (`INCOME`\|`EXPENSE`), `active` (Bool), Audit. Inhalt **ausschließlich aus der Excel-Datei**.
+**Category** – `categories/{id}`: `name`, `type` (`INCOME`\|`EXPENSE`), `active` (Bool), Audit. Inhalt **ausschließlich aus der Excel-Datei** (12 verwendete Werte; Behandlung von „Werkstatt" vs. „TÜV/Werkstatt" und der ungenutzten `Look`-Einträge: Entscheidung 13).
 
 ### Wichtige Datenflüsse
 
-1. **Bestand:** `openingBalanceCents + Σ Einnahmen − Σ Ausgaben`. Berechnung über Firestore-Aggregationsabfragen (`sum()`) oder clientseitig über alle Transaktionen. Geplante Ausgaben zählen nicht.
+1. **Bestand:** Anfangsbestand ist 0 (laut Excel). Bestand = Σ Einnahmen + Σ Ausgaben mit `SETTLED` (entspricht der Excel-Formel „Kontostand aktuell"). Zusätzlich: offene Forderungen je Partei = Σ `OPEN`-Ausgaben je Zahler; Kontostand nach Begleichung = Bestand + offene Forderungen. Berechnung über Firestore-Aggregationsabfragen (`sum()`) oder clientseitig. Geplante Ausgaben zählen nicht. Hinweis: Die Anforderung nennt „Anfangsbestand + Einnahmen − Ausgaben"; der Abrechnungsstatus ist eine Erweiterung aus der Excel, die bestätigt werden muss.
 2. **Geplant → gekauft:** Ein einziger Firestore-Batch (atomar): neue `transactions`-Ausgabe mit tatsächlichem Betrag + `plannedExpenses.status = PURCHASED` + `purchasedTransactionId`. Bei fehlender Verbindung schlägt der Batch fehl; es entsteht nichts Halbes.
 3. **Kalender-Überschneidung:** Abfrage `startDate ≤ neuesEnde`, danach Filter `endDate ≥ neuerStart` im Client (Firestore kann nicht zwei Bereichsfilter auf verschiedenen Feldern). Bei Treffer Warnung, danach Speichern nur nach ausdrücklicher Bestätigung (Entscheidung 5). Bei geringer Datenmenge ist die Race-Condition zwischen zwei gleichzeitigen Nutzern akzeptabel; das wird dokumentiert, nicht verschwiegen.
 4. **Stellplatz mit Fotos:** Fotos werden zuerst hochgeladen, danach wird das Firestore-Dokument geschrieben; bei Abbruch werden hochgeladene Dateien wieder gelöscht. Die 3-Foto-Grenze wird in UI **und** Rules erzwungen.
@@ -255,10 +286,29 @@ Recherche (Firebase-Dokumentation „Default bucket and billing requirements for
 
 Das kollidiert direkt mit der Vorgabe „keine kostenpflichtige Infrastruktur / kein Upgrade auf einen kostenpflichtigen Tarif". Nach Abschnitt 63 der Anforderungen entscheidest **du**. Optionen in Abschnitt 11, Entscheidung 1.
 
+### Supabase als Alternative (geprüft am 30.09.2026)
+
+Quellen: Supabase-Preisseite, Doku zu Storage-Zugriff, Firebase-Auth-Integration und Projekt-Pausierung.
+
+| Punkt | Befund |
+|---|---|
+| Free-Plan | 1 GB Dateispeicher, max. 50 MB je Datei, 5 GB Traffic, 500 MB Datenbank, 50.000 aktive Nutzer, 2 aktive Projekte. Keine Kreditkarte nach den geprüften Seiten erforderlich (nicht explizit bestätigt) |
+| Überschreitung | Keine automatische Abrechnung; laut Doku „service restrictions" (z. B. Pausierung oder nur-lesende Datenbank) |
+| Dateigröße/Umfang | Für ~40 Fotos und wenige Dokumente ausreichend, große PDFs (bis 50 MB) möglich |
+| Zugriffsschutz | Storage-Regeln als PostgreSQL-Row-Level-Security auf `storage.objects`. Ohne Regeln kein Upload |
+| **Kopplung an Firebase Auth** | Supabase kann Firebase-Auth-Tokens akzeptieren, **aber** jeder Nutzer braucht dafür ein Custom-Claim `role: authenticated`. Das wird laut Doku über Firebase-„Blocking Functions" (Identity Platform) oder eine `onCreate` **Cloud Function** gesetzt. Beides setzt bei Firebase **Cloud Functions bzw. den Blaze-Tarif** voraus (Annahme, aus der Doku abgeleitet, Einzelheiten nicht separat geprüft) |
+| **Pausierung** | Free-Projekte werden pausiert, wenn eine Woche lang zu wenig Datenbankaktivität stattfindet. Wiederherstellung per Dashboard bis zu 1 Jahr, Daten bleiben erhalten. Eine selten genutzte Familien-App ist genau der Risikofall |
+| Kotlin-Client | Community-gepflegtes `supabase-kt` (Kotlin Multiplatform). Pflegezustand und Kompatibilität nicht geprüft |
+
+**Bewertung:**
+- **Supabase nur für Dateien, Rest in Firebase:** Das umgeht Blaze **nicht**, weil die Verknüpfung der Firebase-Anmeldung mit Supabase das Custom-Claim braucht (Cloud Function/Identity Platform). Ohne diese Verknüpfung müsste man Dateien mit einem gemeinsamen geheimen Schlüssel in der App schützen – das ist unsicher und widerspricht Sicherheit vor Bequemlichkeit. **Nicht empfohlen.**
+- **Supabase komplett statt Firebase (Auth + Datenbank + Storage aus einem System, Free-Plan):** Technisch machbar, alles kostenlos ohne Kreditkarte, Dateien bis 50 MB, Rules als RLS. Preis: **Abweichung von der Vorgabe „bevorzugt Firebase"** (erlaubt, wenn technisch erforderlich), anderes Datenmodell (Postgres statt Firestore), anderer Client, **Pausierung nach einer Woche ohne Aktivität** (Gegenmaßnahme: regelmäßiger Aufruf durch die App oder manuelles Fortsetzen). Der Plan müsste in Phase 1–3 umgeschrieben werden.
+- **Firebase mit Bildern in Firestore (Option B unten)** bleibt die einfachste Lösung ohne Blaze, mit Grenze bei großen PDFs.
+
 ### Datei-Ablage (unabhängig vom Speicherort)
 - Pfad: `households/{hid}/campsites/{campsiteId}/{photoId}.jpg`, `households/{hid}/receipts/{transactionId}/{name}`, `households/{hid}/documents/{docId}/{name}`.
 - Nie öffentliche URLs speichern; nur den Pfad im Firestore-Dokument.
-- Grenzen: Fotos nach Kompression typisch ~200–500 KB (Annahme, wird in Phase 8 gemessen); Dokumente/Belege begrenzt auf Bild oder PDF, Größenlimit in Entscheidung 1 festzulegen.
+- Grenzen: Fotos nach Kompression typisch ~200–500 KB (Annahme, wird in Phase 6 gemessen); Dokumente/Belege begrenzt auf Bild oder PDF, Größenlimit in Entscheidung 1 festzulegen.
 
 ---
 
@@ -304,7 +354,7 @@ Jeder Screen implementiert Loading, Success, Empty, Error, Offline. Löschen imm
 
 ## 9. Implementierungsplan
 
-Reihenfolge gegenüber dem Vorschlag der Anforderungen leicht angepasst: **Kalender, Auffälligkeiten und Stellplätze hängen nicht von der Excel-Datei ab und können vor den Finanzen kommen.** Finanzen und geplante Ausgaben folgen, sobald die Excel-Datei vorliegt. So blockiert die fehlende Datei nichts.
+Reihenfolge gegenüber dem Vorschlag der Anforderungen leicht angepasst: Kalender, Auffälligkeiten und Stellplätze hängen nicht von der Excel-Datei ab und kommen vor den Finanzen. Da die Excel-Datei jetzt vorliegt, kann die Finanzphase auch früher gezogen werden – das ist deine Entscheidung (siehe 14).
 
 Nach **jeder** Phase: implementieren → kompilieren → Tests → Fehler beheben → Ergebnis prüfen → dieses Dokument aktualisieren → offene Punkte notieren → erst dann weiter.
 
@@ -359,12 +409,12 @@ Abschlusskriterium: Freigabe durch dich.
 - **Tests:** Upload, Öffnen, Löschen, Zugriff durch Fremdhaushalt verboten, Dateityp-/Größenlimit.
 - **Abschluss:** Alle Fälle bestanden.
 
-### Phase 8 – Finanzen *(startet erst nach Excel-Analyse)*
+### Phase 8 – Finanzen
 - **Ziel:** Einnahmen, Ausgaben, Kategorien, Personen, Bestand, Belege, Übersicht gemäß Excel-Struktur.
-- **Voraussetzung:** Excel-Datei liegt vor; kurze Struktur-Zusammenfassung von mir wurde von dir bestätigt.
+- **Voraussetzung:** Excel-Analyse liegt vor (Abschnitt 3); du bestätigst die Deutung von „Kosten beglichen" (Entscheidung 12), das Parteien-Modell (11) und die Kategorien (13). Ein einmaliger Import der 325 Buchungen wird nach Entscheidung 6 geplant.
 - **Dateien:** `Transaction`, `Category`, `FinanceRepository`, `finance/*`, Rules.
 - **Tests:** Bestandsberechnung mit bekannten Zahlen, Personenzuordnung, Validierung (kein negativer Betrag), Beleg, Rechte, Offline.
-- **Abschluss:** Berechnung stimmt mit Excel-Kontrollwerten überein.
+- **Abschluss:** Berechnung stimmt mit den Excel-Kontrollwerten überein (Kontostand, offene Forderungen, Kontostand nach Begleichung, Summen, Buchungsanzahl).
 
 ### Phase 9 – Geplante Ausgaben
 - **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
@@ -406,8 +456,11 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | B. Dateien direkt in Firestore ablegen (Base64, komprimiert) | 0 € im Spark-Tarif | Kein Blaze, alles in einem System, Rules gelten | 1-MiB-Grenze je Dokument: reicht für komprimierte Fotos und kleine Bilder, **nicht** für größere PDFs (Versicherung, Bedienungsanleitungen); Größeres müsste in Teilstücke zerlegt oder abgelehnt werden |
 | C. Fremder kostenloser Dateispeicher (z. B. Supabase) | 0 € | Große Dateien möglich | Zweites Backend, eigene Auth-Anbindung, Datenschutz; mehr Komplexität – widerspricht „einfach vor komplex" |
 | D. Bestehendes älteres Firebase-Projekt mit `*.appspot.com`-Bucket, falls du eines hast | 0 € | Gratis-Kontingent bleibt erhalten | Nur wenn ein solches Projekt existiert; nicht neu anlegbar |
+| E. Komplett auf Supabase wechseln (statt Firebase) | 0 €, ohne Kreditkarte | Ein System, Dateien bis 50 MB, Rules per RLS | Abweichung von „bevorzugt Firebase", anderes Datenmodell, Pausierung nach 1 Woche Inaktivität, Plan muss umgeschrieben werden |
 
-*Meine technische Empfehlung:* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
+*Supabase nur für Dateien (Option C) ist durch die Prüfung praktisch ausgeschieden:* Die Kopplung an Firebase Auth braucht Cloud Functions bzw. Identity Platform und damit wieder den Blaze-Tarif.
+
+*Meine technische Empfehlung (unverändert):* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Option E ist die ernsthafte Alternative, wenn dir große PDFs wichtig sind und du kein Blaze willst – dann aber bitte bewusst, weil sie das Fundament ändert. Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
 *Unsicherheit:* Die tatsächliche Kompressionsgröße der Fotos (Annahme 200–500 KB) und Firestore-Kontingente (Stand heute) sind nicht von mir gemessen bzw. neu geprüft worden – das prüfe ich in Phase 1/6, bevor ich baue.
 
 **2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei (Vorschlag: Einladungscode, den der ADMIN erzeugt)?
@@ -418,7 +471,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 **5. Kalender-Überschneidung** – Speichern nach Warnung erlauben? (Vorschlag: ja, mit ausdrücklicher Bestätigung „Trotzdem speichern".)
 
-**6. Excel** – Bitte Datei bereitstellen; soll vorhandener Datenbestand einmalig importiert werden?
+**6. Import** – Sollen die 325 Buchungen aus der Excel einmalig in OBELIX übernommen werden (Empfehlung: ja, sonst startet der Kontostand bei 0 statt beim tatsächlichen Stand)? Dabei sind Rundung, das vermutlich falsche Jahr zweier Buchungen und die Schreibweisen bei „Verantwortung" zu entscheiden.
 
 **7. Navigation** – 6 Hauptbereiche in Bottom Bar oder Aufteilung/„Mehr"?
 
@@ -428,6 +481,16 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 **10. `google-services.json`** – nicht committen (Vorschlag) oder committen?
 
+**11. Zahler = Partei oder Person?** Die Excel kennt zwei Parteien (zwei Paare). Vorschlag: „Bezahlt von" = Partei; jedes Mitglied gehört zu einer Partei.
+
+**12. „Kosten beglichen"** – Ist meine Deutung richtig (ja = im Kontostand, nein = offene Forderung, gesponsert = nicht erstattet)? Soll der Abrechnungsstatus in die App (Vorschlag: ja, denn der Kontostand der Excel hängt davon ab)?
+
+**13. Kategorien** – 12 verwendete Werte übernehmen; „Werkstatt" mit „TÜV/Werkstatt" zusammenlegen? Ungenutzte Einträge (Bad, Erstanschaffung, Küche, „Schalfen") weglassen oder anlegen?
+
+**14. Reihenfolge** – Finanzen jetzt vorziehen, da die Excel vorliegt?
+
+**15. Nicht übernommene Excel-Funktionen** – „Verantwortung" (Freitext) und „Kosten pro Tag / pro Nutzungstag" stehen nicht in den Anforderungen. Weglassen (Vorschlag) oder aufnehmen?
+
 ---
 
 ## 12. Erkannte technische Risiken
@@ -435,7 +498,8 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | # | Risiko | Wirkung | Gegenmaßnahme |
 |---|---|---|---|
 | 1 | **Firebase Storage nur mit Blaze** | Konflikt mit Kostenvorgabe | Entscheidung 1 vor Phase 6 |
-| 2 | **Excel fehlt** | Finanzmodell, Kategorien, Anfangsbestand unbekannt | Finanzphase verschoben; generisches Modell; Datei anfordern |
+| 2 | **Excel-Daten uneinheitlich** (veraltete Pivot, Rundungsreste, vermutlich falsches Jahr bei 2 Buchungen, Freitext-Felder) | Falscher Kontostand oder Importfehler | Kontrollwerte aus der Excel als Abnahmetest; Auffälligkeiten nicht stillschweigend „reparieren", sondern mit dir klären |
+| 2b | **Öffentliches Repository und private Finanzdaten** | Namen/Beträge könnten versehentlich veröffentlicht werden | `private/` und `*.xlsx` in `.gitignore`; Analyse mit Namen nur im nicht-öffentlichen Claude-Projekt |
 | 3 | **Kein Android-SDK in dieser Sitzung; Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` blockiert** (geprüft) | Ich kann die App hier voraussichtlich **nicht kompilieren** | Build über GitHub Actions (öffentliches Repo, kostenlos) oder lokal bei dir; ich melde nichts als „kompiliert", was nicht tatsächlich gebaut wurde |
 | 4 | **Keine Geräte-/Firebase-Konsole-Zugriffe** | GPS, Kamera, echtes Firebase-Projekt nicht von mir testbar | Emulator-Tests für Rules; Gerätetests kennzeichne ich als „von dir zu prüfen" |
 | 5 | **Firestore-Offline-Cache** meldet lokalen Schreiberfolg | Widerspricht Anforderung 8 | Persistenz deaktivieren; Schreiben nur mit Serverbestätigung (`await()` auf Server-Antwort) |
@@ -461,5 +525,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 | Phase | Status | Datum | Offene Punkte |
 |---|---|---|---|
-| 0 Analyse | abgeschlossen, wartet auf Freigabe | 30.09.2026 | Entscheidungen 1–10, Excel-Datei |
+| 0 Analyse | abgeschlossen (Rev. 2 mit Excel-Analyse und Supabase-Prüfung), wartet auf Freigabe | 30.09.2026 | Entscheidungen 1–15 |
 | 1–11 | nicht begonnen | | |
