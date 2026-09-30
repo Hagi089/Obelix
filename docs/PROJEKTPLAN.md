@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 3: Finanz-Entscheidungen eingearbeitet, Dropbox geprüft) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+Stand: 30.09.2026 (Rev. 4: Freigabe erteilt, Phase 1 abgeschlossen) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -20,6 +20,15 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 15 | Kosten pro Tag | **Entfällt.** |
 | 13 | Kategorien | Einmalig aus der Excel übernehmen; in den **Einstellungen** können neue Kategorien angelegt werden. |
 | 14 | Reihenfolge | **Finanzen werden vorgezogen** (direkt nach Haushalt/Rollen), geplante Ausgaben direkt danach. |
+| 1 | Dateispeicher | **Option F:** Dateien gestückelt in Firestore (Spark, ohne Kreditkarte). Bestätigt am 30.09.2026. |
+| 2 | Firebase-Projekt | Legt der Benutzer selbst an, Region **Deutschland (`europe-west3`, Frankfurt)**. Anleitung: `docs/FIREBASE-EINRICHTUNG.md`. |
+| 2b | Haushaltsbeitritt | **Einladungscode.** |
+| 4 | Löschen | **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog). Entsprechend werden die Rules gebaut. |
+| 5 | Kalender-Überschneidung | Speichern bleibt **erlaubt**, aber die Überschneidung muss **vor dem Speichern** geprüft und **eindeutig angezeigt** werden (welcher Eintrag, welche Person, welcher Zeitraum); Speichern nur nach ausdrücklicher Bestätigung. |
+| 7 | Navigation | **Sechs Bereiche** (Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente), Einstellungen über Zahnrad. |
+| 8 | Dashboard-Zeitraum | Vorerst nicht nötig; Dashboard zeigt zunächst nur Bestände und Zähler ohne Zeitraum. |
+| – | Design | **Google-Richtlinien:** Material 3 mit Systemfarben, Android-Architekturleitfaden, Kotlin-Styleguide, Barrierefreiheit (Kontrast, Beschriftungen, Touch-Ziele ≥ 48 dp). |
+| 3, 9, 10 | Karte, Löschart, `google-services.json` | Noch nicht ausdrücklich entschieden; es gelten meine Vorschläge: OSM-Karte (Prüfung in Phase 9), hartes Löschen mit Bestätigung, `google-services.json` nicht committen. |
 
 **Annahmen, die ich getroffen habe (bitte widersprechen, falls falsch):**
 - Übernommen werden die **12 tatsächlich verwendeten** Kategorien, unverändert (auch „Werkstatt" neben „TÜV/Werkstatt"). Die nie benutzten `Look`-Einträge werden nicht angelegt, sie können über die Einstellungen ergänzt werden.
@@ -417,12 +426,16 @@ Nach **jeder** Phase: implementieren → kompilieren → Tests → Fehler behebe
 ### Phase 0 – Analyse und Architektur ✅ (dieses Dokument)
 Abschlusskriterium: Freigabe durch dich.
 
-### Phase 1 – Projektbasis und Firebase
+### Phase 1 – Projektbasis und Firebase ✅ (30.09.2026, mit Einschränkung)
 - **Ziel:** Leere App startet, Firebase verbunden, CI kompiliert.
 - **Dateien:** `settings.gradle.kts`, `build.gradle.kts`, `app/build.gradle.kts`, `gradle/libs.versions.toml`, `AndroidManifest.xml`, `MainActivity`, Theme, Navigation-Gerüst, `strings.xml`, `.gitignore`, `README.md`, `.github/workflows/build.yml`, `firebase/firebase.json`
 - **Umsetzung:** Projekt, Abhängigkeiten (Compose BOM, Navigation, Firebase BOM, Auth, Firestore), Firestore-Persistenz aus, Netzwerkstatus, Fehler-Mapper, Theme, leere Navigation, `google-services.json` lokal.
 - **Tests:** Build, Unit-Test-Lauf, App startet im Emulator/Gerät.
 - **Abschluss:** `assembleDebug` und `testDebugUnitTest` laufen in GitHub Actions grün; App startet; kein Secret im Repo.
+- **Ergebnis:** CI-Lauf auf Commit `60460b7`: Build, Unit-Tests und Lint **grün**. Kein Secret im Repo (`.gitignore` geprüft).
+- **Nicht von mir geprüft (kein Gerät/Emulator hier):** Start der App auf einem Gerät, Darstellung der Navigation, Verhalten mit echter `google-services.json`. Bitte die Debug-APK aus dem GitHub-Actions-Lauf (Artefakt `obelix-debug-apk`) installieren: Ohne `google-services.json` muss „Backend nicht eingerichtet" erscheinen. Den Lauf mit Firebase-Konfiguration gibt es erst nach deinem lokalen Build oder nach Phase 2.
+- **Festgelegte Versionen (geprüft am 30.09.2026):** AGP 9.3.3, Gradle 9.5.1, Kotlin 2.4.10, Compose BOM 2026.09.00, Navigation 2.10.2, Lifecycle 2.11.0, Firebase BoM 34.19.0, `minSdk 26`, `compileSdk 37` (von den AndroidX-Bibliotheken verlangt), `targetSdk 36`.
+- **Offene Punkte:** (1) `targetSdk` später auf 37 heben; (2) GitHub-Actions-Aktionen `setup-java@v4` und Node-20-Hinweis: kein Fehler, aber Update auf v5 sinnvoll; (3) Compose-Material-Icons-Erweiterung wird über `material-icons-extended 1.7.8` bezogen (Version nicht gesondert gegen die BOM geprüft, Build ist grün).
 
 ### Phase 2 – Authentifizierung
 - **Ziel:** Registrierung, Login, Logout, Passwort-Reset.
@@ -597,5 +610,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 | Phase | Status | Datum | Offene Punkte |
 |---|---|---|---|
-| 0 Analyse | abgeschlossen (Rev. 3: Finanz-Entscheidungen, Dropbox-Prüfung), wartet auf Freigabe | 30.09.2026 | Offen: 1 (Speicher), 2/2b, 3, 4, 5, 7, 8, 9, 10, 15b, 15c |
-| 1–12 | nicht begonnen | | |
+| 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
+| 1 Projektbasis | abgeschlossen (CI grün) | 30.09.2026 | Gerätetest der APK durch den Benutzer; Firebase-Projekt anlegen |
+| 2 Authentifizierung | nächste Phase | | benötigt `google-services.json` |
+| 3–12 | nicht begonnen | | |
