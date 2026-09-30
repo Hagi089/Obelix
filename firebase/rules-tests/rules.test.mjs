@@ -13,6 +13,7 @@ import {
   getDoc,
   getDocs,
   query,
+  runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
@@ -486,6 +487,73 @@ describe('R-07 users-Zeiger', () => {
   it('R-07d kein Zeiger ohne Mitglieds-Dokument', async () => {
     await assertFails(setDoc(doc(as('stranger'), 'users/stranger'), {
       householdId: 'hhA', displayName: 'S', createdAt: serverTimestamp(),
+    }));
+  });
+});
+
+// =====================================================================
+// Die App schreibt mit Transaktionen (nicht mit Batches), damit offline nichts als gespeichert gilt.
+// Diese Tests führen dieselben Schreibvorgänge wie HouseholdRepository.kt aus.
+describe('R-08 Schreibvorgänge der App (Transaktionen)', () => {
+  it('R-08a Beitritt per Transaktion', async () => {
+    const db = as('newbie');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'households/hhA/members/newbie'), {
+        role: 'MEMBER', partyId: 'B', displayName: 'Neu', inviteCode: CODE_A, createdAt: serverTimestamp(),
+      });
+      tx.set(doc(db, 'users/newbie'), { householdId: 'hhA', displayName: 'Neu', createdAt: serverTimestamp() });
+    }));
+    await assertSucceeds(getDoc(doc(db, 'households/hhA')));
+  });
+
+  it('R-08b Haushalt anlegen per Transaktion (Start-Code, Parteien, ADMIN)', async () => {
+    const db = as('founder');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'households/hhNew'), {
+        name: 'Neu', parties: PARTIES, inviteCode: null, createdBy: 'founder', createdAt: serverTimestamp(),
+      });
+      tx.set(doc(db, 'households/hhNew/members/founder'), {
+        role: 'ADMIN', partyId: 'A', displayName: 'Gründer', inviteCode: START, createdAt: serverTimestamp(),
+      });
+      tx.set(doc(db, 'users/founder'), { householdId: 'hhNew', displayName: 'Gründer', createdAt: serverTimestamp() });
+      tx.update(doc(db, `invites/${START}`), { usedBy: 'founder', usedAt: serverTimestamp(), householdId: 'hhNew' });
+    }));
+    // Der Gründer kann danach den ersten gemeinsamen Code erzeugen.
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.set(doc(db, `invites/${CODE_NEW}`), {
+        type: 'JOIN', householdId: 'hhNew', parties: PARTIES, createdBy: 'founder', createdAt: serverTimestamp(),
+      });
+      tx.update(doc(db, 'households/hhNew'), 'inviteCode', CODE_NEW);
+    }));
+    await assertSucceeds(joinBatch(as('newbie'), 'newbie', { hid: 'hhNew', code: CODE_NEW }).commit());
+  });
+
+  it('R-08c Code erneuern und Mitglied entfernen per Transaktion', async () => {
+    const db = as('adminA');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.set(doc(db, `invites/${CODE_NEW}`), {
+        type: 'JOIN', householdId: 'hhA', parties: PARTIES, createdBy: 'adminA', createdAt: serverTimestamp(),
+      });
+      tx.update(doc(db, 'households/hhA'), 'inviteCode', CODE_NEW);
+      tx.delete(doc(db, `invites/${CODE_A}`));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.delete(doc(db, 'households/hhA/members/memberA'));
+      tx.delete(doc(db, 'users/memberA'));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.update(doc(db, 'households/hhA/members/adminA'), { role: 'ADMIN', partyId: 'B' });
+    }));
+  });
+
+  it('R-08d Beitritt mit widerrufenem Code scheitert auch als Transaktion', async () => {
+    await assertSucceeds(rotateCodeBatch(as('adminA'), 'adminA').commit());
+    const db = as('newbie');
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'households/hhA/members/newbie'), {
+        role: 'MEMBER', partyId: 'A', displayName: 'Neu', inviteCode: CODE_A, createdAt: serverTimestamp(),
+      });
+      tx.set(doc(db, 'users/newbie'), { householdId: 'hhA', displayName: 'Neu', createdAt: serverTimestamp() });
     }));
   });
 });
