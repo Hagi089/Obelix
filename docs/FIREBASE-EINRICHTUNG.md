@@ -37,24 +37,26 @@ Dauer: ca. 15 Minuten. Du brauchst ein Google-Konto. **Es wird kein Abrechnungsk
 - Falls die Konsole irgendwo ein Upgrade vorschlägt: ablehnen und mich fragen.
 
 ## 7. Sicherheitsregeln veröffentlichen (Phase 3, nach jeder Änderung an `firebase/firestore.rules` erneut)
-Ohne veröffentlichte Regeln bleibt die Datenbank komplett gesperrt, die App zeigt dann beim Laden des Haushalts einen Fehler.
+Ohne veröffentlichte Regeln bleibt die Datenbank komplett gesperrt, die App zeigt dann „Benutzerdaten konnten nicht geladen werden".
 1. Auf GitHub die Datei `firebase/firestore.rules` öffnen und den **kompletten** Inhalt kopieren (Knopf „Copy raw file").
 2. Firebase-Konsole → **Firestore Database → Regeln**. Den gesamten Editorinhalt ersetzen (alles markieren, einfügen).
 3. **Veröffentlichen**. Die Konsole prüft die Syntax und meldet Fehler in Rot; ohne Fehler ist es aktiv.
 4. Optional per Kommandozeile statt Konsole: `firebase deploy --only firestore:rules` im Ordner `firebase/` (braucht die Firebase-CLI und `firebase login`; kein Blaze nötig).
 
-Die Regeln sind im Emulator automatisch getestet (GitHub Actions, Job „rules"). Ob sie in deinem echten Projekt greifen, zeigen die Gerätetests G3-01 bis G3-13.
+Die Regeln sind im Emulator automatisch getestet (GitHub Actions, Job „rules"). Ob sie in deinem echten Projekt greifen, zeigen die Gerätetests G3-01 bis G3-11.
 
-## 8. Start-Code für den ersten Haushalt anlegen (einmalig)
-Ohne gültigen Zugangscode kann sich niemand registrieren. Für den allerersten Haushalt legst du **von Hand** einen einmaligen Start-Code an (in der Konsole gelten die Regeln nicht, deshalb geht das nur dort):
-1. **Firestore Database → Daten → Sammlung starten** → Sammlungs-ID: `invites` → Weiter.
-2. **Dokument-ID:** ein Code aus genau **16 Zeichen**: Großbuchstaben A–Z **ohne I, L, O** und Ziffern **2–9** (keine 0 und keine 1). Zufällig wählen, nicht erratbar, z. B. von Claude im Chat erzeugen lassen. **Nie ins Repository schreiben.**
+## 8. Zugangscode anlegen und dich zum Admin machen (einmalig)
+Ohne gültigen Zugangscode kann sich niemand registrieren. Den ersten Code legst du **von Hand** an (in der Konsole gelten die Regeln nicht):
+1. **Firestore Database → Daten → Sammlung starten** → Sammlungs-ID: `config` → Weiter.
+2. **Dokument-ID:** `access`.
 3. Felder anlegen:
-   - `type` · Typ **string** · Wert `CREATE_HOUSEHOLD`
-   - `usedBy` · Typ **null**
-   - optional `expiresAt` · Typ **timestamp** · Datum, bis zu dem der Code gelten soll
-4. Speichern. In der App registrierst du dich jetzt mit diesem Code und richtest den Haushalt ein; danach ist der Start-Code verbraucht. Weitere Personen bekommen den gemeinsamen Code aus den Einstellungen der App.
-5. Für den Haushaltstrennungs-Test G3-13 kannst du auf dieselbe Weise einen zweiten Start-Code anlegen.
+   - `code` · Typ **string** · Wert: genau **16 Zeichen**, Großbuchstaben A–Z **ohne I, L, O** und Ziffern **2–9** (keine 0, keine 1). Zufällig wählen, z. B. von Claude erzeugen lassen. **Nie ins Repository schreiben.**
+   - `updatedBy` · Typ **string** · Wert `konsole`
+   - `updatedAt` · Typ **timestamp** · aktuelles Datum
+4. Speichern.
+5. In der App mit deinem Konto anmelden (oder neu registrieren) und den Code eingeben. Du bist jetzt freigeschaltet, zunächst als Mitglied.
+6. **Dich zum Admin machen:** Firestore → Daten → Sammlung `users` → das Dokument mit deinem Namen öffnen → Feld `role` auf `ADMIN` ändern → Speichern. (Die Dokument-ID ist deine Benutzer-ID; du findest sie auch unter Authentication → Benutzer.)
+7. In der App die Einstellungen neu öffnen: Dort siehst du jetzt den Zugangscode und die Benutzerliste. Weitere Personen bekommen den Code von dir, später erneuerst du ihn direkt in der App.
 
 ## Checkliste für die Rückmeldung
 - [ ] Tarif Spark
@@ -62,4 +64,4 @@ Ohne gültigen Zugangscode kann sich niemand registrieren. Für den allerersten 
 - [ ] Firestore in `europe-west3`, Produktionsmodus
 - [ ] Android-App `de.hagi089.obelix` registriert, `google-services.json` vorhanden
 - [ ] Regeln veröffentlicht (Abschnitt 7)
-- [ ] Start-Code angelegt (Abschnitt 8)
+- [ ] Zugangscode angelegt und eigenes Konto auf ADMIN gesetzt (Abschnitt 8)

@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils: Kalender, Einnahmen und Ausgaben, Auffälligkeiten, geplante Anschaffungen, Stellplätze und Dokumente.
 
-Status: **Phase 3 (Haushalt, Rollen, Sicherheitsregeln) umgesetzt**, Geräteabnahme offen; danach Finanzen (Phase 4). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Phase 3 (Benutzer, Rollen, Zugangscode, Sicherheitsregeln) umgesetzt**, Geräteabnahme offen; danach Finanzen (Phase 4). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Technologien
 - Kotlin, Jetpack Compose, Material 3 (adaptive Navigation: Leiste auf Smartphones, Rail auf Tablets)
@@ -22,10 +22,10 @@ app/src/main/java/de/hagi089/obelix/
   AppContainer.kt, ObelixApplication.kt, MainActivity.kt
   core/error      Fehler → verständliche deutsche Meldungen
   core/network    Erkennung der Internetverbindung
-  core/validation Eingabeprüfung (Anmeldung, Zugangscode, Haushalt)
+  core/validation Eingabeprüfung (Anmeldung, Zugangscode)
   data/auth       Anmeldung (Firebase Auth)
-  data/household  Haushalt, Mitglieder, Zugangscodes (Firestore)
-  ui/             App-Gerüst, Navigation, Theme, Bildschirme (auth, onboarding, settings)
+  data/user       Benutzer, Rollen, Zugangscode (Firestore)
+  ui/             App-Gerüst, Navigation, Theme, Bildschirme (auth, onboarding = Zugangscode, settings)
 firebase/         Firestore-Sicherheitsregeln und ihre Tests (rules-tests/)
 ```
 
