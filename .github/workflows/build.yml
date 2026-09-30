@@ -72,22 +72,25 @@ jobs:
 
       - name: Werkzeuge installieren
         run: |
-          npm install -g firebase-tools
-          firebase --version
-          npm install --prefix firebase/rules-tests
-          npm ls --prefix firebase/rules-tests --depth=0
+          set -o pipefail
+          {
+            npm install -g firebase-tools
+            firebase --version
+            npm install --prefix firebase/rules-tests
+            npm ls --prefix firebase/rules-tests --depth=0 || true
+          } 2>&1 | tee rules.log
 
       - name: Regeln im Emulator testen
         working-directory: firebase
         run: |
           set -o pipefail
-          firebase emulators:exec --only firestore --project demo-obelix "npm --prefix rules-tests test" 2>&1 | tee ../rules.log
+          firebase emulators:exec --only firestore --project demo-obelix "npm --prefix rules-tests test" 2>&1 | tee -a ../rules.log
 
       - name: Fehler zusammenfassen
         if: failure()
         run: |
           {
-            grep -n -E "not ok|✖|failureType|AssertionError|Error:|error:|Could not|Java|Unable" -A2 rules.log | head -80
+            grep -n -E "not ok|✖|failureType|AssertionError|Error:|error:|ERR!|Could not|Java|Unable|peer" -A2 rules.log | head -80
           } > rules-errors.txt || true
           msg=$(sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g' rules-errors.txt | head -c 3500)
           echo "::error title=Regel-Test-Fehler::${msg}"
