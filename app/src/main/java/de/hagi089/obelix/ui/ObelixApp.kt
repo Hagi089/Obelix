@@ -45,6 +45,8 @@ import de.hagi089.obelix.ui.components.OfflineBanner
 import de.hagi089.obelix.ui.navigation.BookingFormRoute
 import de.hagi089.obelix.ui.navigation.ImportRoute
 import de.hagi089.obelix.ui.navigation.ObelixNavHost
+import de.hagi089.obelix.ui.navigation.PlannedFormRoute
+import de.hagi089.obelix.ui.navigation.PlannedListRoute
 import de.hagi089.obelix.ui.navigation.SettingsRoute
 import de.hagi089.obelix.ui.navigation.TopLevelDestination
 import de.hagi089.obelix.ui.navigation.navigateToTopLevel
@@ -124,7 +126,7 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentTopLevel = TopLevelDestination.entries.firstOrNull { currentDestination.isIn(it) }
-    // Alles außer den sechs Hauptbereichen (Einstellungen, Buchungsformular, Import) ist ein Unterbildschirm mit Zurück-Pfeil.
+    // Alles außer den sechs Hauptbereichen (Einstellungen, Buchungsformular, geplante Ausgaben, Import) ist ein Unterbildschirm mit Zurück-Pfeil.
     val isSubScreen = currentDestination != null && currentTopLevel == null
 
     NavigationSuiteScaffold(
@@ -148,6 +150,8 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                             currentDestination?.hasRoute(SettingsRoute::class) == true -> R.string.nav_settings
                             currentDestination?.hasRoute(BookingFormRoute::class) == true -> R.string.finance_form_title
                             currentDestination?.hasRoute(ImportRoute::class) == true -> R.string.import_title
+                            currentDestination?.hasRoute(PlannedListRoute::class) == true -> R.string.planned_title
+                            currentDestination?.hasRoute(PlannedFormRoute::class) == true -> R.string.planned_form_title
                             currentTopLevel != null -> currentTopLevel.labelRes
                             else -> R.string.app_name
                         }

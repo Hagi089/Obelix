@@ -53,6 +53,12 @@ class ErrorMapperTest {
     }
 
     @Test
+    fun appException_wrappedByALibrary_keepsItsError() {
+        assertEquals(AppError.CONFLICT, ErrorMapper.classify(RuntimeException("umhüllt", AppException(AppError.CONFLICT))))
+        assertEquals(AppError.UNKNOWN, ErrorMapper.classify(RuntimeException("umhüllt", IllegalStateException("x"))))
+    }
+
+    @Test
     fun everyError_hasMessage() {
         AppError.entries.forEach { error -> assertTrue("$error ohne Meldung", error.messageRes != 0) }
     }

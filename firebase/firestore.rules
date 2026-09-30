@@ -1,6 +1,7 @@
 rules_version = '2';
 
-// OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen).
+// OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
+// Phase 5: geplante Ausgaben).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -46,7 +47,7 @@ service cloud.firestore {
     function validBooking(d) {
       return d.keys().hasOnly(['type', 'date', 'amountCents', 'categoryId', 'paidByUid', 'settlement',
                                'description', 'comment', 'settledAt', 'settledBy', 'importRef',
-                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+                               'plannedExpenseId', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
         && d.keys().hasAll(['type', 'date', 'amountCents', 'categoryId', 'settlement', 'description',
                             'comment', 'createdAt', 'createdBy'])
         && d.type in ['INCOME', 'EXPENSE']
@@ -60,8 +61,32 @@ service cloud.firestore {
         && (!('paidByUid' in d) || validText(d.paidByUid, 128))
         && (d.type == 'INCOME' || 'paidByUid' in d)
         && (!('importRef' in d) || validText(d.importRef, 20))
+        && (!('plannedExpenseId' in d) || (validText(d.plannedExpenseId, 128) && d.type == 'EXPENSE'))
         && (!('settledBy' in d) || validText(d.settledBy, 128))
         && (!('settledAt' in d) || d.settledAt is timestamp);
+    }
+
+    function transactionPath(bookingId) {
+      return /databases/$(database)/documents/transactions/$(bookingId);
+    }
+    function plannedPath(plannedId) {
+      return /databases/$(database)/documents/plannedExpenses/$(plannedId);
+    }
+    // Geplante Ausgabe (Phase 5). Geschätzter Betrag in Cent (1 bis 1.000.000,00 EUR), Status PLANNED oder
+    // PURCHASED; purchasedTransactionId gibt es genau bei PURCHASED (Verweis auf die entstandene Buchung).
+    function validPlanned(d) {
+      return d.keys().hasOnly(['title', 'estimatedAmountCents', 'plannedDate', 'status', 'priority', 'link',
+                               'comment', 'purchasedTransactionId', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['title', 'estimatedAmountCents', 'plannedDate', 'status', 'comment', 'createdAt', 'createdBy'])
+        && validText(d.title, 200)
+        && d.estimatedAmountCents is int && d.estimatedAmountCents > 0 && d.estimatedAmountCents <= 100000000
+        && validDay(d.plannedDate)
+        && d.status in ['PLANNED', 'PURCHASED']
+        && (!('priority' in d) || d.priority in ['LOW', 'MEDIUM', 'HIGH'])
+        && (!('link' in d) || (d.link is string && d.link.size() <= 500 && d.link.matches('^https?://[^ ]+$')))
+        && d.comment is string && d.comment.size() <= 500
+        && ((d.status == 'PURCHASED') == ('purchasedTransactionId' in d))
+        && (!('purchasedTransactionId' in d) || validText(d.purchasedTransactionId, 128));
     }
 
     // =====================================================================
@@ -127,16 +152,65 @@ service cloud.firestore {
         && validBooking(request.resource.data)
         && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
         && request.resource.data.createdBy == request.auth.uid
-        && request.resource.data.createdAt == request.time;
+        && request.resource.data.createdAt == request.time
+        // Eine Buchung aus einem Kauf entsteht nur zusammen mit der Planung, die im selben Schritt
+        // auf PURCHASED gesetzt wird und auf diese Buchung verweist.
+        && (!('plannedExpenseId' in request.resource.data) || (
+              getAfter(plannedPath(request.resource.data.plannedExpenseId)).data.status == 'PURCHASED'
+              && getAfter(plannedPath(request.resource.data.plannedExpenseId)).data.purchasedTransactionId == bookingId));
 
       allow update: if isUser()
         && validBooking(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && request.resource.data.get('importRef', null) == resource.data.get('importRef', null)
+        && request.resource.data.get('plannedExpenseId', null) == resource.data.get('plannedExpenseId', null)
         && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // plannedExpenses/{id}: geplante Ausgaben (Phase 5). Alle Benutzer dürfen lesen, anlegen, ändern
+    // und löschen. Der Kauf (PLANNED -> PURCHASED) ist nur zusammen mit der passenden Buchung möglich,
+    // eine gekaufte Planung ist nicht mehr änderbar und wird nur wieder geöffnet, wenn ihre Buchung
+    // im selben Schritt gelöscht wurde.
+    // =====================================================================
+    match /plannedExpenses/{plannedId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validPlanned(request.resource.data)
+        && request.resource.data.status == 'PLANNED'
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isUser()
+        && validPlanned(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && (
+          // Bearbeiten, solange noch geplant
+          (resource.data.status == 'PLANNED' && request.resource.data.status == 'PLANNED')
+          // Kauf: die Buchung entsteht im selben Schritt und verweist auf diese Planung
+          || (resource.data.status == 'PLANNED' && request.resource.data.status == 'PURCHASED'
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'purchasedTransactionId', 'updatedAt', 'updatedBy'])
+              && existsAfter(transactionPath(request.resource.data.purchasedTransactionId))
+              && getAfter(transactionPath(request.resource.data.purchasedTransactionId)).data.plannedExpenseId == plannedId
+              && getAfter(transactionPath(request.resource.data.purchasedTransactionId)).data.type == 'EXPENSE')
+          // Wieder öffnen: nur, wenn die Buchung im selben Schritt gelöscht wird
+          || (resource.data.status == 'PURCHASED' && request.resource.data.status == 'PLANNED'
+              && request.resource.data.diff(resource.data).affectedKeys()
+                   .hasOnly(['status', 'purchasedTransactionId', 'updatedAt', 'updatedBy'])
+              && !existsAfter(transactionPath(resource.data.purchasedTransactionId)))
+        );
 
       allow delete: if isUser();
     }

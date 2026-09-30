@@ -25,6 +25,7 @@
     <string name="error_not_found">Der Eintrag wurde nicht gefunden. Möglicherweise wurde er inzwischen gelöscht.</string>
     <string name="error_unauthenticated">Du bist nicht mehr angemeldet. Bitte melde dich erneut an.</string>
     <string name="error_unavailable">Der Server ist gerade nicht erreichbar. Bitte versuche es später erneut.</string>
+    <string name="error_conflict">Der Stand hat sich zwischenzeitlich geändert, z. B. wurde diese Anschaffung schon als gekauft gebucht. Bitte gehe zurück, lade die Liste neu und prüfe den aktuellen Stand.</string>
     <string name="error_unknown">Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es erneut.</string>
 
     <!-- Anmeldung -->
@@ -205,4 +206,48 @@
     <string name="import_confirm_title">Import starten?</string>
     <string name="import_confirm_text">Es werden %1$d Buchungen angelegt. Bereits importierte Buchungen werden nicht doppelt angelegt.</string>
     <string name="import_confirm_button">Importieren</string>
+
+    <!-- Geplante Ausgaben (Phase 5) -->
+    <string name="planned_title">Geplante Ausgaben</string>
+    <string name="planned_form_title">Geplante Ausgabe</string>
+    <string name="planned_open">Geplante Ausgaben</string>
+    <string name="planned_add">Geplante Ausgabe hinzufügen</string>
+    <string name="planned_empty">Noch keine geplanten Ausgaben vorhanden.</string>
+    <string name="planned_empty_planned">Keine offenen geplanten Ausgaben.</string>
+    <string name="planned_empty_purchased">Noch nichts als gekauft gebucht.</string>
+    <string name="planned_filter_planned">Geplant</string>
+    <string name="planned_filter_purchased">Gekauft</string>
+    <string name="planned_summary_open_count">Offen geplant</string>
+    <string name="planned_summary_estimated">Geschätzt gesamt</string>
+    <string name="planned_summary_hint">Geplante Ausgaben ändern den Kontostand nicht. Erst der Kauf wird zu einer echten Ausgabe.</string>
+    <string name="planned_created_by">Erstellt von %1$s</string>
+    <string name="planned_row_purchased">Gekauft</string>
+    <string name="field_title">Bezeichnung</string>
+    <string name="field_estimated_amount">Geschätzter Betrag</string>
+    <string name="field_planned_date">Datum der Planung</string>
+    <string name="field_priority">Priorität (optional)</string>
+    <string name="field_link">Link (optional)</string>
+    <string name="priority_low">Niedrig</string>
+    <string name="priority_medium">Mittel</string>
+    <string name="priority_high">Hoch</string>
+    <string name="planned_link_open">Link öffnen</string>
+    <string name="planned_link_open_failed">Der Link konnte nicht geöffnet werden.</string>
+    <string name="action_purchased">Gekauft …</string>
+    <string name="purchase_title">Als gekauft buchen</string>
+    <string name="purchase_help">Es entsteht eine echte Ausgabe mit dem tatsächlichen Betrag. Die Planung gilt danach als gekauft und erscheint nicht mehr unter „Geplant“.</string>
+    <string name="field_actual_amount">Tatsächlicher Betrag</string>
+    <string name="field_purchase_date">Kaufdatum</string>
+    <string name="purchase_confirm">Als gekauft buchen</string>
+    <string name="planned_purchased_info">Gekauft am %1$s für %2$s</string>
+    <string name="planned_purchased_view_booking">Buchung ansehen</string>
+    <string name="planned_purchased_booking_missing">Die zugehörige Buchung gibt es nicht mehr.</string>
+    <string name="planned_purchased_locked">Gekaufte Planungen lassen sich nicht mehr ändern.</string>
+    <string name="planned_delete_title">Geplante Ausgabe löschen?</string>
+    <string name="planned_delete_text">Die Planung wird endgültig gelöscht.</string>
+    <string name="planned_delete_purchased_text">Die Planung wird endgültig gelöscht. Die daraus entstandene Buchung bleibt bestehen.</string>
+    <string name="finance_delete_text_planned">Die Buchung wird endgültig gelöscht und der Kontostand ändert sich entsprechend. Die zugehörige geplante Ausgabe wird wieder als „Geplant“ geöffnet.</string>
+    <string name="booking_from_planned_hint">Diese Buchung stammt aus einer geplanten Ausgabe.</string>
+    <string name="error_planned_title_required">Bitte gib eine Bezeichnung ein.</string>
+    <string name="error_planned_title_too_long">Die Bezeichnung darf höchstens 200 Zeichen lang sein.</string>
+    <string name="error_planned_link_invalid">Bitte gib einen Link an, der mit http:// oder https:// beginnt (höchstens 500 Zeichen, ohne Leerzeichen).</string>
 </resources>

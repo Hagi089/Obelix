@@ -23,6 +23,10 @@ import de.hagi089.obelix.ui.finance.FinanceScreen
 import de.hagi089.obelix.ui.finance.FinanceViewModel
 import de.hagi089.obelix.ui.importing.ImportScreen
 import de.hagi089.obelix.ui.importing.ImportViewModel
+import de.hagi089.obelix.ui.planned.PlannedFormScreen
+import de.hagi089.obelix.ui.planned.PlannedFormViewModel
+import de.hagi089.obelix.ui.planned.PlannedListScreen
+import de.hagi089.obelix.ui.planned.PlannedListViewModel
 import de.hagi089.obelix.ui.settings.CategoriesViewModel
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
@@ -52,6 +56,41 @@ fun ObelixNavHost(
                 viewModel = financeViewModel,
                 onAdd = { navController.navigate(BookingFormRoute()) },
                 onOpen = { id -> navController.navigate(BookingFormRoute(bookingId = id)) },
+                onOpenPlanned = { navController.navigate(PlannedListRoute) },
+            )
+        }
+        composable<PlannedListRoute> {
+            val plannedListViewModel: PlannedListViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { PlannedListViewModel(container.plannedExpenseRepository, container.userRepository) }
+                },
+            )
+            PlannedListScreen(
+                viewModel = plannedListViewModel,
+                onAdd = { navController.navigate(PlannedFormRoute()) },
+                onOpen = { id -> navController.navigate(PlannedFormRoute(plannedId = id)) },
+            )
+        }
+        composable<PlannedFormRoute> { entry ->
+            val route = entry.toRoute<PlannedFormRoute>()
+            val plannedFormViewModel: PlannedFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        PlannedFormViewModel(
+                            plannedId = route.plannedId,
+                            uid = user.uid,
+                            planned = container.plannedExpenseRepository,
+                            finance = container.financeRepository,
+                            categories = container.categoryRepository,
+                            users = container.userRepository,
+                        )
+                    }
+                },
+            )
+            PlannedFormScreen(
+                viewModel = plannedFormViewModel,
+                onFinished = { navController.navigateUp() },
+                onOpenBooking = { id -> navController.navigate(BookingFormRoute(bookingId = id)) },
             )
         }
         composable<BookingFormRoute> { entry ->

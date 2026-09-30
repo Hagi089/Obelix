@@ -80,20 +80,23 @@ fun BookingFormScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             val editable = !state.isSaving
+            // Eine Buchung aus einer geplanten Ausgabe bleibt eine Ausgabe (Regeln erzwingen das).
+            val fromPlanned = state.existing?.plannedExpenseId != null
             Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 FilterChip(
                     selected = state.type == BookingType.EXPENSE,
                     onClick = { viewModel.setType(BookingType.EXPENSE) },
-                    enabled = editable,
+                    enabled = editable && !fromPlanned,
                     label = { Text(stringResource(R.string.type_expense)) },
                 )
                 FilterChip(
                     selected = state.type == BookingType.INCOME,
                     onClick = { viewModel.setType(BookingType.INCOME) },
-                    enabled = editable,
+                    enabled = editable && !fromPlanned,
                     label = { Text(stringResource(R.string.type_income)) },
                 )
             }
+            if (fromPlanned) Text(stringResource(R.string.booking_from_planned_hint), style = MaterialTheme.typography.bodySmall)
 
             OutlinedButton(
                 onClick = { datePickerOpen = true },
@@ -222,7 +225,13 @@ fun BookingFormScreen(
         AlertDialog(
             onDismissRequest = { confirmDelete = false },
             title = { Text(stringResource(R.string.finance_delete_title)) },
-            text = { Text(stringResource(R.string.finance_delete_text)) },
+            text = {
+                Text(
+                    stringResource(
+                        if (state.existing?.plannedExpenseId != null) R.string.finance_delete_text_planned else R.string.finance_delete_text,
+                    ),
+                )
+            },
             confirmButton = {
                 TextButton(onClick = { confirmDelete = false; viewModel.delete() }) { Text(stringResource(R.string.action_delete)) }
             },
@@ -238,7 +247,7 @@ private fun FieldError(text: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DateDialog(initialIso: String, onSelected: (String) -> Unit, onDismiss: () -> Unit) {
+internal fun DateDialog(initialIso: String, onSelected: (String) -> Unit, onDismiss: () -> Unit) {
     val initialMillis = try {
         LocalDate.parse(initialIso).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
     } catch (e: java.time.format.DateTimeParseException) {

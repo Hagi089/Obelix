@@ -42,6 +42,8 @@ data class Booking(
     val comment: String,
     /** Nur bei importierten Buchungen: Herkunft (Excel-Zeile). */
     val importRef: String?,
+    /** Nur bei Buchungen, die aus einer geplanten Ausgabe entstanden sind (Phase 5): Verweis auf die Planung. */
+    val plannedExpenseId: String? = null,
 )
 
 /** Eingabe zum Anlegen oder Ändern einer Buchung. */
@@ -55,6 +57,8 @@ data class BookingInput(
     val description: String,
     val comment: String,
     val importRef: String? = null,
+    /** Nur beim Kauf einer geplanten Ausgabe: Verweis auf die Planung. */
+    val plannedExpenseId: String? = null,
 )
 
 /** Finanzkategorie (Sammlung `categories`). Wird nie gelöscht, nur deaktiviert. */

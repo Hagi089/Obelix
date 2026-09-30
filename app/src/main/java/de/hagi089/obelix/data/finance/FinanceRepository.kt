@@ -28,7 +28,11 @@ interface FinanceRepository {
     /** Aktion „Erstattet": OPEN → SETTLED. */
     suspend fun markSettled(id: String, uid: String): Result<Unit>
 
-    suspend fun delete(id: String): Result<Unit>
+    /**
+     * Löscht die Buchung. Entstand sie aus dem Kauf einer geplanten Ausgabe ([plannedExpenseId]), wird die
+     * Planung im selben Schritt wieder auf GEPLANT gesetzt (sonst wäre der Betrag weder geplant noch ausgegeben).
+     */
+    suspend fun delete(id: String, plannedExpenseId: String?, uid: String): Result<Unit>
 
     /**
      * Einmaliger Import. Jede Buchung braucht [BookingInput.importRef]; sie wird unter dieser ID angelegt.
@@ -96,8 +100,27 @@ class FirestoreFinanceRepository(private val db: FirebaseFirestore) : FinanceRep
         db.writeTransaction { tx -> tx.update(col.document(id), data) }
     }
 
-    override suspend fun delete(id: String): Result<Unit> = repositoryCall {
-        db.writeTransaction { tx -> tx.delete(col.document(id)) }
+    override suspend fun delete(id: String, plannedExpenseId: String?, uid: String): Result<Unit> = repositoryCall {
+        val ref = col.document(id)
+        val planRef = plannedExpenseId?.let { db.collection(PLANNED_COLLECTION).document(it) }
+        db.writeTransaction { tx ->
+            // Lesen vor Schreiben (Transaktionsregel). Fehlt die Planung inzwischen, wird nur die Buchung gelöscht.
+            val plan = planRef?.let { tx.get(it) }
+            tx.delete(ref)
+            if (planRef != null && plan != null && plan.exists() &&
+                plan.getString("status") == "PURCHASED" && plan.getString("purchasedTransactionId") == id
+            ) {
+                tx.update(
+                    planRef,
+                    mapOf(
+                        "status" to "PLANNED",
+                        "purchasedTransactionId" to FieldValue.delete(),
+                        "updatedAt" to FieldValue.serverTimestamp(),
+                        "updatedBy" to uid,
+                    ),
+                )
+            }
+        }
     }
 
     override suspend fun importBookings(inputs: List<BookingInput>, uid: String, onProgress: (Int) -> Unit): Result<Int> =
@@ -116,19 +139,7 @@ class FirestoreFinanceRepository(private val db: FirebaseFirestore) : FinanceRep
             done
         }
 
-    private fun createData(input: BookingInput, uid: String): Map<String, Any> = buildMap {
-        put("type", input.type.name)
-        put("date", input.date)
-        put("amountCents", input.amountCents)
-        put("categoryId", input.categoryId)
-        input.paidByUid?.let { put("paidByUid", it) }
-        put("settlement", input.settlement.name)
-        put("description", input.description)
-        put("comment", input.comment)
-        input.importRef?.let { put("importRef", it) }
-        put("createdAt", FieldValue.serverTimestamp())
-        put("createdBy", uid)
-    }
+    private fun createData(input: BookingInput, uid: String): Map<String, Any> = bookingCreateData(input, uid)
 
     private fun DocumentSnapshot.toBooking(): Booking? {
         if (!exists()) return null
@@ -143,13 +154,34 @@ class FirestoreFinanceRepository(private val db: FirebaseFirestore) : FinanceRep
             description = getString("description") ?: return null,
             comment = getString("comment") ?: "",
             importRef = getString("importRef"),
+            plannedExpenseId = getString("plannedExpenseId"),
         )
     }
 
     private companion object {
-        const val COLLECTION = "transactions"
+        const val COLLECTION = BOOKINGS_COLLECTION
         /** Firestore begrenzt die Regelabfragen je Transaktion auf 20 (je Buchung eine): 10 sind sicher (Regel-Test R-06j). */
         const val IMPORT_CHUNK_SIZE = 10
         const val IMPORT_TIMEOUT_MS = 300_000L
     }
+}
+
+/** Firestore-Sammlungen (auch vom Repository der geplanten Ausgaben genutzt, damit die Namen nur einmal stehen). */
+internal const val BOOKINGS_COLLECTION = "transactions"
+internal const val PLANNED_COLLECTION = "plannedExpenses"
+
+/** Felder einer neuen Buchung. Muss zu firebase/firestore.rules (validBooking) passen. */
+internal fun bookingCreateData(input: BookingInput, uid: String): Map<String, Any> = buildMap {
+    put("type", input.type.name)
+    put("date", input.date)
+    put("amountCents", input.amountCents)
+    put("categoryId", input.categoryId)
+    input.paidByUid?.let { put("paidByUid", it) }
+    put("settlement", input.settlement.name)
+    put("description", input.description)
+    put("comment", input.comment)
+    input.importRef?.let { put("importRef", it) }
+    input.plannedExpenseId?.let { put("plannedExpenseId", it) }
+    put("createdAt", FieldValue.serverTimestamp())
+    put("createdBy", uid)
 }

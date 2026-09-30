@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -27,6 +28,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -57,6 +59,7 @@ fun FinanceScreen(
     viewModel: FinanceViewModel,
     onAdd: () -> Unit,
     onOpen: (String) -> Unit,
+    onOpenPlanned: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -72,7 +75,7 @@ fun FinanceScreen(
             !state.hasLoaded -> Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 CircularProgressIndicator()
             }
-            else -> FinanceContent(state = state, viewModel = viewModel, onOpen = onOpen)
+            else -> FinanceContent(state = state, viewModel = viewModel, onOpen = onOpen, onOpenPlanned = onOpenPlanned)
         }
         if (state.hasLoaded) {
             FloatingActionButton(
@@ -104,7 +107,7 @@ private fun ErrorState(@StringRes messageRes: Int, onRetry: () -> Unit) {
 }
 
 @Composable
-private fun FinanceContent(state: FinanceUiState, viewModel: FinanceViewModel, onOpen: (String) -> Unit) {
+private fun FinanceContent(state: FinanceUiState, viewModel: FinanceViewModel, onOpen: (String) -> Unit, onOpenPlanned: () -> Unit) {
     val summary = remember(state.bookings) { state.summary }
     val visible = remember(state.bookings, state.filter) { state.visible }
     LazyColumn(
@@ -124,6 +127,12 @@ private fun FinanceContent(state: FinanceUiState, viewModel: FinanceViewModel, o
             }
         }
         item { OverviewCard(summary = summary, state = state) }
+        item {
+            OutlinedButton(onClick = onOpenPlanned, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+                Text(text = stringResource(R.string.planned_open), modifier = Modifier.weight(1f))
+                Icon(imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null)
+            }
+        }
         item { Filters(state = state, onChange = viewModel::setFilter) }
         if (state.bookings.isEmpty()) {
             item { EmptyText(R.string.finance_empty) }

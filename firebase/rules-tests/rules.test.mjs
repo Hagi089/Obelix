@@ -9,6 +9,7 @@ import {
   Timestamp,
   collection,
   deleteDoc,
+  deleteField,
   doc,
   getDoc,
   getDocs,
@@ -492,5 +493,277 @@ describe('R-07 Kategorien (categories)', () => {
     await assertSucceeds(runTransaction(db, async (tx) => {
       for (let i = 0; i < 12; i++) tx.set(doc(db, `categories/imp-${i}`), category('admin', { name: `K${i}` }));
     }));
+  });
+});
+
+// =====================================================================
+// Phase 5: geplante Ausgaben. Testdaten nur für den Emulator.
+
+/** Was die App beim Anlegen einer geplanten Ausgabe schreibt (PlannedExpenseRepository.create). */
+function planned(uid, o = {}) {
+  return {
+    title: 'Neue Batterie',
+    estimatedAmountCents: 50000,
+    plannedDate: '2026-09-30',
+    status: 'PLANNED',
+    comment: '',
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+async function seedPlanned(id = 'p1', o = {}) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `plannedExpenses/${id}`), {
+      ...without(planned('member'), 'createdAt'),
+      createdAt: Timestamp.now(),
+      ...o,
+    });
+  });
+}
+
+/** Geplante Ausgabe, die bereits gekauft wurde, samt der zugehörigen Buchung (472,00 statt 500,00 EUR). */
+async function seedPurchased(plannedId = 'p1', bookingId = 'b-p1') {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const now = Timestamp.now();
+    await setDoc(doc(db, `plannedExpenses/${plannedId}`), {
+      ...without(planned('member'), 'createdAt'),
+      status: 'PURCHASED',
+      purchasedTransactionId: bookingId,
+      createdAt: now,
+      updatedAt: now,
+      updatedBy: 'member',
+    });
+    await setDoc(doc(db, `transactions/${bookingId}`), {
+      ...without(booking('member'), 'createdAt'),
+      createdAt: now,
+      plannedExpenseId: plannedId,
+      amountCents: 47200,
+      description: 'Neue Batterie',
+    });
+  });
+}
+
+const planEdit = (uid, o = {}) => ({ title: 'Geändert', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+const planUpdate = (uid, bookingId, o = {}) => ({
+  status: 'PURCHASED', purchasedTransactionId: bookingId, updatedAt: serverTimestamp(), updatedBy: uid, ...o,
+});
+const purchaseBooking = (uid, plannedId, o = {}) =>
+  booking(uid, { plannedExpenseId: plannedId, amountCents: 47200, description: 'Neue Batterie', ...o });
+
+/** Der Kauf wie in der App: Buchung anlegen und Planung auf PURCHASED setzen, in einer Transaktion. */
+function purchase(db, uid, plannedId, bookingId, bookingOverrides = {}, planOverrides = {}) {
+  return runTransaction(db, async (tx) => {
+    await tx.get(doc(db, `plannedExpenses/${plannedId}`));
+    tx.set(doc(db, `transactions/${bookingId}`), purchaseBooking(uid, plannedId, bookingOverrides));
+    tx.update(doc(db, `plannedExpenses/${plannedId}`), planUpdate(uid, bookingId, planOverrides));
+  });
+}
+
+/** Buchung löschen und Planung wieder öffnen, in einer Transaktion (FinanceRepository.delete). */
+function reopen(db, uid, plannedId, bookingId, planOverrides = {}) {
+  return runTransaction(db, async (tx) => {
+    await tx.get(doc(db, `plannedExpenses/${plannedId}`));
+    tx.delete(doc(db, `transactions/${bookingId}`));
+    tx.update(doc(db, `plannedExpenses/${plannedId}`), {
+      status: 'PLANNED', purchasedTransactionId: deleteField(), updatedAt: serverTimestamp(), updatedBy: uid, ...planOverrides,
+    });
+  });
+}
+
+// =====================================================================
+describe('R-08 Geplante Ausgaben (plannedExpenses)', () => {
+  it('R-08a MEMBER und ADMIN dürfen Planungen anlegen und lesen; optionale Felder gültig', async () => {
+    for (const uid of ['member', 'admin']) {
+      await assertSucceeds(setDoc(doc(as(uid), `plannedExpenses/p-${uid}`), planned(uid)));
+    }
+    await assertSucceeds(setDoc(doc(as('member'), 'plannedExpenses/p3'),
+      planned('member', { priority: 'HIGH', link: 'https://example.org/batterie?x=1', comment: 'Kommentar' })));
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'plannedExpenses')));
+    if (list.size !== 3) throw new Error(`erwartet 3 Planungen, gefunden ${list.size}`);
+  });
+
+  it('R-08b ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedPlanned();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'plannedExpenses/p1')));
+      await assertFails(getDocs(collection(db, 'plannedExpenses')));
+      await assertFails(setDoc(doc(db, 'plannedExpenses/neu'), planned('nobody')));
+      await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planEdit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'plannedExpenses/p1')));
+    }
+  });
+
+  it('R-08c Validierung beim Anlegen: Pflichtfelder, Betrag, Datum, Status, Link, Audit', async () => {
+    const db = as('member');
+    const bad = (o) => assertFails(setDoc(doc(db, 'plannedExpenses/x'), planned('member', o)));
+    await bad({ title: '' });
+    await bad({ title: 'x'.repeat(201) });
+    await bad({ estimatedAmountCents: 0 });
+    await bad({ estimatedAmountCents: -5 });
+    await bad({ estimatedAmountCents: 12.5 });
+    await bad({ estimatedAmountCents: 100000001 });
+    await bad({ plannedDate: '30.09.2026' });
+    await bad({ status: 'DONE' });
+    await bad({ status: 'PURCHASED', purchasedTransactionId: 'b1' });
+    await bad({ purchasedTransactionId: 'b1' });
+    await bad({ priority: 'URGENT' });
+    await bad({ link: 'ftp://example.org/datei' });
+    await bad({ link: 'javascript:alert(1)' });
+    await bad({ link: 'https://exa mple.org' });
+    await bad({ link: 'https://example.org/' + 'a'.repeat(500) });
+    await bad({ comment: 'x'.repeat(501) });
+    await bad({ comment: 5 });
+    await bad({ createdBy: 'admin' });
+    await bad({ createdAt: Timestamp.now() });
+    await bad({ updatedAt: serverTimestamp(), updatedBy: 'member' });
+    await bad({ extra: 1 });
+    await assertFails(setDoc(doc(db, 'plannedExpenses/x'), without(planned('member'), 'comment')));
+    await assertFails(setDoc(doc(db, 'plannedExpenses/x'), without(planned('member'), 'title')));
+    // Grenzwerte sind gültig
+    await assertSucceeds(setDoc(doc(db, 'plannedExpenses/g1'), planned('member', { estimatedAmountCents: 1 })));
+    await assertSucceeds(setDoc(doc(db, 'plannedExpenses/g2'), planned('member', { estimatedAmountCents: 100000000, title: 'x'.repeat(200) })));
+  });
+
+  it('R-08d Bearbeiten, solange geplant: jeder Benutzer, Audit Pflicht, Herkunft unveränderlich', async () => {
+    await seedPlanned();
+    await assertSucceeds(updateDoc(doc(as('admin'), 'plannedExpenses/p1'), planEdit('admin', { estimatedAmountCents: 45000, priority: 'LOW' })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { link: 'http://example.org' })));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), { title: 'ohne Audit' }));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('admin')));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { updatedAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { createdAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { estimatedAmountCents: 0 })));
+    await assertFails(updateDoc(doc(as('member'), 'plannedExpenses/p1'), planEdit('member', { title: '' })));
+  });
+
+  it('R-08e Kauf in einer Transaktion: Buchung mit tatsächlichem Betrag, Planung wird PURCHASED', async () => {
+    await seedPlanned();
+    const db = as('member');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    const b = (await assertSucceeds(getDoc(doc(db, 'transactions/b-p1')))).data();
+    const p = (await assertSucceeds(getDoc(doc(db, 'plannedExpenses/p1')))).data();
+    if (b.amountCents !== 47200) throw new Error(`Buchung: erwartet 47200 Cent, gefunden ${b.amountCents}`);
+    if (p.estimatedAmountCents !== 50000) throw new Error('Schätzung darf sich nicht ändern');
+    if (p.status !== 'PURCHASED' || p.purchasedTransactionId !== 'b-p1') throw new Error('Planung nicht als gekauft markiert');
+    if (b.plannedExpenseId !== 'p1') throw new Error('Buchung verweist nicht auf die Planung');
+  });
+
+  it('R-08f PURCHASED ohne passende Buchung ist verboten', async () => {
+    await seedPlanned();
+    await seedPlanned('p2');
+    const db = as('member');
+    // nur die Planung, keine Buchung
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planUpdate('member', 'gibt-es-nicht')));
+    // Buchung existiert schon, verweist aber nicht auf diese Planung
+    await seedBooking('b-alt');
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planUpdate('member', 'b-alt')));
+    // Buchung verweist auf eine andere Planung
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'transactions/b-x'), purchaseBooking('member', 'p2'));
+      tx.update(doc(db, 'plannedExpenses/p1'), planUpdate('member', 'b-x'));
+    }));
+    // Einnahme statt Ausgabe
+    await assertFails(purchase(db, 'member', 'p1', 'b-i', { type: 'INCOME', settlement: 'SETTLED' }));
+    // Kauf und gleichzeitig andere Felder ändern
+    await assertFails(purchase(db, 'member', 'p1', 'b-t', {}, { title: 'Anderer Titel' }));
+    await assertFails(purchase(db, 'member', 'p1', 'b-e', {}, { estimatedAmountCents: 1 }));
+    // Kauf ohne Audit
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'transactions/b-a'), purchaseBooking('member', 'p1'));
+      tx.update(doc(db, 'plannedExpenses/p1'), { status: 'PURCHASED', purchasedTransactionId: 'b-a' });
+    }));
+    const p = (await assertSucceeds(getDoc(doc(db, 'plannedExpenses/p1')))).data();
+    if (p.status !== 'PLANNED') throw new Error('Planung darf nicht gekauft sein');
+  });
+
+  it('R-08g Buchung mit plannedExpenseId gibt es nur zusammen mit dem Kauf', async () => {
+    await seedPlanned();
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'transactions/b1'), purchaseBooking('member', 'p1')));
+    await assertFails(setDoc(doc(db, 'transactions/b2'), purchaseBooking('member', 'gibt-es-nicht')));
+    await assertFails(setDoc(doc(db, 'transactions/b3'), purchaseBooking('member', 'p1', { plannedExpenseId: '' })));
+    // Planung darf sich nicht auf eine andere Buchungs-ID beziehen als die angelegte
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'transactions/b4'), purchaseBooking('member', 'p1'));
+      tx.update(doc(db, 'plannedExpenses/p1'), planUpdate('member', 'andere-id'));
+    }));
+    // Normale Buchungen bleiben unberührt
+    await assertSucceeds(setDoc(doc(db, 'transactions/b5'), booking('member')));
+  });
+
+  it('R-08h Doppelter Kauf und Änderung einer gekauften Planung sind verboten', async () => {
+    await seedPurchased();
+    await seedBooking('b-neu');
+    const db = as('admin');
+    await assertFails(purchase(db, 'admin', 'p1', 'b-zweit'));
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planEdit('admin')));
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planEdit('admin', { estimatedAmountCents: 1 })));
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), planUpdate('admin', 'b-neu')));
+  });
+
+  it('R-08i Wieder öffnen nur, wenn die Buchung im selben Schritt gelöscht wird', async () => {
+    await seedPurchased();
+    const db = as('member');
+    // Buchung bleibt bestehen: verboten
+    await assertFails(updateDoc(doc(db, 'plannedExpenses/p1'), {
+      status: 'PLANNED', purchasedTransactionId: deleteField(), updatedAt: serverTimestamp(), updatedBy: 'member',
+    }));
+    // Buchung löschen und Planung öffnen in einer Transaktion: erlaubt
+    await assertSucceeds(reopen(db, 'member', 'p1', 'b-p1'));
+    const p = (await assertSucceeds(getDoc(doc(db, 'plannedExpenses/p1')))).data();
+    if (p.status !== 'PLANNED' || 'purchasedTransactionId' in p) throw new Error('Planung nicht wieder geöffnet');
+    const b = await assertSucceeds(getDoc(doc(db, 'transactions/b-p1')));
+    if (b.exists()) throw new Error('Buchung müsste gelöscht sein');
+    // danach kann erneut gekauft werden
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-zweit'));
+  });
+
+  it('R-08j Wieder öffnen ändert nichts anderes; Buchung ohne Planung wird trotzdem gelöscht', async () => {
+    await seedPurchased();
+    const db = as('member');
+    await assertFails(reopen(db, 'member', 'p1', 'b-p1', { title: 'Anderer Titel' }));
+    await assertFails(reopen(db, 'member', 'p1', 'b-p1', { updatedBy: 'admin' }));
+    // Buchung ohne Öffnen der Planung löschen (z. B. ältere App): erlaubt; Planung lässt sich danach öffnen
+    await assertSucceeds(deleteDoc(doc(db, 'transactions/b-p1')));
+    await assertSucceeds(updateDoc(doc(db, 'plannedExpenses/p1'), {
+      status: 'PLANNED', purchasedTransactionId: deleteField(), updatedAt: serverTimestamp(), updatedBy: 'member',
+    }));
+  });
+
+  it('R-08k plannedExpenseId einer Buchung ist unveränderlich; sonst normal bearbeitbar', async () => {
+    await seedPurchased();
+    await seedPlanned('p2');
+    await seedBooking('b-normal');
+    const db = as('member');
+    await assertSucceeds(updateDoc(doc(db, 'transactions/b-p1'), edit('member', { amountCents: 47500, settlement: 'SPONSORED' })));
+    await assertFails(updateDoc(doc(db, 'transactions/b-p1'), edit('member', { plannedExpenseId: 'p2' })));
+    await assertFails(updateDoc(doc(db, 'transactions/b-p1'), edit('member', { plannedExpenseId: deleteField() })));
+    await assertFails(updateDoc(doc(db, 'transactions/b-p1'), edit('member', { type: 'INCOME', settlement: 'SETTLED' })));
+    await assertFails(updateDoc(doc(db, 'transactions/b-normal'), edit('member', { plannedExpenseId: 'p2' })));
+    await assertSucceeds(updateDoc(doc(db, 'transactions/b-normal'), edit('member')));
+  });
+
+  it('R-08l Löschen einer Planung: jeder freigeschaltete Benutzer, gekaufte Buchung bleibt', async () => {
+    await seedPlanned('p1');
+    await seedPurchased('p2', 'b-p2');
+    await assertSucceeds(deleteDoc(doc(as('member'), 'plannedExpenses/p1')));
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'plannedExpenses/p2')));
+    const b = await assertSucceeds(getDoc(doc(as('member'), 'transactions/b-p2')));
+    if (!b.exists()) throw new Error('Buchung muss bestehen bleiben');
+  });
+
+  it('R-08m Regression: 300 Importbuchungen in Blöcken à 10 funktionieren weiterhin', async () => {
+    const db = as('admin');
+    for (let start = 0; start < 300; start += 10) {
+      await assertSucceeds(runTransaction(db, async (tx) => {
+        for (let i = start; i < start + 10; i++) {
+          tx.set(doc(db, `transactions/xl-${i}`), booking('admin', { paidByUid: 'member', importRef: `xl-${i}`, settlement: 'SETTLED' }));
+        }
+      }));
+    }
   });
 });

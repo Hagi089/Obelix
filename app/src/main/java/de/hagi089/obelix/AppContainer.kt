@@ -15,6 +15,8 @@ import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
 import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
 import de.hagi089.obelix.data.finance.FirestoreFinanceRepository
+import de.hagi089.obelix.data.planned.FirestorePlannedExpenseRepository
+import de.hagi089.obelix.data.planned.PlannedExpenseRepository
 import de.hagi089.obelix.data.settings.ThemePreference
 import de.hagi089.obelix.data.user.FirestoreUserRepository
 import de.hagi089.obelix.data.user.UserRepository
@@ -43,6 +45,8 @@ class AppContainer(context: Context) {
     val financeRepository: FinanceRepository by lazy { FirestoreFinanceRepository(firestore) }
 
     val categoryRepository: CategoryRepository by lazy { FirestoreCategoryRepository(firestore) }
+
+    val plannedExpenseRepository: PlannedExpenseRepository by lazy { FirestorePlannedExpenseRepository(firestore) }
 
     /** Übergabe von Code und Name zwischen Registrierungsformular und Codebildschirm. */
     val registrationHandoff = RegistrationHandoff()

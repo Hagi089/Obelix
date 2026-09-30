@@ -168,7 +168,7 @@ class BookingFormViewModel(
 
     fun delete() {
         val existing = _state.value.existing ?: return
-        run(_state.value) { finance.delete(existing.id) }
+        run(_state.value) { finance.delete(existing.id, existing.plannedExpenseId, uid) }
     }
 
     private fun run(base: BookingFormState, block: suspend () -> Result<Unit>) {

@@ -27,6 +27,8 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     WEAK_PASSWORD(R.string.error_weak_password),
     TOO_MANY_REQUESTS(R.string.error_too_many_requests),
     INVALID_ACCESS_CODE(R.string.error_access_code_invalid),
+    /** Der Stand hat sich zwischenzeitlich geändert (z. B. Planung wurde schon gekauft). */
+    CONFLICT(R.string.error_conflict),
     UNKNOWN(R.string.error_unknown),
 }
 
@@ -53,7 +55,8 @@ object ErrorMapper {
         is FirebaseAuthUserCollisionException -> AppError.EMAIL_IN_USE
         is FirebaseAuthInvalidUserException -> AppError.UNAUTHENTICATED
         is FirebaseFirestoreException -> mapFirestore(throwable.code)
-        else -> AppError.UNKNOWN
+        // Ein bereits abgebildeter Fehler kann von einer Bibliothek (z. B. Transaktion) umhüllt worden sein.
+        else -> (throwable.cause as? AppException)?.error ?: AppError.UNKNOWN
     }
 
     internal fun mapFirestore(code: FirebaseFirestoreException.Code): AppError = when (code) {

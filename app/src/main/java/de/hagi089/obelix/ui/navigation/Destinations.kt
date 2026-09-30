@@ -24,6 +24,12 @@ import kotlinx.serialization.Serializable
 /** Formular für eine Buchung; bookingId = null legt eine neue an. */
 @Serializable data class BookingFormRoute(val bookingId: String? = null)
 
+/** Liste der geplanten Ausgaben (aus dem Finanzbereich). */
+@Serializable data object PlannedListRoute
+
+/** Formular einer geplanten Ausgabe; plannedId = null legt eine neue an. */
+@Serializable data class PlannedFormRoute(val plannedId: String? = null)
+
 /** Einmaliger Excel-Import (nur ADMIN, aus den Einstellungen). */
 @Serializable data object ImportRoute
 
