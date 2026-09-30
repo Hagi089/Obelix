@@ -1,10 +1,32 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 2: Excel analysiert, Supabase geprüft) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
+Stand: 30.09.2026 (Rev. 3: Finanz-Entscheidungen eingearbeitet, Dropbox geprüft) · Status: **Entwurf, wartet auf Freigabe** · Es wurde kein Code verändert.
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
 Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des GitHub-Repositorys `Hagi089/Obelix`.
+
+---
+
+## 0. Getroffene Entscheidungen (30.09.2026)
+
+| # | Thema | Entscheidung |
+|---|---|---|
+| 6 | Import | Die 325 Excel-Buchungen werden **einmalig importiert**. |
+| 11 | Zahler | „Bezahlt von" = **Partei** (Excel: zwei Paare). Jedes Mitglied gehört zu einer Partei. |
+| 12 | Kosten beglichen | Bestätigt. Ablauf: Eine Partei legt Kosten aus und trägt sie ein → Status **offen** (Excel „nein") → nach Erstattung **beglichen** (Excel „ja", zählt zum Kontostand). **Gesponsert** = keine Erstattung, zählt nicht zum Kontostand, erscheint aber in der Übersicht der Gesamtausgaben. Excel „gesponsert" und „wird gesponsert" werden beide zu „gesponsert". |
+| – | Vermutliche Fehler in der Excel | Werden **unverändert importiert**; der Benutzer korrigiert sie selbst in der App (oder vorher in der Excel). Die betroffenen Zeilen stehen in der nicht-öffentlichen Excel-Analyse. |
+| – | Nachkommastellen | Beträge haben **genau 2 Nachkommastellen** (Speicherung in Cent). Beim Import wird kaufmännisch gerundet. Nachgerechnet: Der Kontostand bleibt dabei unverändert; die Summe der Einzahlungen ändert sich um 1 Cent. |
+| 15 | Kosten pro Tag | **Entfällt.** |
+| 13 | Kategorien | Einmalig aus der Excel übernehmen; in den **Einstellungen** können neue Kategorien angelegt werden. |
+| 14 | Reihenfolge | **Finanzen werden vorgezogen** (direkt nach Haushalt/Rollen), geplante Ausgaben direkt danach. |
+
+**Annahmen, die ich getroffen habe (bitte widersprechen, falls falsch):**
+- Übernommen werden die **12 tatsächlich verwendeten** Kategorien, unverändert (auch „Werkstatt" neben „TÜV/Werkstatt"). Die nie benutzten `Look`-Einträge werden nicht angelegt, sie können über die Einstellungen ergänzt werden.
+- **Kategorien anlegen dürfen alle Mitglieder**; umbenennen/deaktivieren nur ADMIN. Kategorien werden nie gelöscht, nur deaktiviert, damit alte Buchungen gültig bleiben.
+- **Als erstattet markieren** darf jedes Mitglied (Aktion „Erstattet" an einer offenen Ausgabe).
+- „Verantwortung" (Freitext in der Excel) wird **nicht** als eigenes Feld übernommen; beim Import wird der Wert an den Kommentar angehängt, damit nichts verloren geht. Hierzu hast du dich noch nicht geäußert (Entscheidung 15b).
+- Die 25 Buchungen mit Betrag 0 (Inventarliste) werden **nicht** als Finanzbuchungen importiert, da ein Betrag > 0 Pflicht ist (Anforderung 35). Sie stehen nach dem Import in einer Protokolldatei. Wenn du sie behalten willst, bitte sagen (Entscheidung 15c).
 
 ---
 
@@ -78,7 +100,7 @@ Datei `Einkausliste_WoMo_v2_1.xlsx`, vollständig gelesen (Werte und Formeln), K
 - *Offene Forderungen je Partei* = Summe der Beträge je Zahler mit „beglichen = nein".
 - *Kontostand nach Forderungsbegleichung* = Kontostand + offene Forderungen.
 - *Forecast* = Summe der Posten mit „erledigt = nein" (aktuell keine vorhanden; künftig = geplante Ausgaben).
-- *Kosten pro Tag / pro Nutzungstag*: Ausgaben ÷ Tage seit Kauf, mit fest eingetippter Annahme „Nutzung an 15 % der Tage". **Nicht in den Anforderungen** → wird nicht umgesetzt, nur als Vorschlag geführt.
+- *Kosten pro Tag / pro Nutzungstag*: Ausgaben ÷ Tage seit Kauf, mit fest eingetippter Annahme „Nutzung an 15 % der Tage". **Entfällt** (Entscheidung 15).
 
 **Bedeutung von „Kosten beglichen" (aus den Formeln abgeleitet, muss bestätigt werden):** `ja` = über das gemeinsame Konto abgewickelt, zählt zum Kontostand · `nein` = eine Partei hat privat ausgelegt, offene Forderung · `gesponsert` / `wird gesponsert` = wird nicht erstattet, zählt nicht zum Kontostand · leer = nur bei Preis 0.
 
@@ -209,7 +231,9 @@ Abweichung von der Beispielstruktur der Anforderungen: Ein Top-Level-Dokument `u
 | amountCents | Long, > 0 | ja |
 | categoryId | String → `categories` | ja |
 | paidByPartyId (+ optional paidByUid) | String | Ausgabe: ja; Einnahme: optional (Excel kennt nur die Partei) |
-| settlement | `SETTLED` \| `OPEN` \| `SPONSORED` | Ausgabe: ja. Abbildung von „Kosten beglichen" (ja / nein / gesponsert). **Entscheidung 12** |
+| settlement | `OPEN` \| `SETTLED` \| `SPONSORED` | Ausgabe: ja (Standard beim Anlegen: `OPEN`). Einnahme: immer `SETTLED`. Excel „nein" → `OPEN`, „ja" → `SETTLED`, „gesponsert"/„wird gesponsert" → `SPONSORED` |
+| settledAt / settledBy | Timestamp / uid | gesetzt beim Übergang `OPEN` → `SETTLED` |
+| importRef | String | nur bei importierten Buchungen: Excel-Zeilennummer, zur Nachvollziehbarkeit |
 | description | String | ja |
 | comment | String | nein |
 | receipt | Map {path, contentType, sizeBytes} | nein (nur Ausgabe) |
@@ -305,10 +329,42 @@ Quellen: Supabase-Preisseite, Doku zu Storage-Zugriff, Firebase-Auth-Integration
 - **Supabase komplett statt Firebase (Auth + Datenbank + Storage aus einem System, Free-Plan):** Technisch machbar, alles kostenlos ohne Kreditkarte, Dateien bis 50 MB, Rules als RLS. Preis: **Abweichung von der Vorgabe „bevorzugt Firebase"** (erlaubt, wenn technisch erforderlich), anderes Datenmodell (Postgres statt Firestore), anderer Client, **Pausierung nach einer Woche ohne Aktivität** (Gegenmaßnahme: regelmäßiger Aufruf durch die App oder manuelles Fortsetzen). Der Plan müsste in Phase 1–3 umgeschrieben werden.
 - **Firebase mit Bildern in Firestore (Option B unten)** bleibt die einfachste Lösung ohne Blaze, mit Grenze bei großen PDFs.
 
+### Dropbox als Alternative (geprüft am 30.09.2026)
+
+Quellen: Dropbox-OAuth-Dokumentation, Dropbox-Hilfe zu geteilten Ordnern.
+
+Es gibt zwei Varianten, die sich grundlegend unterscheiden:
+
+**Variante 1 – ein gemeinsames Dropbox-Konto, Zugangsschlüssel in der App: nicht vertretbar.** Der Schlüssel steckt dann in jeder installierten App und lässt sich aus der APK auslesen. Wer ihn hat, hat vollen Zugriff auf das Dropbox-Konto, am Haushalt und an den Firebase-Regeln vorbei. Das verletzt Anforderung 28 („nur authentifizierte Benutzer des Haushalts") und 32. Außerdem gilt das Konto dann für Fahrzeugschein und Versicherungsunterlagen als ungeschützt.
+
+**Variante 2 – jedes Familienmitglied verbindet sein eigenes Dropbox-Konto, Dateien liegen in einem geteilten Ordner: technisch sauber, aber aufwendig.**
+- Dropbox unterstützt für Apps die Anmeldung per PKCE (kein Geheimnis in der App) und dauerhafte Refresh-Tokens.
+- Den Zugriffsschutz übernimmt Dropbox über die Mitgliedschaft im geteilten Ordner, **nicht** Firebase. Es gibt dann zwei getrennte Rechtesysteme, die zusammenpassen müssen (wer im Haushalt ist, muss auch im Ordner sein – beides von Hand gepflegt).
+- **Jedes** Familienmitglied braucht ein Dropbox-Konto und muss es in der App zusätzlich verbinden (zweite Anmeldung).
+- Beim kostenlosen Dropbox Basic zählt der geteilte Ordner laut Dropbox-Hilfe **gegen den Speicher jedes Mitglieds**. Basic hat 2 GB (plus eventueller Bonusspeicher). Für ~40 Fotos und einige Dokumente reicht das, sofern die Konten nicht schon voll sind.
+- Nicht geprüft: Gerätelimit von Dropbox Basic für App-Zugriffe, Nutzer-Obergrenze einer Dropbox-App im Entwicklungsstatus.
+- Zusätzlicher Code: Dropbox-SDK, Kontoverknüpfung, Fehlerfälle (Konto nicht verbunden, Ordner nicht geteilt, Speicher voll).
+
+**Bewertung:** Variante 2 ist möglich und kostenlos, erfüllt „einfach vor komplex" aber schlecht. Die Anforderungen sagen ausdrücklich, Dropbox soll nicht allein wegen der wenigen Fotos integriert werden.
+
+### Empfehlung: Dateien in Firestore, in Stücke geteilt (neue Option F)
+
+Firebase Spark bleibt für alles andere (Anmeldung und Daten) **kostenlos und ohne Kreditkarte** – nur Firebase *Storage* ist das Problem. Deshalb können Dateien ebenfalls in Firestore liegen:
+
+- Firestore kann Binärdaten (`Bytes`) direkt speichern. Grenze je Dokument 1 MiB, je Anfrage 10 MiB.
+- Jede Datei wird in Stücke zu ~900 KB aufgeteilt: `households/{hid}/files/{fileId}` (Metadaten: Name, Typ, Größe, Anzahl Stücke) und `…/files/{fileId}/chunks/{n}`. Hochladen in **einem** Batch (alles oder nichts, passt zu Anforderung 8). Beim Öffnen werden die Stücke gelesen und zusammengesetzt.
+- Ein komprimiertes Foto (~1800 px) ist voraussichtlich ein einziges Stück; ein 5-MB-PDF sind 6 Stücke.
+- **Kostenloses Kontingent** (Spark, laut Firebase-Doku): 1 GiB gespeicherte Daten, 50.000 Lesevorgänge/Tag, 20.000 Schreibvorgänge/Tag, 10 GiB ausgehender Datenverkehr/Monat. Beispielrechnung (Annahme, nicht gemessen): 40 Fotos × 0,4 MB + 50 Dokumente × 3 MB ≈ 170 MB – deutlich unter 1 GiB.
+- **Sicherheit:** Dieselben Firestore-Regeln wie für alle anderen Daten; Haushaltstrennung automatisch. Keine öffentlichen Links.
+- **Grenzen:** Dateigröße je Datei auf **8 MB** begrenzen (unter dem 10-MiB-Anfragelimit). Sehr große Handbücher wären zu groß – dann Link statt Datei. Keine Vorschaubilder-Automatik; die App lädt Dateien nur beim Öffnen (sparsam).
+- **Risiko:** Ungewöhnliches, aber bekanntes Muster. Wird das Kontingent irgendwann knapp, lässt sich die Dateiablage hinter der Schnittstelle `FileStore` austauschen, ohne den Rest der App zu ändern.
+
+Damit ist die Anwendung **vollständig kostenlos auf Firebase Spark**, mit einer Anmeldung und einem Rechtesystem.
+
 ### Datei-Ablage (unabhängig vom Speicherort)
 - Pfad: `households/{hid}/campsites/{campsiteId}/{photoId}.jpg`, `households/{hid}/receipts/{transactionId}/{name}`, `households/{hid}/documents/{docId}/{name}`.
 - Nie öffentliche URLs speichern; nur den Pfad im Firestore-Dokument.
-- Grenzen: Fotos nach Kompression typisch ~200–500 KB (Annahme, wird in Phase 6 gemessen); Dokumente/Belege begrenzt auf Bild oder PDF, Größenlimit in Entscheidung 1 festzulegen.
+- Grenzen: Fotos nach Kompression typisch ~200–500 KB (Annahme, wird in Phase 6 gemessen); Dokumente/Belege begrenzt auf Bild oder PDF, bei Option F max. 8 MB je Datei.
 
 ---
 
@@ -354,7 +410,7 @@ Jeder Screen implementiert Loading, Success, Empty, Error, Offline. Löschen imm
 
 ## 9. Implementierungsplan
 
-Reihenfolge gegenüber dem Vorschlag der Anforderungen leicht angepasst: Kalender, Auffälligkeiten und Stellplätze hängen nicht von der Excel-Datei ab und kommen vor den Finanzen. Da die Excel-Datei jetzt vorliegt, kann die Finanzphase auch früher gezogen werden – das ist deine Entscheidung (siehe 14).
+Reihenfolge nach deiner Entscheidung: Finanzen (mit Import) und geplante Ausgaben direkt nach Haushalt und Rollen. Die Dateiablage kommt als eigene Phase vor Stellplätzen und Dokumenten, weil Belege, Fotos und Dokumente sie gemeinsam nutzen.
 
 Nach **jeder** Phase: implementieren → kompilieren → Tests → Fehler beheben → Ergebnis prüfen → dieses Dokument aktualisieren → offene Punkte notieren → erst dann weiter.
 
@@ -382,53 +438,67 @@ Abschlusskriterium: Freigabe durch dich.
 - **Tests:** MEMBER vs. ADMIN, **zwei-Haushalte-Isolation**, Selbst-Beförderung verboten.
 - **Abschluss:** Rules-Tests grün; manuelle Prüfung gegen das echte Projekt mit zwei Testkonten.
 
-### Phase 4 – Kalender
+### Phase 4 – Finanzen und Excel-Import
+- **Ziel:** Einnahmen, Ausgaben, Kategorien, Parteien, Abrechnungsstatus, Kontostand, Übersicht; historische Daten aus der Excel übernommen.
+- **Dateien:** `Transaction`, `Category`, `FinanceRepository`, `finance/*`, `settings/Kategorien`, `core/Money` (Cent-Rechnung), Rules, `tools/import/` (Import-Skript, **ohne Daten**).
+- **Umsetzung:**
+  - Einnahme/Ausgabe erfassen, bearbeiten, löschen (mit Bestätigung); Pflichtfelder laut Anforderung 12/13; Betrag > 0, genau 2 Nachkommastellen.
+  - Abrechnungsstatus: neue Ausgabe = „offen"; Aktion „Erstattet"; „gesponsert" wählbar.
+  - Übersicht: Kontostand, offene Forderungen je Partei, Kontostand nach Begleichung, Gesamtausgaben (inkl. gesponsert); Filter nach Kategorie/Partei/Zeitraum.
+  - Kategorien: Liste aus der Excel; neue Kategorie in den Einstellungen.
+  - Import: einmaliges Skript liest die Excel lokal (Datei bleibt in `private/`), rundet auf Cent, legt Kategorien und Buchungen an, schreibt ein Protokoll (übersprungene Nullbeträge, Rundungen). Zuerst gegen den **Firebase-Emulator**, erst nach deiner Freigabe gegen das echte Projekt. Durchführung mit einem Admin-Zugang (Service-Account-Datei), die **nie** ins Repository kommt.
+- **Tests:** Unit-Tests Cent-Rechnung und Kontostand; Import-Test gegen die Kontrollwerte (Kontostand, offene Forderungen je Partei, Kontostand nach Begleichung, Summen, Anzahl); Statuswechsel offen → erstattet; Rules (fremder Haushalt, Pflichtfelder, negativer Betrag); Offline.
+- **Abschluss:** Nach dem Import zeigt die App dieselben Kennzahlen wie die Excel-Formeln (nachgerechnet: Kontostand bleibt nach Rundung identisch).
+- **Belege** folgen in Phase 6, sobald die Dateiablage steht.
+
+### Phase 5 – Geplante Ausgaben
+- **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
+- **Dateien:** `PlannedExpense`, `PlannedExpenseRepository`, `planned/*`, Rules.
+- **Umsetzung:** Liste/Formular; „Gekauft" fragt tatsächlichen Betrag, Kaufdatum, bezahlt von (Partei), Kategorie, Abrechnungsstatus ab und erzeugt die Ausgabe in einem atomaren Batch.
+- **Tests:** 500 € geplant / 472 € gekauft ⇒ Ausgabe 472 €; geplant erscheint danach nicht mehr offen; Kontostand ändert sich nur durch den Kauf (und nur bei Status „erstattet"); ohne Netz entsteht nichts Halbes.
+- **Abschluss:** Alle Fälle bestanden.
+
+### Phase 6 – Dateiablage und Belege
+- **Voraussetzung:** Entscheidung 1.
+- **Ziel:** Gemeinsame Dateiablage (`FileStore`), Bildverkleinerung, Belege an Ausgaben.
+- **Dateien:** `FileStore`, `ImageCompressor`, Rules für Dateien, Beleg-UI in `finance/*`.
+- **Tests:** Upload/Anzeige/Löschen, Größen- und Typgrenzen, Zugriff durch fremden Haushalt verboten, Abbruch ohne Netz hinterlässt keine Reste.
+- **Abschluss:** Alle Fälle bestanden; gemessene Fotogröße im Plan nachgetragen.
+
+### Phase 7 – Kalender
 - **Ziel:** Nutzung eintragen, bearbeiten, löschen, Überschneidung.
-- **Dateien:** `CalendarEntry`, `CalendarRepository`, `calendar/*`, Rules-Ergänzung.
+- **Dateien:** `CalendarEntry`, `CalendarRepository`, `calendar/*`, Rules.
 - **Umsetzung:** Liste/Monatsansicht, Formular (von/bis/Name, optional Ziel/Kommentar), Überschneidungswarnung, Lösch-Bestätigung.
-- **Tests:** Unit-Tests der Überschneidungslogik (Randfälle: gleicher Tag, angrenzend, umschließend), ungültige Datumsbereiche, Rules, Offline.
+- **Tests:** Überschneidungslogik (gleicher Tag, angrenzend, umschließend), ungültige Datumsbereiche, Rules, Offline.
 - **Abschluss:** Alle Kalenderfälle der Teststrategie bestanden.
 
-### Phase 5 – Auffälligkeiten
+### Phase 8 – Auffälligkeiten
 - **Ziel:** Erstellen, bearbeiten, erledigen, wieder öffnen, filtern, löschen.
 - **Dateien:** `Repair`, `RepairRepository`, `repairs/*`, Rules.
 - **Tests:** Status-Wechsel, Filter, Rechte, Offline.
 - **Abschluss:** Alle Fälle bestanden.
 
-### Phase 6 – Speicher-Entscheidung umsetzen und Stellplätze
-- **Voraussetzung:** Entscheidung 1 (Speicher) und Entscheidung 3 (Karte).
+### Phase 9 – Stellplätze
+- **Voraussetzung:** Phase 6, Entscheidung 3 (Karte).
 - **Ziel:** Standort speichern, bis zu 3 Fotos, Karte, externe Navigation.
-- **Dateien:** `Campsite`, `CampsiteRepository`, `FileStore`, `ImageCompressor`, `campsites/*`, Manifest-Berechtigungen (Standort, Kamera), Rules (Firestore + ggf. Storage).
-- **Umsetzung:** Standortberechtigung erklärt und korrekt behandelt, kein Hintergrund-Tracking; Foto aufnehmen/auswählen, Vorschau, Entfernen, Kompression; Marker → Detail; „Navigation starten" per Intent.
-- **Tests:** GPS/Berechtigung verweigert/erteilt, 3-Foto-Grenze (UI und Rules), Foto einzeln löschen, Löschen des Stellplatzes löscht auch Dateien, Karte, Navigation, Offline.
-- **Abschluss:** Alle Fälle auf echtem Gerät geprüft (GPS und Kamera lassen sich nur dort verlässlich testen).
+- **Dateien:** `Campsite`, `CampsiteRepository`, `campsites/*`, Manifest-Berechtigungen (Standort, Kamera), Rules.
+- **Umsetzung:** Standortberechtigung korrekt behandelt, kein Hintergrund-Tracking; Foto aufnehmen/auswählen, Vorschau, Entfernen; Marker → Detail; „Navigation starten" per Intent.
+- **Tests:** GPS/Berechtigung verweigert/erteilt, 3-Foto-Grenze (UI und Rules), Foto einzeln löschen, Stellplatz löschen entfernt auch Fotos, Karte, Navigation, Offline.
+- **Abschluss:** Alle Fälle auf echtem Gerät geprüft.
 
-### Phase 7 – Dokumente
+### Phase 10 – Dokumente
 - **Ziel:** Hochladen, Kategorie, öffnen, löschen, Zugriffsschutz.
 - **Dateien:** `Document`, `DocumentRepository`, `documents/*`, Rules.
 - **Tests:** Upload, Öffnen, Löschen, Zugriff durch Fremdhaushalt verboten, Dateityp-/Größenlimit.
 - **Abschluss:** Alle Fälle bestanden.
 
-### Phase 8 – Finanzen
-- **Ziel:** Einnahmen, Ausgaben, Kategorien, Personen, Bestand, Belege, Übersicht gemäß Excel-Struktur.
-- **Voraussetzung:** Excel-Analyse liegt vor (Abschnitt 3); du bestätigst die Deutung von „Kosten beglichen" (Entscheidung 12), das Parteien-Modell (11) und die Kategorien (13). Ein einmaliger Import der 325 Buchungen wird nach Entscheidung 6 geplant.
-- **Dateien:** `Transaction`, `Category`, `FinanceRepository`, `finance/*`, Rules.
-- **Tests:** Bestandsberechnung mit bekannten Zahlen, Personenzuordnung, Validierung (kein negativer Betrag), Beleg, Rechte, Offline.
-- **Abschluss:** Berechnung stimmt mit den Excel-Kontrollwerten überein (Kontostand, offene Forderungen, Kontostand nach Begleichung, Summen, Buchungsanzahl).
-
-### Phase 9 – Geplante Ausgaben
-- **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
-- **Dateien:** `PlannedExpense`, `PlannedExpenseRepository`, `planned/*`.
-- **Tests:** Beispiel 500 € geplant / 472 € gekauft ⇒ Ausgabe 472 €; geplant erscheint danach nicht mehr offen; Bestand ändert sich nur durch den Kauf; Abbruch ohne Netz erzeugt nichts Halbes.
-- **Abschluss:** Alle Fälle bestanden.
-
-### Phase 10 – Dashboard
+### Phase 11 – Dashboard
 - **Ziel:** Kennzahlen aus echten Daten.
-- **Umsetzung:** Nächster/aktueller Termin, Bestand, Ausgaben im aktuellen Zeitraum, Anzahl offener Auffälligkeiten, Anzahl offener Anschaffungen, Anzahl Stellplätze; sparsame Abfragen (Zähl-/Aggregationsabfragen). „Aktueller Zeitraum" muss definiert werden (Entscheidung 8).
+- **Umsetzung:** Nächster/aktueller Termin, Kontostand, Ausgaben im aktuellen Zeitraum, offene Forderungen, Anzahl offener Auffälligkeiten, Anzahl offener Anschaffungen, Anzahl Stellplätze; sparsame Zähl-/Aggregationsabfragen. „Aktueller Zeitraum": Entscheidung 8.
 - **Abschluss:** Zahlen stimmen mit den Detailbereichen überein; Leerzustand ohne Fake-Zahlen.
 
-### Phase 11 – Qualitätssicherung
-- Gesamttest laut Abschnitt 42/43/54 der Anforderungen (Auth, Rules, Firestore, Storage, alle Bereiche, Offline, Fehlerfälle, mehrere Bildschirmgrößen), Code-Bereinigung, README vollständig.
+### Phase 12 – Qualitätssicherung
+- Gesamttest laut Abschnitt 42/43/54 der Anforderungen, Code-Bereinigung, README vollständig.
 - **Abschluss:** Alle Abschlusskriterien aus Abschnitt 60 der Anforderungen erfüllt und belegt.
 
 ---
@@ -449,29 +519,31 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 ## 11. Offene Entscheidungen (deine Freigabe nötig)
 
-**1. Dateispeicher (dringend, blockiert Phase 6 und 7)** – Problem: Firebase Storage verlangt für neue Projekte den kostenpflichtigen Blaze-Tarif.
+**1. Dateispeicher (dringend, blockiert Belege, Stellplatzfotos und Dokumente)** – *Neue Empfehlung: Option F.* – Problem: Firebase Storage verlangt für neue Projekte den kostenpflichtigen Blaze-Tarif.
 | Option | Kosten | Vorteile | Nachteile |
 |---|---|---|---|
 | A. Blaze-Tarif mit Storage in `US-CENTRAL1/EAST1/WEST1` (Always-Free) plus Budgetalarm | Erwartet 0 €, aber Kreditkarte/Abrechnungskonto nötig; Überschreiten der Gratisgrenze wäre kostenpflichtig | Ein System, saubere Rules, keine Größenprobleme | Widerspricht „kein kostenpflichtiger Tarif"; Daten in den USA (Datenschutz, Familien-App mit Dokumenten wie Fahrzeugschein) |
 | B. Dateien direkt in Firestore ablegen (Base64, komprimiert) | 0 € im Spark-Tarif | Kein Blaze, alles in einem System, Rules gelten | 1-MiB-Grenze je Dokument: reicht für komprimierte Fotos und kleine Bilder, **nicht** für größere PDFs (Versicherung, Bedienungsanleitungen); Größeres müsste in Teilstücke zerlegt oder abgelehnt werden |
 | C. Fremder kostenloser Dateispeicher (z. B. Supabase) | 0 € | Große Dateien möglich | Zweites Backend, eigene Auth-Anbindung, Datenschutz; mehr Komplexität – widerspricht „einfach vor komplex" |
 | D. Bestehendes älteres Firebase-Projekt mit `*.appspot.com`-Bucket, falls du eines hast | 0 € | Gratis-Kontingent bleibt erhalten | Nur wenn ein solches Projekt existiert; nicht neu anlegbar |
+| F. **Dateien gestückelt in Firestore** (Empfehlung, siehe Abschnitt 6) | 0 €, ohne Kreditkarte | Ein System, eine Anmeldung, Firestore-Regeln gelten | Max. ~8 MB je Datei; eigener Code für das Stückeln |
+| G. Dropbox, jedes Mitglied mit eigenem Konto | 0 € | Große Dateien möglich | Zweite Anmeldung für jeden, zweites Rechtesystem, Speicher zählt bei jedem Mitglied; ein gemeinsames Konto mit Schlüssel in der App ist unsicher und ausgeschlossen |
 | E. Komplett auf Supabase wechseln (statt Firebase) | 0 €, ohne Kreditkarte | Ein System, Dateien bis 50 MB, Rules per RLS | Abweichung von „bevorzugt Firebase", anderes Datenmodell, Pausierung nach 1 Woche Inaktivität, Plan muss umgeschrieben werden |
 
 *Supabase nur für Dateien (Option C) ist durch die Prüfung praktisch ausgeschieden:* Die Kopplung an Firebase Auth braucht Cloud Functions bzw. Identity Platform und damit wieder den Blaze-Tarif.
 
-*Meine technische Empfehlung (unverändert):* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Option E ist die ernsthafte Alternative, wenn dir große PDFs wichtig sind und du kein Blaze willst – dann aber bitte bewusst, weil sie das Fundament ändert. Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
-*Unsicherheit:* Die tatsächliche Kompressionsgröße der Fotos (Annahme 200–500 KB) und Firestore-Kontingente (Stand heute) sind nicht von mir gemessen bzw. neu geprüft worden – das prüfe ich in Phase 1/6, bevor ich baue.
+*Frühere Empfehlung (durch F ersetzt):* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Option E ist die ernsthafte Alternative, wenn dir große PDFs wichtig sind und du kein Blaze willst – dann aber bitte bewusst, weil sie das Fundament ändert. Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
+*Unsicherheit:* Die tatsächliche Kompressionsgröße der Fotos (Annahme 200–500 KB) und die tatsächliche Nutzung des Kontingents sind nicht gemessen – das prüfe ich in Phase 6, bevor Fotos und Dokumente folgen. (Die Spark-Kontingente selbst wurden am 30.09.2026 in der Firebase-Doku geprüft.)
 
 **2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei (Vorschlag: Einladungscode, den der ADMIN erzeugt)?
 
-**3. Karte** – Vorschlag: OpenStreetMap-Kacheln mit einer Open-Source-Bibliothek (Kandidaten: osmdroid, MapLibre; Pflegezustand und Lizenz prüfe ich in Phase 6). Google Maps SDK **nicht** ohne Prüfung, da API-Schlüssel und Abrechnungskonto nötig sein können (nicht verifiziert). Die OSM-Nutzungsrichtlinien für Kacheln erlauben nur moderate Nutzung – für eine kleine Familien-App vermutlich unkritisch, das ist nicht geprüft.
+**3. Karte** – Vorschlag: OpenStreetMap-Kacheln mit einer Open-Source-Bibliothek (Kandidaten: osmdroid, MapLibre; Pflegezustand und Lizenz prüfe ich in Phase 9). Google Maps SDK **nicht** ohne Prüfung, da API-Schlüssel und Abrechnungskonto nötig sein können (nicht verifiziert). Die OSM-Nutzungsrichtlinien für Kacheln erlauben nur moderate Nutzung – für eine kleine Familien-App vermutlich unkritisch, das ist nicht geprüft.
 
 **4. Löschrechte** – Darf MEMBER eigene Einträge löschen, oder nur ADMIN? (Vorschlag: MEMBER löscht eigene Einträge, ADMIN alles.)
 
 **5. Kalender-Überschneidung** – Speichern nach Warnung erlauben? (Vorschlag: ja, mit ausdrücklicher Bestätigung „Trotzdem speichern".)
 
-**6. Import** – Sollen die 325 Buchungen aus der Excel einmalig in OBELIX übernommen werden (Empfehlung: ja, sonst startet der Kontostand bei 0 statt beim tatsächlichen Stand)? Dabei sind Rundung, das vermutlich falsche Jahr zweier Buchungen und die Schreibweisen bei „Verantwortung" zu entscheiden.
+**6. Import** – ✅ entschieden: ja (siehe Abschnitt 0).
 
 **7. Navigation** – 6 Hauptbereiche in Bottom Bar oder Aufteilung/„Mehr"?
 
@@ -481,15 +553,15 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 **10. `google-services.json`** – nicht committen (Vorschlag) oder committen?
 
-**11. Zahler = Partei oder Person?** Die Excel kennt zwei Parteien (zwei Paare). Vorschlag: „Bezahlt von" = Partei; jedes Mitglied gehört zu einer Partei.
+**11.** ✅ entschieden (siehe Abschnitt 0).
 
-**12. „Kosten beglichen"** – Ist meine Deutung richtig (ja = im Kontostand, nein = offene Forderung, gesponsert = nicht erstattet)? Soll der Abrechnungsstatus in die App (Vorschlag: ja, denn der Kontostand der Excel hängt davon ab)?
+**12.** ✅ entschieden (siehe Abschnitt 0).
 
-**13. Kategorien** – 12 verwendete Werte übernehmen; „Werkstatt" mit „TÜV/Werkstatt" zusammenlegen? Ungenutzte Einträge (Bad, Erstanschaffung, Küche, „Schalfen") weglassen oder anlegen?
+**13.** ✅ entschieden (siehe Abschnitt 0).
 
-**14. Reihenfolge** – Finanzen jetzt vorziehen, da die Excel vorliegt?
+**14.** ✅ entschieden (siehe Abschnitt 0).
 
-**15. Nicht übernommene Excel-Funktionen** – „Verantwortung" (Freitext) und „Kosten pro Tag / pro Nutzungstag" stehen nicht in den Anforderungen. Weglassen (Vorschlag) oder aufnehmen?
+**15.** „Kosten pro Tag" ✅ entfällt. **15b.** „Verantwortung": Vorschlag – an den Kommentar anhängen, kein eigenes Feld. **15c.** Nullbeträge (Inventarliste): Vorschlag – nicht importieren, nur protokollieren.
 
 ---
 
@@ -497,7 +569,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 | # | Risiko | Wirkung | Gegenmaßnahme |
 |---|---|---|---|
-| 1 | **Firebase Storage nur mit Blaze** | Konflikt mit Kostenvorgabe | Entscheidung 1 vor Phase 6 |
+| 1 | **Firebase Storage nur mit Blaze** | Konflikt mit Kostenvorgabe | Empfehlung Option F (Dateien in Firestore); Entscheidung 1 vor Phase 6 |
 | 2 | **Excel-Daten uneinheitlich** (veraltete Pivot, Rundungsreste, vermutlich falsches Jahr bei 2 Buchungen, Freitext-Felder) | Falscher Kontostand oder Importfehler | Kontrollwerte aus der Excel als Abnahmetest; Auffälligkeiten nicht stillschweigend „reparieren", sondern mit dir klären |
 | 2b | **Öffentliches Repository und private Finanzdaten** | Namen/Beträge könnten versehentlich veröffentlicht werden | `private/` und `*.xlsx` in `.gitignore`; Analyse mit Namen nur im nicht-öffentlichen Claude-Projekt |
 | 3 | **Kein Android-SDK in dieser Sitzung; Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` blockiert** (geprüft) | Ich kann die App hier voraussichtlich **nicht kompilieren** | Build über GitHub Actions (öffentliches Repo, kostenlos) oder lokal bei dir; ich melde nichts als „kompiliert", was nicht tatsächlich gebaut wurde |
@@ -525,5 +597,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 
 | Phase | Status | Datum | Offene Punkte |
 |---|---|---|---|
-| 0 Analyse | abgeschlossen (Rev. 2 mit Excel-Analyse und Supabase-Prüfung), wartet auf Freigabe | 30.09.2026 | Entscheidungen 1–15 |
-| 1–11 | nicht begonnen | | |
+| 0 Analyse | abgeschlossen (Rev. 3: Finanz-Entscheidungen, Dropbox-Prüfung), wartet auf Freigabe | 30.09.2026 | Offen: 1 (Speicher), 2/2b, 3, 4, 5, 7, 8, 9, 10, 15b, 15c |
+| 1–12 | nicht begonnen | | |
