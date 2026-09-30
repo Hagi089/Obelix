@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 15: **Phase 8 – Auffälligkeiten umgesetzt (Version 13)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün, **Gerätetest G8-01 bis G8-12 offen**; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 7 abgenommen, Phase 8 wartet auf den Gerätetest).
+Stand: 30.09.2026 (Rev. 15: **Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 8 abgenommen, Phase 9 folgt).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -588,7 +588,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test der Oberfläche (Compose) und der Transaktion/Abfrage gegen echtes Firestore.
 - **Nicht Teil von Phase 7:** Dashboard-Anzeige des nächsten Termins (Phase 11), Erinnerungen, Wiederholungen, Antippen eines Tages im Raster.
 
-### Phase 8 – Auffälligkeiten ⏳ umgesetzt (30.09.2026, Version 13), Gerätetest G8-01 bis G8-12 offen
+### Phase 8 – Auffälligkeiten ✅ abgenommen (30.09.2026, Version 13), Gerätetest G8-01 bis G8-12 bestanden
 - **Ziel:** Erstellen, bearbeiten, erledigen, wieder öffnen, filtern (Alle/Offen/Erledigt, Standard „Offen“), löschen mit Bestätigung (Entscheidung 34, 35).
 - **Umgesetzt (Commit `6227ef9`):**
   - `firebase/firestore.rules`: Sammlung `repairs` (`validRepair`, Audit, Anlegen nur `OPEN`, Statuswechsel erlaubt). Regel-Tests R-11 (8 Fälle); R-03c nutzt jetzt `campsites` als Beispiel einer noch gesperrten Sammlung.
@@ -597,7 +597,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Version 13 (`versionCode 13`).
 - **Automatisch geprüft (GitHub Actions, Commit `6227ef9`, Lauf 36762739295):** Android-Bau, Lint und **184 Unit-Tests** grün (155 + 29 neu, aus den Quelltexten gezählt: Validierung 5, Filter/Zähler/Sortierung 9, Formularablauf 15); **92 von 92 Regel-Tests** im Emulator (84 + 8 neu, R-11). Beide Jobs beim ersten Lauf grün.
 - **Mit Fakes getestet (ViewModel):** `RepairFormViewModelTest`: Anlegen (getrimmt), Pflichtfelder, Erledigen/Wiederöffnen schreiben den Status mit den Angaben des Formulars, bei ungültiger Eingabe wird nichts geschrieben, Löschen, Schreibfehler lässt das Formular offen und speichert nichts, unbekannte Kennung und Ladefehler.
-- **Noch nicht geprüft (von dir zu prüfen, Tests G8-01 bis G8-12):** Regeln in der Firebase-Konsole **neu veröffentlichen** (sonst „Dafür fehlt dir die Berechtigung“); Darstellung von Liste, Filter und Formular (Hell/Dunkel, große Schrift, TalkBack); Bedienung von Datumsauswahl, Prioritätsauswahl und Dialog; Verhalten gegen dein echtes Projekt; Offline; zwei Konten.
+- **Gerätetest:** G8-01 bis G8-12 vom Benutzer am 30.09.2026 als bestanden gemeldet (Darstellung, Bedienung, echtes Projekt, Offline, zwei Konten).
 - **Erkenntnisse / Grenzen:**
   - Die Beschreibung ist Pflicht (Anforderung 18 nennt sie unter „Mindestens“); dadurch lässt sich auch eine kurze Auffälligkeit nicht nur mit Titel speichern.
   - „Erledigt“ speichert kein eigenes Datum. Wer und wann zuletzt geändert hat, steht als `updatedBy/At` in der Datenbank, wird aber in der App nicht angezeigt (nicht gefordert).
@@ -737,5 +737,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 5 Geplante Ausgaben | abgenommen (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 bestanden (abgenommen)** | 30.09.2026 | – |
 | 6 Dateiablage und Belege | abgenommen (Version 10): Bau, Lint und Unit-Tests grün (96 aus den Quellen gezählt), **76 Regel-Tests grün** (Commit `5956f25`, Lauf 36748194004); **Gerätetest G6-01 bis G6-14 bestanden** | 30.09.2026 | Fotogröße (G6-02) nicht gemeldet, nicht nachgetragen |
 | 7 Kalender | ✅ abgenommen (Version 11): Bau, Lint, 141 Unit-Tests und 84 Regel-Tests grün (Commit `00e7e5b`); **Gerätetest G7-01 bis G7-14 bestanden**. Erweiterung Personenfarben (Version 12): 155 Unit-Tests grün, **G7-15 offen** | 30.09.2026 | Gerätetest G7-15 |
-| 8 Auffälligkeiten | umgesetzt (Version 13): Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295); **Gerätetest G8-01 bis G8-12 offen** | 30.09.2026 | Regeln neu veröffentlichen; Gerätetest |
+| 8 Auffälligkeiten | ✅ abgenommen (Version 13): Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295); **Gerätetest G8-01 bis G8-12 bestanden** | 30.09.2026 | – |
 | 9–12 | nicht begonnen | | |

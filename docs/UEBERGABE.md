@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · **Phase 8 – Auffälligkeiten umgesetzt (Version 13), Gerätetest G8-01 bis G8-12 offen** · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 30.09.2026 · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -19,8 +19,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ✅ Gerätetest G5-01 bis G5-12 bestanden |
 | 6 | Dateiablage und Belege (Version 09) | ✅ abgenommen: Bau, Lint, 96 Unit-Tests (aus den Quellen gezählt) und 76 Regel-Tests grün (Commit `5956f25`, Fehlerkorrektur Version 10) · ✅ Gerätetest G6-01 bis G6-14 bestanden |
 | **7** | **Kalender (Version 11; Personenfarben Version 12)** | **✅ abgenommen** (G7-01 bis G7-15 bestanden) |
-| **8** | **Auffälligkeiten (Version 13)** | **⏳ umgesetzt**: Bau, Lint, 184 Unit-Tests (aus den Quellen gezählt) und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295) · Gerätetest G8-01 bis G8-12 **offen** |
-| 9–12 | Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 9, nach Abnahme von Phase 8) |
+| **8** | **Auffälligkeiten (Version 13)** | **✅ abgenommen**: Bau, Lint, 184 Unit-Tests (aus den Quellen gezählt) und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295) · Gerätetest G8-01 bis G8-12 bestanden |
+| 9–12 | Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 9) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
@@ -92,7 +92,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Ablauf (Entscheidung 34/35, Annahmen):** Bereich „Aufgaben“ = Liste mit Zähler, Filter **Offen (Standard)/Erledigt/Alle**, Sortierung offen vor erledigt, Priorität, neueres Datum. Formular mit „Als erledigt markieren“/„Wieder öffnen“ (speichert die Angaben des Formulars mit, ungültige Eingaben verhindern es), Löschen mit Bestätigung. Kein eigenes Erledigt-Datum.
 - **Neu im Code:** `data/repairs/*` (`Models`, `RepairValidator`, `RepairLogic`, `RepairRepository`), `ui/repairs/*` (`RepairListScreen`/`-ViewModel`, `RepairFormScreen`/`-ViewModel`), `RepairFormRoute` in `Destinations.kt`, Verdrahtung in `ObelixNavHost`/`ObelixApp`, `AppContainer.repairRepository`, Texte „Auffälligkeiten (Phase 8)“ in `strings.xml`, Regeln/Tests in `firebase/`. Die Priorität nutzt `Priority` aus `data/planned`.
 - **R-03c (Fallstrick aus Phase 7, diesmal vorbeugend):** Der Test „noch nicht freigegebene Sammlungen sind gesperrt“ zeigt jetzt auf `campsites` (Phase 9); danach auf `documents` (Phase 10).
-- **Offen:** Gerätetest G8-01 bis G8-12 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4f). **Regeln in der Firebase-Konsole neu veröffentlichen**, sonst schlägt jeder Zugriff auf `repairs` mit „Dafür fehlt dir die Berechtigung“ fehl. Alte App vor der Installation deinstallieren; unten in den Einstellungen steht „Version 13“. Von mir nicht prüfbar: Darstellung (Hell/Dunkel, große Schrift, TalkBack), Bedienung der Auswahlen und Dialoge, Verhalten gegen das echte Projekt, Offline, zwei Konten.
+- **Abgenommen:** Gerätetest G8-01 bis G8-12 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4f) bestanden; die Regeln für `repairs` sind in der Firebase-Konsole veröffentlicht.
 - **Vorschläge (nicht umgesetzt):** „Zuletzt geändert von/am“ im Formular anzeigen; Dashboard-Zähler offener Auffälligkeiten kommt mit Phase 11; Foto zur Auffälligkeit nach Phase 9 (Kamera vorhanden).
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
@@ -140,7 +140,7 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ## 7. Prompt für den neuen Chat (Phase 9)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Trage die Testergebnisse ein, bevor du ihn sendest.
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Testergebnisse sind bereits eingetragen.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -149,9 +149,9 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 7 abgenommen. Phase 8 (Auffälligkeiten) ist Version 13 (Commit 6227ef9; Bau, Lint, 184 Unit-Tests, 92 Regel-Tests grün). Gerätetest G8-01 bis G8-12: [HIER ERGEBNIS EINTRAGEN, z. B. "alle bestanden" oder die fehlgeschlagenen Fälle mit Beobachtung]. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht: [ja/nein].
+Stand: Phase 1 bis 8 abgenommen (Phase 7 Kalender mit Personenfarben = Version 11 und 12). Phase 8 (Auffälligkeiten) ist Version 13 (Commit 6227ef9; Bau, Lint, 184 Unit-Tests, 92 Regel-Tests grün). Gerätetest G8-01 bis G8-12: alle bestanden. Die Regeln aus firebase/firestore.rules (inklusive repairs) sind in der Firebase-Konsole veröffentlicht: ja.
 
-Auftrag jetzt: [Falls G8 Fehler gefunden hat: zuerst diese beheben. Danach:] PHASE 9 – Stellplätze gemäß Plan (aktuellen Standort speichern, bis zu 3 Fotos, Karte ohne kostenpflichtige API, Navigation extern starten). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
+Auftrag jetzt: PHASE 9 – Stellplätze gemäß Plan (aktuellen Standort speichern, bis zu 3 Fotos, Karte ohne kostenpflichtige API, Navigation extern starten). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
 Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 14, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
 ```
