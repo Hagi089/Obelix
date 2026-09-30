@@ -611,7 +611,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test der Oberfläche (Compose) und der Transaktion gegen echtes Firestore.
 - **Nicht Teil von Phase 8:** Dashboard-Zähler der offenen Auffälligkeiten (Phase 11), Fotos zu Auffälligkeiten, Zuweisung an Personen, Erinnerungen.
 
-### Phase 9 – Stellplätze ✅ umgesetzt (30.09.2026, Version 14), Gerätetest G9-01 bis G9-18 offen
+### Phase 9 – Stellplätze ✅ umgesetzt (30.09.2026, Version 14; Korrekturen der Karte Version 15 bis 17), Gerätetest G9-01 bis G9-18 offen
 - **Voraussetzung:** Phase 6, Entscheidung 3 (Karte → Entscheidung 36).
 - **Ziel:** Standort speichern, bis zu 3 Fotos, Karte, externe Navigation (Entscheidungen 36 bis 39).
 - **Stand:** Commit `961f686`, Lauf 36767013859: Bau, Lint, **238 Unit-Tests** (54 neu, aus den Quellen gezählt) und **104 von 104 Regel-Tests** (12 neu, R-12) grün. Der erste Lauf (`45a4130`) scheiterte nur an **einem Lint-Fehler** (Text in der Karte über `LocalContext` statt `stringResource`), sofort behoben.
@@ -626,6 +626,7 @@ Abschlusskriterium: Freigabe durch dich.
   - osmdroid ist archiviert (Entscheidung 36); die Karte braucht Netz für die Kacheln (ohne Netz bleiben nur schon zwischengespeicherte Kacheln sichtbar, Liste und Formular funktionieren nach dem Laden aus dem Netz).
   - Die Berechtigungen der fertigen APK habe ich **nicht gesehen** (Log nicht erreichbar); der CI-Schritt druckt sie, G9-17 prüft sie.
   - Kein automatischer Test von Oberfläche, Standort, Kamera, Karte und der Transaktion gegen echtes Firestore.
+- **Korrekturen nach dem ersten Gerätetest (Version 15 bis 17, Commits `585dc87`, `1fa06c6`, `e85babf`):** (1) Die Karte (Android-View) zeichnete über den Umschalter Liste/Karte → `clipToBounds` am Kartenbereich. (2) Zwei Stellplätze dicht beieinander ließen die Karte so weit hineinzoomen, dass es dort keine Kacheln gab (leeres Raster, langes Laden) → bei Plätzen näher als etwa 0,004° feste Nahansicht (Zoom 16), sonst Ausschnitt um alle Markierungen; Zoom begrenzt auf 3 bis 19 (Kachelgrenze von OSM Standard). Keine Funktionsänderung sonst.
 - **Nicht Teil von Phase 9:** Fotos im Vollbild/Zoom, Foto zu Auffälligkeiten, Standort ändern, Karte offline, Dashboard-Anzeige (Phase 11), Stellplatz-Suche/Filter.
 - **Abschluss:** Alle Fälle auf echtem Gerät geprüft – **offen** (G9-01 bis G9-18, `TESTFAELLE.md` 2.4g; vorher die Regeln in der Firebase-Konsole veröffentlichen).
 
