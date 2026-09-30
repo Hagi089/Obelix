@@ -27,6 +27,8 @@ import org.osmdroid.views.MapView
 import org.osmdroid.views.overlay.CopyrightOverlay
 import org.osmdroid.views.overlay.Marker
 
+/** Stärkste Vergrößerung beim automatischen Ausschnitt (Straßenebene); der Kartentyp hat Kacheln bis Stufe 19. */
+private const val MAX_FRAME_ZOOM = 17.0
 private const val TILE_CACHE_MAX_BYTES = 50L * 1024 * 1024
 private const val TILE_CACHE_TRIM_BYTES = 40L * 1024 * 1024
 
@@ -105,6 +107,8 @@ private fun createMapView(context: Context): MapView {
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         setTileSource(TileSourceFactory.MAPNIK)
         setMultiTouchControls(true)
+        minZoomLevel = 3.0
+        maxZoomLevel = 19.0
         zoomController.setVisibility(CustomZoomButtonsController.Visibility.SHOW_AND_FADEOUT)
         overlays.add(CopyrightOverlay(context))
     }
@@ -118,11 +122,15 @@ private fun frame(view: MapView, campsites: List<Campsite>) {
         return
     }
     if (campsites.size == 1) {
-        view.controller.setZoom(14.0)
+        view.controller.setZoom(15.0)
         view.controller.setCenter(GeoPoint(campsites[0].latitude, campsites[0].longitude))
         return
     }
     val box = BoundingBox.fromGeoPoints(campsites.map { GeoPoint(it.latitude, it.longitude) })
     // Erst nach dem Layout, sonst kennt die Karte ihre Größe noch nicht.
-    view.post { view.zoomToBoundingBox(box, false, 96) }
+    view.post {
+        view.zoomToBoundingBox(box, false, 96)
+        // Liegen die Plätze dicht beieinander, wäre der Ausschnitt stärker vergrößert, als es Kacheln gibt (leere Karte).
+        if (view.zoomLevelDouble > MAX_FRAME_ZOOM) view.controller.setZoom(MAX_FRAME_ZOOM)
+    }
 }
