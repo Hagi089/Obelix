@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 8: **kein Haushalt mehr**, Benutzer mit Zugangscode; Phase 3 automatisch getestet, Gerätetest offen) · Status: **freigegeben, in Umsetzung** (Phase 3 wartet auf die Geräteabnahme, danach Phase 4).
+Stand: 30.09.2026 (Rev. 8: **kein Haushalt mehr**, Benutzer mit Zugangscode; Phase 3 abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 3 abgenommen, als Nächstes Phase 4).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -451,7 +451,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Gerätetest:** Alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) hat der Benutzer am 30.09.2026 erfolgreich getestet, siehe [`TESTFAELLE.md`](TESTFAELLE.md).
 - **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Der **Zugangscode für die Registrierung ist der Kern von Phase 3** (Zugriff nur mit Code, serverseitig über Firestore-Regeln). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
-### Phase 3 – Benutzer, Rollen, Zugangscode, Firestore-Rules ✅ umgesetzt, ⏳ Geräteabnahme offen
+### Phase 3 – Benutzer, Rollen, Zugangscode, Firestore-Rules ✅ abgenommen (30.09.2026)
 - **Ziel:** Registrierung nur mit Zugangscode, Rollen ADMIN/MEMBER, Rules mit Emulator-Tests.
 - **Verlauf:** Zuerst mit Haushalt, Parteien und Start-Code umgesetzt (Commits `5d4414f` bis `a26b665`). Am 30.09.2026 auf Wunsch des Benutzers **zurückgebaut**: kein Haushalt, keine Parteien, ein gemeinsamer Datenbestand (Commit `656d1e9`).
 - **Umgesetzt:**
@@ -627,5 +627,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
 | 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
-| 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **Geräteabnahme offen** | 30.09.2026 | Regeln veröffentlichen, Code anlegen, eigenes Konto zum ADMIN machen, Tests G3-01 ff. |
+| 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | Phase 4: Excel und genaue E-Mail-Adressen von Tobias und Robert bereitstellen |
 | 4–12 | nicht begonnen | | |

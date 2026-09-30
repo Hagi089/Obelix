@@ -16,7 +16,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 |---|---|---|
 | Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
-| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 3 von 11 (G3-01 bis G3-03), ⏳ 8 offen |
+| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
 | Alle weiteren Bereiche (ab Phase 4) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `656d1e9`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (22 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 30/30 (siehe 2.5).
@@ -75,7 +75,7 @@ Hinweis: Für neue Konten eine E-Mail-Adresse verwenden, auf die du Zugriff hast
 Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer auf dem Gerät erfolgreich getestet. Bei künftigen Fällen bitte ✅ oder ❌ melden, bei ❌ mit Screenshot oder genauer Meldung.
 
 
-### 2.4 Gerätetest Phase 3 – Benutzer, Rollen, Zugangscode (⏳ wartet auf dich)
+### 2.4 Gerätetest Phase 3 – Benutzer, Rollen, Zugangscode (✅ bestanden)
 
 **Voraussetzungen (einmalig, siehe [`FIREBASE-EINRICHTUNG.md`](FIREBASE-EINRICHTUNG.md), Abschnitte 7 und 8):** (1) Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht, (2) Dokument `config/access` mit Code angelegt, (3) neueste Debug-APK aus GitHub Actions installiert (vorher die alte App deinstallieren, die Signatur ändert sich bei jedem CI-Bau). Zugangscodes nicht öffentlich posten.
 
@@ -84,14 +84,14 @@ Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer 
 | G3-01 | Mit deinem **vorhandenen Konto aus Phase 2** anmelden | Kein Hauptbereich, sondern „Zugangscode eingeben" mit „Weiter" und „Abmelden". Ohne veröffentlichte Regeln erscheint stattdessen „Benutzerdaten konnten nicht geladen werden … Dafür fehlt dir die Berechtigung" | ✅ (30.09.2026, Benutzer, nach Fix `e2b2483`) |
 | G3-02 | Dort den Code aus `config/access` eingeben (mit oder ohne Bindestriche, auch Kleinbuchstaben) | Hauptbereich öffnet sich. Einstellungen: dein Name, E-Mail, „Deine Rolle: Mitglied" | ✅ (30.09.2026, Benutzer) |
 | G3-03 | In der Firebase-Konsole in `users/<deine uid>` das Feld `role` auf `ADMIN` setzen; in der App Einstellungen neu öffnen | „Deine Rolle: Admin"; Abschnitte „Zugangscode" (Code sichtbar, Kopieren, Teilen, „Neuen Zugangscode erzeugen") und „Benutzer" (du mit „(du)", ohne Menü) | ✅ (30.09.2026, Benutzer) |
-| G3-04 | Abmelden, „Konto erstellen" mit neuer E-Mail und **falschem Code** (z. B. `AAAAAAAA22222222`) | Zurück zur Anmeldung mit „Der Zugangscode ist ungültig oder nicht mehr gültig." In der Konsole (Authentication) **kein** Konto zu dieser E-Mail | ⏳ |
-| G3-05 | Registrieren mit leerem oder zu kurzem Code | Meldung am Feld, kein Serveraufruf, kein neues Konto | ⏳ |
-| G3-06 | **Zweite Person** registriert sich mit Name, E-Mail, gültigem Code, Passwort | Direkt der Hauptbereich. Einstellungen: „Deine Rolle: Mitglied", **kein** Zugangscode, **keine** Benutzerliste | ⏳ |
-| G3-07 | Als Admin: bei der zweiten Person Menü (drei Punkte) → „Zum Admin machen", dann „Zum Mitglied machen" | Rolle ändert sich sichtbar; die zweite Person sieht nach erneutem Öffnen der Einstellungen jeweils die passende Ansicht | ⏳ |
-| G3-08 | Admin: „Neuen Zugangscode erzeugen" (Bestätigung). Dann mit dem **alten** Code eine weitere Person registrieren, danach mit dem **neuen** | Alter Code: „ungültig", kein Konto; neuer Code: Registrierung gelingt. Bereits registrierte Benutzer behalten ihren Zugriff | ⏳ |
-| G3-09 | Admin: Benutzer „Entfernen" (Bestätigungsdialog). Die entfernte Person startet die App neu | Person ist aus der Liste weg; sie sieht „Zugangscode eingeben" und kommt nur mit dem aktuellen Code wieder hinein | ⏳ |
-| G3-10 | Flugmodus an: als Admin Code erneuern bzw. Benutzer entfernen; außerdem eine Registrierung versuchen | „Keine Verbindung zum Server …", **keine** Erfolgsmeldung, nichts geändert. Flugmodus aus: Aktion funktioniert | ⏳ |
-| G3-11 | App schließen und öffnen; Abmelden und wieder anmelden (ohne Code) | Direkt der Hauptbereich, Rolle stimmt | ⏳ |
+| G3-04 | Abmelden, „Konto erstellen" mit neuer E-Mail und **falschem Code** (z. B. `AAAAAAAA22222222`) | Zurück zur Anmeldung mit „Der Zugangscode ist ungültig oder nicht mehr gültig." In der Konsole (Authentication) **kein** Konto zu dieser E-Mail | ✅ (30.09.2026, Benutzer) |
+| G3-05 | Registrieren mit leerem oder zu kurzem Code | Meldung am Feld, kein Serveraufruf, kein neues Konto | ✅ (30.09.2026, Benutzer) |
+| G3-06 | **Zweite Person** registriert sich mit Name, E-Mail, gültigem Code, Passwort | Direkt der Hauptbereich. Einstellungen: „Deine Rolle: Mitglied", **kein** Zugangscode, **keine** Benutzerliste | ✅ (30.09.2026, Benutzer) |
+| G3-07 | Als Admin: bei der zweiten Person Menü (drei Punkte) → „Zum Admin machen", dann „Zum Mitglied machen" | Rolle ändert sich sichtbar; die zweite Person sieht nach erneutem Öffnen der Einstellungen jeweils die passende Ansicht | ✅ (30.09.2026, Benutzer) |
+| G3-08 | Admin: „Neuen Zugangscode erzeugen" (Bestätigung). Dann mit dem **alten** Code eine weitere Person registrieren, danach mit dem **neuen** | Alter Code: „ungültig", kein Konto; neuer Code: Registrierung gelingt. Bereits registrierte Benutzer behalten ihren Zugriff | ✅ (30.09.2026, Benutzer) |
+| G3-09 | Admin: Benutzer „Entfernen" (Bestätigungsdialog). Die entfernte Person startet die App neu | Person ist aus der Liste weg; sie sieht „Zugangscode eingeben" und kommt nur mit dem aktuellen Code wieder hinein | ✅ (30.09.2026, Benutzer) |
+| G3-10 | Flugmodus an: als Admin Code erneuern bzw. Benutzer entfernen; außerdem eine Registrierung versuchen | „Keine Verbindung zum Server …", **keine** Erfolgsmeldung, nichts geändert. Flugmodus aus: Aktion funktioniert | ✅ (30.09.2026, Benutzer) |
+| G3-11 | App schließen und öffnen; Abmelden und wieder anmelden (ohne Code) | Direkt der Hauptbereich, Rolle stimmt | ✅ (30.09.2026, Benutzer) |
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
@@ -123,7 +123,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 
 | Phase | Bereich | Geplante Testfälle | Art |
 |---|---|---|---|
-| 3 | Benutzer, Rollen, Sicherheitsregeln | **Umgesetzt**: Emulator-Tests R-01 bis R-05 ✅ (siehe 2.5), Unit-Tests A-15/A-16 ✅. **Offen: Gerätetests G3-01 bis G3-11** (siehe 2.4) | Emulator (automatisch), Gerät |
+| 3 | Benutzer, Rollen, Sicherheitsregeln | **Umgesetzt**: Emulator-Tests R-01 bis R-05 ✅ (siehe 2.5), Unit-Tests A-15/A-16 ✅. Gerätetests G3-01 bis G3-11 ✅ (siehe 2.4) | Emulator (automatisch), Gerät |
 | 4 | Finanzen und Import | Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen −99,00 €, Kontostand nach Begleichung 8,17 €, 325 Buchungen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
 | 5 | Geplante Ausgaben | Planung anlegen · „Gekauft" mit tatsächlichem Betrag (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €) · geplante Ausgabe erscheint danach nicht mehr offen · Kontostand ändert sich nur durch den Kauf · Abbruch ohne Netz erzeugt nichts Halbes | Unit, Gerät |
 | 6 | Dateiablage, Belege | Datei hochladen, anzeigen, löschen · Größe höchstens 8 MB, erlaubte Typen · Datei in Stücken korrekt zusammengesetzt · Zugriff ohne Freischaltung verboten · Abbruch hinterlässt keine Reste · Fotogröße messen | Unit, Emulator, Gerät |
@@ -149,3 +149,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | **Haushalt entfernt** (Entscheidung des Benutzers): keine Haushalte und Parteien, alle Benutzer teilen einen Datenbestand; Registrierung mit gemeinsamem Zugangscode, Admin = Projektinhaber. Regeln und Tests neu (29 Regel-Tests, 22 Unit-Tests, alles grün, Commit `656d1e9`). Gerätefälle neu: G3-01 bis G3-11 |
 | 30.09.2026 | **Fehler beim Gerätetest gefunden (G3-01):** Konto ohne Freischaltung sah „Benutzerdaten konnten nicht geladen werden – Dafür fehlt dir die Berechtigung" statt „Zugangscode eingeben". Ursache: Regel erlaubte das Abfragen des eigenen, noch nicht vorhandenen Benutzerdokuments nicht. Behoben in `e2b2483`, Test R-03d ergänzt (30/30 grün). Regeln müssen neu veröffentlicht werden |
 | 30.09.2026 | Benutzer meldet G3-01 bis G3-03 als bestanden (Freischaltung mit Zugangscode, Rolle ADMIN per Konsole). Offen: G3-04 bis G3-11 |
+| 30.09.2026 | Benutzer meldet G3-04 bis G3-11 als bestanden. **Phase 3 vollständig abgenommen** |

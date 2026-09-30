@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 3 (Benutzer, Rollen, Zugangscode, Sicherheitsregeln) umgesetzt, **Haushalt wieder entfernt**, **Geräteabnahme offen** · danach: **Phase 4 – Finanzen und Excel-Import**
+Stand: 30.09.2026 · Phase 3 (Benutzer, Rollen, Zugangscode, Sicherheitsregeln) umgesetzt, **Haushalt wieder entfernt**, **abgenommen** · danach: **Phase 4 – Finanzen und Excel-Import**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -13,7 +13,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 0 | Analyse, Architektur, Plan | ✅ freigegeben |
 | 1 | Projektbasis (Compose, Material 3, Navigation, Firebase, CI) | ✅ auf dem Gerät abgenommen |
 | 2 | Authentifizierung (Registrieren, Anmelden, Abmelden, Passwort-Reset) | ✅ auf dem Gerät abgenommen (G1-01 bis G2-09) |
-| 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ⏳ Gerätetest G3-01 bis G3-11 offen |
+| 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
 | **4** | **Finanzen und Excel-Import** (nach Abnahme von Phase 3) | **⬜ nächste Phase** |
 | 5–12 | Geplante Ausgaben, Dateiablage/Belege, Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
