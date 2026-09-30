@@ -1,7 +1,9 @@
 package de.hagi089.obelix.ui.auth
 
 import androidx.annotation.StringRes
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +38,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -62,7 +67,14 @@ fun AuthScreens(viewModel: AuthViewModel, isOnline: Boolean) {
         mode = newMode
     }
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    Box(modifier = Modifier.fillMaxSize()) {
+        Image(
+            painter = painterResource(R.drawable.login_background),
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            contentScale = ContentScale.Crop,
+            alignment = Alignment.BottomCenter,
+        )
         Column(modifier = Modifier.fillMaxSize()) {
             if (!isOnline) OfflineBanner()
             Column(
@@ -73,30 +85,43 @@ fun AuthScreens(viewModel: AuthViewModel, isOnline: Boolean) {
                     .imePadding()
                     .verticalScroll(rememberScrollState())
                     .padding(horizontal = 24.dp, vertical = 16.dp),
-                verticalArrangement = Arrangement.spacedBy(16.dp, Alignment.CenterVertically),
+                verticalArrangement = Arrangement.Center,
             ) {
-                Text(
-                    text = stringResource(R.string.app_name),
-                    style = MaterialTheme.typography.displaySmall,
-                    color = MaterialTheme.colorScheme.primary,
-                )
-                when (mode) {
-                    AuthMode.LOGIN -> LoginForm(
-                        state = state,
-                        onSubmit = viewModel::signIn,
-                        onRegister = { switchTo(AuthMode.REGISTER) },
-                        onForgotPassword = { switchTo(AuthMode.RESET) },
-                    )
-                    AuthMode.REGISTER -> RegisterForm(
-                        state = state,
-                        onSubmit = viewModel::register,
-                        onBack = { switchTo(AuthMode.LOGIN) },
-                    )
-                    AuthMode.RESET -> ResetForm(
-                        state = state,
-                        onSubmit = viewModel::sendPasswordReset,
-                        onBack = { switchTo(AuthMode.LOGIN) },
-                    )
+                // Halbtransparente Karte, damit das Formular auf dem Foto lesbar bleibt.
+                Surface(
+                    shape = RoundedCornerShape(24.dp),
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.app_name),
+                            style = MaterialTheme.typography.displaySmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                        when (mode) {
+                            AuthMode.LOGIN -> LoginForm(
+                                state = state,
+                                onSubmit = viewModel::signIn,
+                                onRegister = { switchTo(AuthMode.REGISTER) },
+                                onForgotPassword = { switchTo(AuthMode.RESET) },
+                            )
+                            AuthMode.REGISTER -> RegisterForm(
+                                state = state,
+                                onSubmit = viewModel::register,
+                                onBack = { switchTo(AuthMode.LOGIN) },
+                            )
+                            AuthMode.RESET -> ResetForm(
+                                state = state,
+                                onSubmit = viewModel::sendPasswordReset,
+                                onBack = { switchTo(AuthMode.LOGIN) },
+                            )
+                        }
+                    }
                 }
             }
         }

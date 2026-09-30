@@ -133,8 +133,9 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                 item(
                     selected = currentDestination.isIn(destination),
                     onClick = { navController.navigateToTopLevel(destination) },
-                    icon = { Icon(imageVector = destination.icon, contentDescription = null) },
-                    label = { Text(stringResource(destination.labelRes)) },
+                    // Nur Symbole (Beschriftungen brachen um); der Name bleibt für TalkBack als Beschreibung erhalten.
+                    icon = { Icon(imageVector = destination.icon, contentDescription = stringResource(destination.labelRes)) },
+                    label = null,
                 )
             }
         },
