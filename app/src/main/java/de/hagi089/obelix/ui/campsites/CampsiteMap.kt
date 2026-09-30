@@ -107,7 +107,7 @@ private fun createMapView(context: Context): MapView {
         layoutParams = ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT)
         setTileSource(TileSourceFactory.MAPNIK)
         minZoomLevel = 3.0
-        maxZoomLevel = 18.0
+        maxZoomLevel = 19.0
         setMultiTouchControls(true)
         minZoomLevel = 3.0
         maxZoomLevel = 19.0
