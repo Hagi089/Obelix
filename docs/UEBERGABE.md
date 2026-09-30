@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **umgesetzt, Gerätetest G4 offen** · danach: **Phase 5 – Geplante Ausgaben**
+Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Icon, Login-Bild, Menü nur Symbole) umgesetzt, Gerätetest GU offen · danach: **Phase 5 – Geplante Ausgaben**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -14,7 +14,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 1 | Projektbasis (Compose, Material 3, Navigation, Firebase, CI) | ✅ auf dem Gerät abgenommen |
 | 2 | Authentifizierung (Registrieren, Anmelden, Abmelden, Passwort-Reset) | ✅ auf dem Gerät abgenommen (G1-01 bis G2-09) |
 | 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
-| 4 | Finanzen, Kategorien, Excel-Import | ✅ umgesetzt, Bau, 49 Unit-Tests und 45 Regel-Tests grün · ⏳ Gerätetest G4-01 bis G4-16 offen |
+| 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
+| UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen | ✅ umgesetzt, Bau grün (`833599b`) · ⏳ Gerätetest GU-01 bis GU-06 offen |
 | **5** | **Geplante Ausgaben** (nach Abnahme von Phase 4) | **⬜ nächste Phase** |
 | 6–12 |  Dateiablage/Belege, Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
@@ -46,7 +47,12 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - Neu: Sammlungen `transactions` und `categories` (ohne Art), Regeln + Tests R-06/R-07, Finanzen-Übersicht (Kontostand, Forderungen je Zahler, Filter), Buchungsformular (Einnahme/Ausgabe, offen/erstattet/gesponsert), Kategorien in den Einstellungen, Geldklasse `Money` (Cent, deutsche Ein-/Ausgabe, Maximum 1.000.000,00 €).
 - Kontostand wird clientseitig aus allen Buchungen berechnet (ein Laden, keine Dauer-Listener).
 - Bekannte Auffälligkeit in den Daten: Zeilen 104/105 haben das Datum 15.01.2016 (unverändert importiert, vom Benutzer zu prüfen). Rundung halb auf: Zeilen 13/20/181/182/188 ⇒ 6,30 / 29,73 / 1.361,47 / 1.361,47 / 0,16 €; Kontostand bleibt 107,17 €.
-- **Offen:** Gerätetest G4-01 bis G4-16 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4a). **Vom Benutzer:** Regeln neu in der Firebase-Konsole veröffentlichen, neue APK installieren (alte vorher deinstallieren), Robert registrieren, Import ausführen.
+- **Abgenommen:** G4-01 bis G4-16 bestanden, Import in das echte Projekt ausgeführt. Der Import-Code bleibt vorerst (Entfernen in Phase 12 möglich).
+- **Lehre:** Der Benutzer hatte zuerst eine ältere `obelix-import.json` gewählt (Zahler Tobias/Robert, keine Kommentare); die App lehnte sie mit der Meldung zu Zeile 170 (Einnahmen müssen beglichen sein) ab. Verbesserungsvorschlag, nicht umgesetzt: Fehlermeldung nennt den gefundenen Wert.
+
+## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
+- Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
+- **Offen:** Gerätetest GU-01 bis GU-06 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
@@ -97,7 +103,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 3 abgenommen. Phase 4 (Finanzen, Kategorien, Excel-Import) ist umgesetzt (Bau, 49 Unit-Tests, 45 Regel-Tests grün); der Gerätetest G4-01 bis G4-16 ist: [bestanden / Ergebnisse hier eintragen].
+Stand: Phase 1 bis 4 abgenommen (Finanzen, Kategorien, Excel-Import; Bau, 49 Unit-Tests, 45 Regel-Tests grün). Die UI-Überarbeitung (Icon, Login-Hintergrund, Menü nur Symbole) ist gebaut; ihr Gerätetest GU-01 bis GU-06 ist: [bestanden / Ergebnisse hier eintragen].
 
 Auftrag jetzt: PHASE 5 – Geplante Ausgaben gemäß Plan. Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 

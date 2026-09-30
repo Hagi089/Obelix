@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 30.09.2026 · Phase 4 umgesetzt, Gerätetest G4 offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 30.09.2026 · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung: Gerätetest GU offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -17,7 +17,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
 | Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
-| Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ⏳ 16 Fälle (G4-01 bis G4-16) |
+| Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ✅ 16 von 16 (G4-01 bis G4-16) |
 | Alle weiteren Bereiche (ab Phase 5) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `d870760`, Lauf 36734577761):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (49 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 45/45 (siehe 2.5).
@@ -98,28 +98,41 @@ Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer 
 | G3-10 | Flugmodus an: als Admin Code erneuern bzw. Benutzer entfernen; außerdem eine Registrierung versuchen | „Keine Verbindung zum Server …", **keine** Erfolgsmeldung, nichts geändert. Flugmodus aus: Aktion funktioniert | ✅ (30.09.2026, Benutzer) |
 | G3-11 | App schließen und öffnen; Abmelden und wieder anmelden (ohne Code) | Direkt der Hauptbereich, Rolle stimmt | ✅ (30.09.2026, Benutzer) |
 
-### 2.4a Gerätetest Phase 4 – Finanzen und Excel-Import (⏳ offen)
+### 2.4a Gerätetest Phase 4 – Finanzen und Excel-Import (✅ bestanden, 30.09.2026, Benutzer)
 
 Voraussetzung: Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht, neue Debug-APK installiert, Robert (Heidi/Robert) hat sich mit Zugangscode registriert, Datei `obelix-import.json` liegt auf dem Gerät (nicht im Repository).
 
 | ID | Schritte | Erwartet | Status |
 |---|---|---|---|
-| G4-01 | Regeln veröffentlichen, APK installieren, Finanzen öffnen (noch leer) | Leerzustand „Noch keine Buchungen", Kontostand 0,00 €, keine Fake-Zahlen | ⏳ |
-| G4-02 | Einstellungen → Kategorie hinzufügen; gleichen Namen nochmal | Neue Kategorie erscheint; Duplikat wird abgelehnt | ⏳ |
-| G4-03 | Als ADMIN Kategorie umbenennen und deaktivieren; als MEMBER prüfen | ADMIN kann, MEMBER sieht keine Bearbeitung | ⏳ |
-| G4-04 | ADMIN: Einstellungen → Excel-Import → Datei wählen | Vorschau: 300 Buchungen, Einnahmen 69.617,94 €, Ausgaben 70.415,60 €, Kontostand 107,17 €, Robert offen 99,00 €, nach Begleichung 8,17 €, 25 übersprungene Zeilen aufgelistet | ⏳ |
-| G4-05 | Zuordnung: nichts gewählt bzw. beide Zahler dasselbe Konto | Import gesperrt mit Hinweis | ⏳ |
-| G4-06 | Zuordnung Anna/Tobias → Tobias, Heidi/Robert → Robert, Import bestätigen | Bestätigungsdialog, Fortschritt, „Import abgeschlossen: 300" | ⏳ |
-| G4-07 | Finanzen öffnen | Kontostand 107,17 €, „Ausgelegt von Robert 99,00 €", gesponsert 805,83 € | ⏳ |
-| G4-08 | Import erneut ausführen | 300 von 300 bereits vorhanden, Schaltfläche gesperrt, keine Dubletten | ⏳ |
-| G4-09 | Filter (Jahr, Art, Kategorie, Status) | Liste und Summen passen zum Filter | ⏳ |
-| G4-10 | Neue Ausgabe „offen" (Zahler Robert) anlegen | Forderung steigt, Kontostand unverändert | ⏳ |
-| G4-11 | „Als erstattet markieren" | Forderung sinkt, Kontostand sinkt um den Betrag | ⏳ |
-| G4-12 | Buchung bearbeiten; Einnahme mit „Keine Angabe" als Zahler anlegen | Änderung sichtbar; Einnahme wird gespeichert | ⏳ |
-| G4-13 | Testbuchung löschen (mit Bestätigung) | Kontostand wieder 107,17 € | ⏳ |
-| G4-14 | Flugmodus: Buchung speichern | Fehlermeldung, kein falscher Erfolg, nichts gespeichert | ⏳ |
-| G4-15 | Mit Robert anmelden | Sieht dieselben Buchungen und Summen | ⏳ |
-| G4-16 | Rundungsstichprobe und Regression: Anteil Schaden 1.361,47 €, Schneidebrett 6,30 €, 2xTöpfe 29,73 €; Einstellungen (Code, Benutzer, Abmelden) funktionieren wie zuvor | Werte stimmen, keine Regression | ⏳ |
+| G4-01 | Regeln veröffentlichen, APK installieren, Finanzen öffnen (noch leer) | Leerzustand „Noch keine Buchungen", Kontostand 0,00 €, keine Fake-Zahlen | ✅ |
+| G4-02 | Einstellungen → Kategorie hinzufügen; gleichen Namen nochmal | Neue Kategorie erscheint; Duplikat wird abgelehnt | ✅ |
+| G4-03 | Als ADMIN Kategorie umbenennen und deaktivieren; als MEMBER prüfen | ADMIN kann, MEMBER sieht keine Bearbeitung | ✅ |
+| G4-04 | ADMIN: Einstellungen → Excel-Import → Datei wählen | Vorschau: 300 Buchungen, Einnahmen 69.617,94 €, Ausgaben 70.415,60 €, Kontostand 107,17 €, Robert offen 99,00 €, nach Begleichung 8,17 €, 25 übersprungene Zeilen aufgelistet | ✅ |
+| G4-05 | Zuordnung: nichts gewählt bzw. beide Zahler dasselbe Konto | Import gesperrt mit Hinweis | ✅ |
+| G4-06 | Zuordnung Anna/Tobias → Tobias, Heidi/Robert → Robert, Import bestätigen | Bestätigungsdialog, Fortschritt, „Import abgeschlossen: 300" | ✅ |
+| G4-07 | Finanzen öffnen | Kontostand 107,17 €, „Ausgelegt von Robert 99,00 €", gesponsert 805,83 € | ✅ |
+| G4-08 | Import erneut ausführen | 300 von 300 bereits vorhanden, Schaltfläche gesperrt, keine Dubletten | ✅ |
+| G4-09 | Filter (Jahr, Art, Kategorie, Status) | Liste und Summen passen zum Filter | ✅ |
+| G4-10 | Neue Ausgabe „offen" (Zahler Robert) anlegen | Forderung steigt, Kontostand unverändert | ✅ |
+| G4-11 | „Als erstattet markieren" | Forderung sinkt, Kontostand sinkt um den Betrag | ✅ |
+| G4-12 | Buchung bearbeiten; Einnahme mit „Keine Angabe" als Zahler anlegen | Änderung sichtbar; Einnahme wird gespeichert | ✅ |
+| G4-13 | Testbuchung löschen (mit Bestätigung) | Kontostand wieder 107,17 € | ✅ |
+| G4-14 | Flugmodus: Buchung speichern | Fehlermeldung, kein falscher Erfolg, nichts gespeichert | ✅ |
+| G4-15 | Mit Robert anmelden | Sieht dieselben Buchungen und Summen | ✅ |
+| G4-16 | Rundungsstichprobe und Regression: Anteil Schaden 1.361,47 €, Schneidebrett 6,30 €, 2xTöpfe 29,73 €; Einstellungen (Code, Benutzer, Abmelden) funktionieren wie zuvor | Werte stimmen, keine Regression | ✅ |
+
+### 2.4b Gerätetest UI-Überarbeitung (⏳ offen)
+
+Bau und Lint grün (Commit `833599b`, Lauf 36739044165). Das Aussehen kann ich nicht prüfen (kein Gerät). Vor dem Installieren die alte App deinstallieren.
+
+| ID | Schritte | Erwartet | Status |
+|---|---|---|---|
+| GU-01 | App auf dem Startbildschirm und in der App-Liste ansehen | Neues Icon (Wohnmobil mit OBELIX), nicht abgeschnitten, keine weißen Ränder | ⏳ |
+| GU-02 | Abmelden, Login-Bildschirm ansehen (hell und dunkel) | Hintergrundbild vollflächig, Formular auf Karte gut lesbar | ⏳ |
+| GU-03 | Login, Registrierung, Passwort vergessen umschalten; Tastatur öffnen | Alle Felder erreichbar, Bildschirm scrollt, nichts verdeckt | ⏳ |
+| GU-04 | Anmelden, untere Leiste ansehen | Nur Symbole, keine Texte, kein Umbrechen; Auswahl erkennbar; alle sechs Bereiche erreichbar | ⏳ |
+| GU-05 | TalkBack (optional): Symbole in der Leiste | Jedes Symbol wird mit seinem Namen vorgelesen | ⏳ |
+| GU-06 | Regression: Finanzen, Einstellungen, Abmelden und Anmelden, Zugangscode-Bildschirm (frisches Konto) | Verhalten wie zuvor | ⏳ |
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
@@ -154,7 +167,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | Phase | Bereich | Geplante Testfälle | Art |
 |---|---|---|---|
 | 3 | Benutzer, Rollen, Sicherheitsregeln | **Umgesetzt**: Emulator-Tests R-01 bis R-05 ✅ (siehe 2.5), Unit-Tests A-15/A-16 ✅. Gerätetests G3-01 bis G3-11 ✅ (siehe 2.4) | Emulator (automatisch), Gerät |
-| 4 | Finanzen und Import | **Umgesetzt**: A-17 bis A-20 ✅, R-06/R-07 ✅, Gerätetests G4-01 bis G4-16 ⏳ (siehe 2.4a). Ursprünglich geplant: Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen 99,00 €, nach Begleichung 8,17 €, 300 importierbare Buchungen + 25 übersprungene Zeilen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
+| 4 | Finanzen und Import | **Umgesetzt**: A-17 bis A-20 ✅, R-06/R-07 ✅, Gerätetests G4-01 bis G4-16 ✅ (siehe 2.4a). Ursprünglich geplant: Einnahme/Ausgabe erfassen, ändern, löschen (mit Bestätigung) · Betrag muss größer als 0 sein, genau 2 Nachkommastellen · Pflichtfelder · Bezahlt von = Benutzer · Status offen → erstattet · gesponsert zählt nicht zum Kontostand · Kontostand, offene Forderungen je Zahler, Kontostand nach Begleichung · **Importtest gegen die Excel-Kontrollwerte** (Kontostand 107,17 €, offene Forderungen 99,00 €, nach Begleichung 8,17 €, 300 importierbare Buchungen + 25 übersprungene Zeilen, Rundung auf Cent) · neue Kategorie in den Einstellungen · Offline | Unit, Emulator, Gerät |
 | 5 | Geplante Ausgaben | Planung anlegen · „Gekauft" mit tatsächlichem Betrag (500 € geplant, 472 € gekauft ⇒ Ausgabe 472 €) · geplante Ausgabe erscheint danach nicht mehr offen · Kontostand ändert sich nur durch den Kauf · Abbruch ohne Netz erzeugt nichts Halbes | Unit, Gerät |
 | 6 | Dateiablage, Belege | Datei hochladen, anzeigen, löschen · Größe höchstens 8 MB, erlaubte Typen · Datei in Stücken korrekt zusammengesetzt · Zugriff ohne Freischaltung verboten · Abbruch hinterlässt keine Reste · Fotogröße messen | Unit, Emulator, Gerät |
 | 7 | Kalender | Termin anlegen, ändern, löschen · ungültiger Zeitraum (Ende vor Start) · **Überschneidung vor dem Speichern eindeutig angezeigt** (welcher Eintrag, wer, wann), Speichern nur nach Bestätigung · Randfälle: gleicher Tag, angrenzend, umschließend | Unit, Gerät |
@@ -181,3 +194,5 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | Benutzer meldet G3-01 bis G3-03 als bestanden (Freischaltung mit Zugangscode, Rolle ADMIN per Konsole). Offen: G3-04 bis G3-11 |
 | 30.09.2026 | Benutzer meldet G3-04 bis G3-11 als bestanden. **Phase 3 vollständig abgenommen** |
 | 30.09.2026 | **Phase 4 umgesetzt** (Finanzen, Kategorien, Excel-Import in der App durch ADMIN, Import-Weg B). Automatisch grün: Bau, Lint, 49 Unit-Tests, 45 Regel-Tests (Commit `d870760`). Zwei Testfehler in den Regel-Tests (falscher Ersteller, falsch erwarteter Fehlerfall) wurden im Test behoben, nicht in den Regeln. Gerätefälle G4-01 bis G4-16 offen; Regeln müssen neu veröffentlicht werden |
+| 30.09.2026 | Benutzer meldet G4-01 bis G4-16 als bestanden. **Phase 4 abgenommen.** Zwischenfall beim Import: eine ältere Importdatei (Zahler Tobias/Robert, Zeile 170 als gesponserte Einnahme) wurde von der App zu Recht abgelehnt; mit der richtigen Datei lief der Import |
+| 30.09.2026 | UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen. Bau, Lint, 49 Unit-Tests, 45 Regel-Tests grün (Commit `833599b`). Gerätefälle GU-01 bis GU-06 offen |

@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 9: **Phase 4 umgesetzt** – Finanzen und Excel-Import; Gerätetest G4 offen) · Status: **freigegeben, in Umsetzung** (Phase 3 abgenommen, Phase 4 wartet auf die Geräteabnahme, danach Phase 5).
+Stand: 30.09.2026 (Rev. 10: **Phase 4 abgenommen** – Gerätetest G4-01 bis G4-16 bestanden; UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 4 abgenommen, nächste Phase 5).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -468,7 +468,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Noch nicht geprüft (kein Gerät, kein Zugriff auf das echte Projekt):** Ablauf in der App und mit dem echten Firebase-Projekt (Tests G3-xx). Dafür muss der Benutzer die Regeln veröffentlichen, den Code anlegen und sich zum ADMIN machen (`FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8).
 - **Bekannt / offen:** (1) Entfernte Benutzer behalten ihr Konto in Firebase Auth (ohne Datenzugriff); löschen kann man es in der Konsole. (2) Die Rolle wird beim Start und beim Öffnen der Einstellungen geladen, nicht laufend. (3) Keine Mutationsprüfung der Regel-Tests.
 
-### Phase 4 – Finanzen und Excel-Import ✅ umgesetzt (30.09.2026), Gerätetest G4 offen
+### Phase 4 – Finanzen und Excel-Import ✅ umgesetzt und auf dem Gerät abgenommen (30.09.2026)
 - **Ziel:** Einnahmen, Ausgaben, Kategorien, Zahler (Benutzer), Abrechnungsstatus, Kontostand, Übersicht; historische Daten aus der Excel übernommen.
 - **Umgesetzt (Commits `4c2dc88`, `c2b2b61`, `d870760`):**
   - `firebase/firestore.rules`: `transactions` und `categories` (siehe Abschnitt 7). Regel-Tests R-06 (10 Fälle) und R-07 (5 Fälle).
@@ -487,6 +487,12 @@ Abschlusskriterium: Freigabe durch dich.
   - Die Excel-Fehler (z. B. vermutlich falsches Jahr bei den Zeilen 104/105, in der App 15.01.2016) sind **unverändert** übernommen; du korrigierst sie in der App.
   - Einnahmen und Ausgaben lassen sich beim Bearbeiten in die jeweils andere Art umwandeln; die Regeln prüfen die Kombination (Einnahme immer „beglichen").
 - **Nicht Teil von Phase 4:** Belege (Phase 6, Dateiablage), geplante Ausgaben (Phase 5).
+
+### UI-Überarbeitung nach Phase 4 (30.09.2026, auf Wunsch des Benutzers)
+- **App-Icon:** vom Benutzer geliefertes Bild (Wohnmobil mit Schriftzug OBELIX) als Adaptive Icon (`mipmap-anydpi-v26/ic_launcher.xml` und `ic_launcher_round.xml`, Vordergrund `drawable-nodpi/ic_launcher_foreground.png` mit Grafik auf 78 % der Fläche, Hintergrundfarbe `#1E3557`). Kein Icon für ältere Android-Versionen nötig (minSdk 26). Kein Monochrom-Icon (Themed Icons): nicht geliefert, nicht erfunden.
+- **Login-Hintergrund:** vom Benutzer geliefertes Bild `drawable-nodpi/login_background.jpg` (Wohnmobil vor Bergen, Sonnenuntergang) vollflächig, unten ausgerichtet; Formular (Login, Registrierung, Passwort zurücksetzen) auf halbtransparenter Karte. Nur der Anmeldebereich; der Zugangscode-Bildschirm bleibt unverändert.
+- **Menü:** untere Navigation nur mit Symbolen, kein Text mehr (`label = null`); der Name bleibt als `contentDescription` für TalkBack. Die obere Leiste zeigt weiter den Bereichsnamen.
+- Nicht geprüft (Gerätetest GU): Aussehen auf verschiedenen Launchern und Formen, Lesbarkeit der Karte im hellen und dunklen Modus. Bildgrößen: Hintergrund 169 KB, Icon-Vordergrund 270 KB.
 
 ### Phase 5 – Geplante Ausgaben
 - **Ziel:** Planung, „Gekauft"-Workflow mit tatsächlichem Betrag.
@@ -640,5 +646,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
-| 4 Finanzen und Excel-Import | umgesetzt, Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); **Gerätetest G4-01 bis G4-16 und der Import in dein Projekt stehen aus** | 30.09.2026 | Regeln neu veröffentlichen, Tobias und Robert registriert, Importdatei `obelix-import.json` auf das Gerät legen |
+| 4 Finanzen und Excel-Import | ✅ abgenommen: Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); Gerätetest G4-01 bis G4-16 bestanden (Benutzer, 30.09.2026), Import in das echte Projekt durchgeführt | 30.09.2026 | – |
 | 5–12 | nicht begonnen | | |
