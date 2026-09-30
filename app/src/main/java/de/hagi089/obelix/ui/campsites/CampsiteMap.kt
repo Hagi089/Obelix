@@ -9,6 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
@@ -46,6 +47,7 @@ fun CampsiteMap(
     val lifecycle = LocalLifecycleOwner.current.lifecycle
     val currentOnOpen by rememberUpdatedState(onOpen)
     val mapView = remember { createMapView(context) }
+    val unnamed = stringResource(R.string.campsite_unnamed)
 
     DisposableEffect(lifecycle, mapView) {
         val observer = LifecycleEventObserver { _, event ->
@@ -71,7 +73,7 @@ fun CampsiteMap(
         update = { view ->
             view.overlays.removeAll { it is Marker }
             campsites.forEach { campsite ->
-                val title = campsite.name ?: context.getString(R.string.campsite_unnamed)
+                val title = campsite.name ?: unnamed
                 val marker = Marker(view).apply {
                     position = GeoPoint(campsite.latitude, campsite.longitude)
                     setAnchor(Marker.ANCHOR_CENTER, Marker.ANCHOR_BOTTOM)
