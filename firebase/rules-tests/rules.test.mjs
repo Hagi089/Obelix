@@ -175,8 +175,8 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
   it('R-03c noch nicht freigegebene Sammlungen sind für alle gesperrt', async () => {
     for (const uid of ['admin', 'member']) {
       const db = as(uid);
-      await assertFails(setDoc(doc(db, 'calendarEntries/t1'), { amountCents: 100 }));
-      await assertFails(getDoc(doc(db, 'calendarEntries/t1')));
+      await assertFails(setDoc(doc(db, 'repairs/t1'), { amountCents: 100 }));
+      await assertFails(getDoc(doc(db, 'repairs/t1')));
       await assertFails(setDoc(doc(db, 'irgendwas/x'), { a: 1 }));
       await assertFails(setDoc(doc(db, 'config/other'), { a: 1 }));
     }
