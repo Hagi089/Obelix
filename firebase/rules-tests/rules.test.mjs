@@ -424,7 +424,7 @@ describe('R-06 Buchungen (transactions)', () => {
     for (let start = 0; start < 300; start += 10) {
       await assertSucceeds(runTransaction(db, async (tx) => {
         for (let i = start; i < start + 10; i++) {
-          tx.set(doc(db, `transactions/xl-${i}`), booking('member', { importRef: `xl-${i}`, settlement: 'SETTLED' }));
+          tx.set(doc(db, `transactions/xl-${i}`), booking('admin', { paidByUid: 'member', importRef: `xl-${i}`, settlement: 'SETTLED' }));
         }
       }));
     }
@@ -432,7 +432,7 @@ describe('R-06 Buchungen (transactions)', () => {
     if (list.size !== 300) throw new Error(`erwartet 300 Buchungen, gefunden ${list.size}`);
     // Wiederholter Import darf bestehende Buchungen nicht überschreiben
     await assertFails(runTransaction(db, async (tx) => {
-      tx.set(doc(db, 'transactions/xl-0'), booking('member', { importRef: 'xl-0', amountCents: 1 }));
+      tx.set(doc(db, 'transactions/xl-0'), booking('admin', { paidByUid: 'member', importRef: 'xl-0', amountCents: 1 }));
     }));
   });
 });
