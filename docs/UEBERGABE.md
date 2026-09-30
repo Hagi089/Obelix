@@ -75,9 +75,9 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den neuen Chat (Abnahme Phase 3, dann Phase 4)
+## 7. Prompt für den neuen Chat (Phase 4)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Für Phase 4 die Excel-Datei `Einkausliste_WoMo_v2_1.xlsx` im Chat anhängen.
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Excel-Datei `Einkausliste_WoMo_v2_1.xlsx` im Chat anhängen.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -86,9 +86,9 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 3 sind umgesetzt (Bau, Unit-Tests und Regel-Tests in GitHub Actions grün). Phase 1 und 2 sind auf dem Gerät abgenommen. Für Phase 3 habe ich [ALLES / folgende Fälle: …] aus docs/TESTFAELLE.md (G3-01 bis G3-11) getestet: [Ergebnisse hier eintragen, bei Fehlern mit Meldung oder Screenshot].
+Stand: Phase 1 bis 3 sind umgesetzt und auf dem Gerät abgenommen (G1-01 bis G3-11 bestanden; Bau, 22 Unit-Tests und 30 Regel-Tests in GitHub Actions grün). Es gibt keinen Haushalt: alle Benutzer teilen einen Datenbestand, Registrierung mit gemeinsamem Zugangscode, Tobias = ADMIN, alle anderen MEMBER. "Bezahlt von" ist ein Benutzer, angezeigt mit Namen.
 
-Auftrag jetzt: [Fehler aus dem Gerätetest beheben, danach] PHASE 4 – Finanzen und Excel-Import gemäß Plan. Die Excel-Datei hänge ich an; die Analyse steht im Projekt-Dokument "Excel-Analyse". Erst analysieren und einen kurzen Plan für Phase 4 zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
+Auftrag jetzt: PHASE 4 – Finanzen und Excel-Import gemäß Plan. Die Excel-Datei hänge ich an; die Analyse steht im Projekt-Dokument "Excel-Analyse" (Abschnitt 9: Zuordnung Excel-Zahler zu Konten: "Tobias und Anna" bzw. "Anna/Tobias" = Konto von Tobias, "Robert und Heidi" bzw. "Heidi/Robert" = Konto von Robert). Die genauen E-Mail-Adressen der beiden Konten nenne ich dir im Chat; sie kommen nicht ins öffentliche Repository. Erst analysieren und einen kurzen Plan für Phase 4 zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
 Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage.
 ```
