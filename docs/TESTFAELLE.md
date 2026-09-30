@@ -132,6 +132,10 @@ Bau und Lint grün (Commit `833599b`, Lauf 36739044165). Das Aussehen kann ich n
 | GU-03 | Login, Registrierung, Passwort vergessen umschalten; Tastatur öffnen | Alle Felder erreichbar, Bildschirm scrollt, nichts verdeckt | ⏳ |
 | GU-04 | Anmelden, untere Leiste ansehen | Nur Symbole, keine Texte, kein Umbrechen; Auswahl erkennbar; alle sechs Bereiche erreichbar | ⏳ |
 | GU-05 | TalkBack (optional): Symbole in der Leiste | Jedes Symbol wird mit seinem Namen vorgelesen | ⏳ |
+| GU-07 | Einstellungen: Symbol ganz oben antippen (als ADMIN und als MEMBER) | Wechsel Hell/Dunkel sofort, Symbol wechselt (Mond/Sonne), auch Status- und Navigationsleiste passend | ⏳ |
+| GU-08 | App komplett schließen und neu öffnen | Gewählte Darstellung bleibt erhalten | ⏳ |
+| GU-09 | Einstellungen ganz nach unten scrollen | „Version 07" sichtbar | ⏳ |
+| GU-10 | Einstellungen als MEMBER (Robert) und als ADMIN | Abschnitt „Kategorien" nur beim ADMIN; Import und Benutzerverwaltung weiterhin nur beim ADMIN | ⏳ |
 | GU-06 | Regression: Finanzen, Einstellungen, Abmelden und Anmelden, Zugangscode-Bildschirm (frisches Konto) | Verhalten wie zuvor | ⏳ |
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
@@ -196,3 +200,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | **Phase 4 umgesetzt** (Finanzen, Kategorien, Excel-Import in der App durch ADMIN, Import-Weg B). Automatisch grün: Bau, Lint, 49 Unit-Tests, 45 Regel-Tests (Commit `d870760`). Zwei Testfehler in den Regel-Tests (falscher Ersteller, falsch erwarteter Fehlerfall) wurden im Test behoben, nicht in den Regeln. Gerätefälle G4-01 bis G4-16 offen; Regeln müssen neu veröffentlicht werden |
 | 30.09.2026 | Benutzer meldet G4-01 bis G4-16 als bestanden. **Phase 4 abgenommen.** Zwischenfall beim Import: eine ältere Importdatei (Zahler Tobias/Robert, Zeile 170 als gesponserte Einnahme) wurde von der App zu Recht abgelehnt; mit der richtigen Datei lief der Import |
 | 30.09.2026 | UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen. Bau, Lint, 49 Unit-Tests, 45 Regel-Tests grün (Commit `833599b`). Gerätefälle GU-01 bis GU-06 offen |
+| 30.09.2026 | Version 07: Hell-/Dunkelmodus-Umschalter, Versionsanzeige, Kategorien nur für ADMIN. Bau, Lint, Tests grün (Commit `5543941`). Gerätefälle GU-07 bis GU-10 offen |

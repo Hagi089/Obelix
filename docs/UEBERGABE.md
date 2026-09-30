@@ -15,7 +15,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 2 | Authentifizierung (Registrieren, Anmelden, Abmelden, Passwort-Reset) | ✅ auf dem Gerät abgenommen (G1-01 bis G2-09) |
 | 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
-| UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen | ✅ umgesetzt, Bau grün (`833599b`) · ⏳ Gerätetest GU-01 bis GU-06 offen |
+| UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ⏳ Gerätetest GU-01 bis GU-10 offen |
 | **5** | **Geplante Ausgaben** (nach Abnahme von Phase 4) | **⬜ nächste Phase** |
 | 6–12 |  Dateiablage/Belege, Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
@@ -52,7 +52,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 
 ## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
 - Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
-- **Offen:** Gerätetest GU-01 bis GU-06 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
+- **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 08, 09, … in `app/build.gradle.kts`); nächstes Deployment ist Version 08.
+- **Offen:** Gerätetest GU-01 bis GU-10 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
@@ -103,7 +104,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 4 abgenommen (Finanzen, Kategorien, Excel-Import; Bau, 49 Unit-Tests, 45 Regel-Tests grün). Die UI-Überarbeitung (Icon, Login-Hintergrund, Menü nur Symbole) ist gebaut; ihr Gerätetest GU-01 bis GU-06 ist: [bestanden / Ergebnisse hier eintragen].
+Stand: Phase 1 bis 4 abgenommen (Finanzen, Kategorien, Excel-Import; Bau, 49 Unit-Tests, 45 Regel-Tests grün). Die UI-Überarbeitung (Icon, Login-Hintergrund, Menü nur Symbole) ist gebaut; ihr Gerätetest GU-01 bis GU-10 ist: [bestanden / Ergebnisse hier eintragen].
 
 Auftrag jetzt: PHASE 5 – Geplante Ausgaben gemäß Plan. Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
