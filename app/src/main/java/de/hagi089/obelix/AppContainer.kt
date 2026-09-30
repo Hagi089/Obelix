@@ -11,6 +11,11 @@ import de.hagi089.obelix.core.network.NetworkMonitor
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
+import de.hagi089.obelix.data.files.AndroidFileReader
+import de.hagi089.obelix.data.files.FileStore
+import de.hagi089.obelix.data.files.FirestoreFileStore
+import de.hagi089.obelix.data.files.LocalFileReader
+import de.hagi089.obelix.data.files.ReceiptCache
 import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
 import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
@@ -42,7 +47,16 @@ class AppContainer(context: Context) {
 
     val userRepository: UserRepository by lazy { FirestoreUserRepository(firestore) }
 
-    val financeRepository: FinanceRepository by lazy { FirestoreFinanceRepository(firestore) }
+    /** Dateiablage (Belege; später Stellplatzfotos und Dokumente). */
+    val fileStore: FileStore by lazy { FirestoreFileStore(firestore) }
+
+    /** Liest vom Benutzer gewählte Dateien und verkleinert Bilder. */
+    val localFileReader: LocalFileReader by lazy { AndroidFileReader(appContext) }
+
+    /** Zwischenspeicher für PDF-Belege, die in einer externen App geöffnet werden. */
+    val receiptCache: ReceiptCache by lazy { ReceiptCache(appContext) }
+
+    val financeRepository: FinanceRepository by lazy { FirestoreFinanceRepository(firestore, fileStore) }
 
     val categoryRepository: CategoryRepository by lazy { FirestoreCategoryRepository(firestore) }
 

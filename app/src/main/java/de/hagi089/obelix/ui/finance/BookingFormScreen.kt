@@ -1,5 +1,7 @@
 package de.hagi089.obelix.ui.finance
 
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
@@ -41,6 +44,8 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.hagi089.obelix.R
+import de.hagi089.obelix.data.files.FileRef
+import de.hagi089.obelix.data.files.FileSize
 import de.hagi089.obelix.data.finance.BookingType
 import de.hagi089.obelix.data.finance.Settlement
 import de.hagi089.obelix.ui.components.SelectorField
@@ -54,9 +59,14 @@ import java.time.ZoneOffset
 fun BookingFormScreen(
     viewModel: BookingFormViewModel,
     onFinished: () -> Unit,
+    onViewReceipt: (FileRef) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
+    // Dateiauswahl des Systems (Bild oder PDF); braucht keine Berechtigung.
+    val pickReceipt = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) viewModel.attachReceipt(uri)
+    }
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
     var confirmDelete by remember { mutableStateOf(false) }
     var datePickerOpen by remember { mutableStateOf(false) }
@@ -185,6 +195,18 @@ fun BookingFormScreen(
                 modifier = Modifier.fillMaxWidth(),
             )
 
+            if (state.type == BookingType.EXPENSE || state.existing?.receipt != null) {
+                ReceiptSection(
+                    state = state,
+                    editable = editable,
+                    onPick = { pickReceipt.launch(arrayOf("image/*", "application/pdf")) },
+                    onView = onViewReceipt,
+                    onDiscardPending = viewModel::discardPendingReceipt,
+                    onRemove = { viewModel.setRemoveReceipt(true) },
+                    onUndoRemove = { viewModel.setRemoveReceipt(false) },
+                )
+            }
+
             state.saveError?.let {
                 Text(
                     text = stringResource(it.messageRes),
@@ -238,6 +260,66 @@ fun BookingFormScreen(
             dismissButton = { TextButton(onClick = { confirmDelete = false }) { Text(stringResource(R.string.action_cancel)) } },
         )
     }
+}
+
+/** Beleg einer Ausgabe: hinzufügen, ansehen, ersetzen, entfernen. Übertragen wird erst beim Speichern. */
+@Composable
+private fun ReceiptSection(
+    state: BookingFormState,
+    editable: Boolean,
+    onPick: () -> Unit,
+    onView: (FileRef) -> Unit,
+    onDiscardPending: () -> Unit,
+    onRemove: () -> Unit,
+    onUndoRemove: () -> Unit,
+) {
+    val saved = state.existing?.receipt
+    val pending = state.pendingReceipt
+    val canEdit = editable && !state.isReadingReceipt
+    val buttonModifier = Modifier.heightIn(min = 48.dp)
+
+    Text(stringResource(R.string.receipt_title), style = MaterialTheme.typography.labelLarge)
+    when {
+        // Einnahmen haben keinen Beleg; ein vorhandener wird beim Speichern entfernt.
+        state.type == BookingType.INCOME ->
+            Text(stringResource(R.string.receipt_income_removes), style = MaterialTheme.typography.bodyMedium)
+        pending != null -> {
+            Text(
+                stringResource(R.string.receipt_new_info, pending.name, FileSize.format(pending.sizeBytes)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = onPick, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_replace)) }
+                TextButton(onClick = onDiscardPending, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_remove)) }
+            }
+        }
+        saved != null && state.removeReceipt -> {
+            Text(stringResource(R.string.receipt_will_be_removed), style = MaterialTheme.typography.bodyMedium)
+            TextButton(onClick = onUndoRemove, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_undo)) }
+        }
+        saved != null -> {
+            Text(
+                stringResource(R.string.receipt_saved_info, saved.name, FileSize.format(saved.sizeBytes)),
+                style = MaterialTheme.typography.bodyMedium,
+            )
+            Row(modifier = Modifier.horizontalScroll(rememberScrollState()), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onClick = { onView(saved) }, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_view)) }
+                OutlinedButton(onClick = onPick, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_replace)) }
+                TextButton(onClick = onRemove, enabled = canEdit, modifier = buttonModifier) { Text(stringResource(R.string.receipt_remove)) }
+            }
+        }
+        else -> OutlinedButton(onClick = onPick, enabled = canEdit, modifier = buttonModifier.fillMaxWidth()) {
+            Text(stringResource(R.string.receipt_add))
+        }
+    }
+    if (state.isReadingReceipt) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+            Text(stringResource(R.string.receipt_preparing), style = MaterialTheme.typography.bodyMedium)
+        }
+    }
+    state.receiptError?.let { FieldError(stringResource(it)) }
+    if (state.type == BookingType.EXPENSE) Text(stringResource(R.string.receipt_hint), style = MaterialTheme.typography.bodySmall)
 }
 
 @Composable

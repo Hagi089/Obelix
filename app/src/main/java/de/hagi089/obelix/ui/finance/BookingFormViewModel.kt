@@ -1,11 +1,16 @@
 package de.hagi089.obelix.ui.finance
 
+import android.net.Uri
 import androidx.annotation.StringRes
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import de.hagi089.obelix.core.error.AppError
 import de.hagi089.obelix.core.error.AppException
+import de.hagi089.obelix.R
 import de.hagi089.obelix.core.money.Money
+import de.hagi089.obelix.data.files.FileReadException
+import de.hagi089.obelix.data.files.LocalFileReader
+import de.hagi089.obelix.data.files.NewFile
 import de.hagi089.obelix.data.finance.Booking
 import de.hagi089.obelix.data.finance.BookingInput
 import de.hagi089.obelix.data.finance.BookingType
@@ -13,6 +18,7 @@ import de.hagi089.obelix.data.finance.BookingValidator
 import de.hagi089.obelix.data.finance.Category
 import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
+import de.hagi089.obelix.data.finance.ReceiptChange
 import de.hagi089.obelix.data.finance.Settlement
 import de.hagi089.obelix.data.user.UserProfile
 import de.hagi089.obelix.data.user.UserRepository
@@ -48,10 +54,26 @@ data class BookingFormState(
     @param:StringRes val payerError: Int? = null,
     @param:StringRes val descriptionError: Int? = null,
     @param:StringRes val commentError: Int? = null,
+    /** Neu gewählter Beleg (fertig aufbereitet), wird erst beim Speichern übertragen. */
+    val pendingReceipt: NewFile? = null,
+    /** Der vorhandene Beleg soll beim Speichern entfernt werden. */
+    val removeReceipt: Boolean = false,
+    /** Eine gewählte Datei wird gerade gelesen und verkleinert. */
+    val isReadingReceipt: Boolean = false,
+    @param:StringRes val receiptError: Int? = null,
     /** true, sobald gespeichert/gelöscht wurde: der Bildschirm schließt sich. */
     val finished: Boolean = false,
 ) {
     val isEdit: Boolean get() = existing != null
+
+    /** Was beim Speichern mit dem Beleg geschieht (Einnahmen haben keinen Beleg). */
+    val receiptChange: ReceiptChange
+        get() = when {
+            type == BookingType.INCOME -> if (existing?.receipt != null) ReceiptChange.Remove else ReceiptChange.Keep
+            pendingReceipt != null -> ReceiptChange.Replace(pendingReceipt)
+            removeReceipt -> ReceiptChange.Remove
+            else -> ReceiptChange.Keep
+        }
 }
 
 /** Formular zum Anlegen und Bearbeiten einer Buchung (bookingId = null: neu). */
@@ -61,6 +83,7 @@ class BookingFormViewModel(
     private val finance: FinanceRepository,
     private val categories: CategoryRepository,
     private val users: UserRepository,
+    private val fileReader: LocalFileReader,
 ) : ViewModel() {
 
     private val _state = MutableStateFlow(BookingFormState(paidByUid = uid))
@@ -124,9 +147,33 @@ class BookingFormViewModel(
     fun setDescription(text: String) = _state.update { it.copy(description = text, descriptionError = null) }
     fun setComment(text: String) = _state.update { it.copy(comment = text, commentError = null) }
 
+    /** Der Benutzer hat eine Datei gewählt: lesen, Bild verkleinern, prüfen. Erst „Speichern" überträgt sie. */
+    fun attachReceipt(uri: Uri) {
+        if (_state.value.isSaving || _state.value.isReadingReceipt) return
+        _state.update { it.copy(isReadingReceipt = true, receiptError = null) }
+        viewModelScope.launch {
+            val result = fileReader.read(uri)
+            _state.update { current ->
+                result.fold(
+                    onSuccess = { file -> current.copy(isReadingReceipt = false, pendingReceipt = file, removeReceipt = false) },
+                    onFailure = { error ->
+                        val message = (error as? FileReadException)?.messageRes ?: R.string.error_file_unreadable
+                        current.copy(isReadingReceipt = false, receiptError = message)
+                    },
+                )
+            }
+        }
+    }
+
+    /** Verwirft die neu gewählte Datei (der vorhandene Beleg bleibt). */
+    fun discardPendingReceipt() = _state.update { it.copy(pendingReceipt = null, receiptError = null) }
+
+    /** Markiert den vorhandenen Beleg zum Entfernen beim Speichern bzw. macht das rückgängig. */
+    fun setRemoveReceipt(remove: Boolean) = _state.update { it.copy(removeReceipt = remove, pendingReceipt = null, receiptError = null) }
+
     fun save() {
         val s = _state.value
-        if (s.isLoading || s.isSaving) return
+        if (s.isLoading || s.isSaving || s.isReadingReceipt) return
         val errors = s.copy(
             amountError = BookingValidator.amount(s.amountText),
             dateError = BookingValidator.date(s.date),
@@ -156,7 +203,11 @@ class BookingFormViewModel(
         )
         run(errors) {
             val existing = s.existing
-            if (existing == null) finance.create(input, uid) else finance.update(existing.id, input, existing.settlement, uid)
+            if (existing == null) {
+                finance.create(input, uid, s.pendingReceipt.takeIf { s.type == BookingType.EXPENSE })
+            } else {
+                finance.update(existing.id, input, existing.settlement, uid, s.receiptChange)
+            }
         }
     }
 

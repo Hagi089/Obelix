@@ -6,6 +6,7 @@ import { readFileSync } from 'node:fs';
 import { after, before, beforeEach, describe, it } from 'node:test';
 import { assertFails, assertSucceeds, initializeTestEnvironment } from '@firebase/rules-unit-testing';
 import {
+  Bytes,
   Timestamp,
   collection,
   deleteDoc,
@@ -767,5 +768,275 @@ describe('R-08 Geplante Ausgaben (plannedExpenses)', () => {
         }
       }));
     }
+  });
+});
+
+// =====================================================================
+// Phase 6: Dateiablage und Belege. Testdaten nur für den Emulator (Nullbytes, keine echten Dateien).
+
+const CHUNK = 921600; // 900 KiB je Stück (FileLimits.CHUNK_SIZE_BYTES)
+const MAX_FILE = 8 * 1024 * 1024; // 8 MiB (FileLimits.MAX_FILE_BYTES)
+
+const chunkCountFor = (size) => Math.ceil(size / CHUNK);
+const chunkBytes = (n) => ({ data: Bytes.fromUint8Array(new Uint8Array(n)) });
+
+/** Metadaten einer Datei, wie FirestoreFileStore sie schreibt. */
+function fileMeta(uid, size = 1000, o = {}) {
+  return {
+    name: 'beleg.jpg', contentType: 'image/jpeg', sizeBytes: size, chunkCount: chunkCountFor(size),
+    createdAt: serverTimestamp(), createdBy: uid, ...o,
+  };
+}
+
+/** Verweis der Buchung auf die Datei (Feld receipt). */
+const receiptRef = (fileId, size = 1000, o = {}) => ({ fileId, name: 'beleg.jpg', contentType: 'image/jpeg', sizeBytes: size, ...o });
+
+/** Schreibt in die Transaktion: Datei mit allen Stücken (die Stücke zuerst, dann die Metadaten wie in der App). */
+function stageFile(tx, db, uid, fileId, size = 1000, metaOverrides = {}) {
+  const count = chunkCountFor(size);
+  for (let i = 0; i < count; i++) {
+    const n = i < count - 1 ? CHUNK : size - CHUNK * (count - 1);
+    tx.set(doc(db, `files/${fileId}/chunks/${i}`), chunkBytes(n));
+  }
+  tx.set(doc(db, `files/${fileId}`), fileMeta(uid, size, metaOverrides));
+}
+
+/** Neue Ausgabe mit Beleg in einer Transaktion (FinanceRepository.create mit Beleg). */
+function createWithReceipt(db, uid, bookingId, fileId, size = 1000, bookingOverrides = {}, metaOverrides = {}) {
+  return runTransaction(db, async (tx) => {
+    stageFile(tx, db, uid, fileId, size, metaOverrides);
+    tx.set(doc(db, `transactions/${bookingId}`), booking(uid, { receipt: receiptRef(fileId, size), ...bookingOverrides }));
+  });
+}
+
+/** Datei samt Stücken ohne Regelprüfung anlegen (für Tests, die eine bestehende Datei brauchen). */
+async function seedFile(fileId = 'f1', size = 1000, uid = 'member') {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    const db = context.firestore();
+    const count = chunkCountFor(size);
+    for (let i = 0; i < count; i++) {
+      await setDoc(doc(db, `files/${fileId}/chunks/${i}`), chunkBytes(i < count - 1 ? CHUNK : size - CHUNK * (count - 1)));
+    }
+    await setDoc(doc(db, `files/${fileId}`), { ...without(fileMeta(uid, size), 'createdAt'), createdAt: Timestamp.now() });
+  });
+}
+
+/** Bestehende Ausgabe mit Beleg (Datei und Buchung, ohne Regelprüfung). */
+async function seedReceiptBooking(bookingId = 'b1', fileId = 'f1', size = 1000) {
+  await seedFile(fileId, size);
+  await seedBooking(bookingId, { receipt: receiptRef(fileId, size) });
+}
+
+/** Datei samt Stücken löschen (FileStore.stageDelete). */
+function stageDeleteFile(tx, db, fileId, size = 1000) {
+  for (let i = 0; i < chunkCountFor(size); i++) tx.delete(doc(db, `files/${fileId}/chunks/${i}`));
+  tx.delete(doc(db, `files/${fileId}`));
+}
+
+describe('R-09 Dateiablage und Belege (files, chunks, transactions.receipt)', () => {
+  it('R-09a Ausgabe mit Beleg (1 Stück) in einer Transaktion; Datei und Stücke lesbar', async () => {
+    await assertSucceeds(createWithReceipt(as('member'), 'member', 't1', 'f1'));
+    const db = as('admin');
+    const meta = await assertSucceeds(getDoc(doc(db, 'files/f1')));
+    if (!meta.exists() || meta.data().chunkCount !== 1) throw new Error('Metadaten fehlen');
+    const chunks = await assertSucceeds(getDocs(collection(db, 'files/f1/chunks')));
+    if (chunks.size !== 1) throw new Error(`erwartet 1 Stück, gefunden ${chunks.size}`);
+    const b = await assertSucceeds(getDoc(doc(db, 'transactions/t1')));
+    if (b.data().receipt.fileId !== 'f1') throw new Error('Verweis fehlt');
+  });
+
+  it('R-09b größte Datei: 8 MiB = 10 Stücke samt Buchung in einer Transaktion (Grenze der Regelabfragen)', async () => {
+    await assertSucceeds(createWithReceipt(as('member'), 'member', 't1', 'f-max', MAX_FILE));
+    const chunks = await assertSucceeds(getDocs(collection(as('member'), 'files/f-max/chunks')));
+    if (chunks.size !== 10) throw new Error(`erwartet 10 Stücke, gefunden ${chunks.size}`);
+  });
+
+  it('R-09c Datei mit genau einem vollen Stück und mit einem Byte mehr (2 Stücke)', async () => {
+    await assertSucceeds(createWithReceipt(as('member'), 'member', 't1', 'f-full', CHUNK));
+    await assertSucceeds(createWithReceipt(as('member'), 'member', 't2', 'f-plus', CHUNK + 1));
+  });
+
+  it('R-09d zu groß (mehr als 8 MiB), zu viele Stücke, Größe 0: verboten', async () => {
+    const db = as('member');
+    // Alle Stücke sind vorhanden (klein), nur die Metadaten sind ungültig: so schlägt genau die Größenprüfung an.
+    const small = (tx, id, count) => { for (let i = 0; i < count; i++) tx.set(doc(db, `files/${id}/chunks/${i}`), chunkBytes(10)); };
+    await assertFails(runTransaction(db, async (tx) => {
+      small(tx, 'f1', 10);
+      tx.set(doc(db, 'files/f1'), fileMeta('member', 1000, { sizeBytes: MAX_FILE + 1, chunkCount: 10 }));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => { // Gegenprobe: genau 8 MiB mit 10 Stücken ist gültig
+      small(tx, 'f1-ok', 10);
+      tx.set(doc(db, 'files/f1-ok'), fileMeta('member', 1000, { sizeBytes: MAX_FILE, chunkCount: 10 }));
+    }));
+    await assertFails(runTransaction(db, async (tx) => {
+      small(tx, 'f2', 10);
+      tx.set(doc(db, 'files/f2'), fileMeta('member', 1000, { sizeBytes: MAX_FILE + 1, chunkCount: 11 }));
+    }));
+    await assertFails(runTransaction(db, async (tx) => {
+      small(tx, 'f3', 1);
+      tx.set(doc(db, 'files/f3'), fileMeta('member', 1000, { sizeBytes: 0, chunkCount: 1 }));
+    }));
+  });
+
+  it('R-09e nur JPEG und PDF; Name Pflicht; keine Zusatzfelder; falscher Ersteller/Zeitstempel', async () => {
+    const db = as('member');
+    const tryMeta = (id, o) => runTransaction(db, async (tx) => {
+      tx.set(doc(db, `files/${id}/chunks/0`), chunkBytes(10));
+      tx.set(doc(db, `files/${id}`), fileMeta('member', 10, o));
+    });
+    await assertSucceeds(tryMeta('ok-pdf', { contentType: 'application/pdf', name: 'rechnung.pdf' }));
+    await assertFails(tryMeta('x1', { contentType: 'image/png' }));
+    await assertFails(tryMeta('x2', { contentType: 'text/html' }));
+    await assertFails(tryMeta('x3', { name: '' }));
+    await assertFails(tryMeta('x4', { name: 'x'.repeat(201) }));
+    await assertFails(tryMeta('x5', { extra: 1 }));
+    await assertFails(tryMeta('x6', { createdBy: 'admin' }));
+    await assertFails(tryMeta('x7', { createdAt: Timestamp.fromMillis(0) }));
+  });
+
+  it('R-09f Größe passt nicht zur Stückzahl: verboten', async () => {
+    const db = as('member');
+    // 1000 Byte können nicht 2 Stücke sein; 2 Stücke (CHUNK+1 Byte) nicht als 1 Stück angegeben werden
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'files/f1/chunks/0'), chunkBytes(500));
+      tx.set(doc(db, 'files/f1/chunks/1'), chunkBytes(500));
+      tx.set(doc(db, 'files/f1'), fileMeta('member', 1000, { chunkCount: 2 }));
+    }));
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'files/f2/chunks/0'), chunkBytes(CHUNK));
+      tx.set(doc(db, 'files/f2'), fileMeta('member', CHUNK + 1, { chunkCount: 1 }));
+    }));
+  });
+
+  it('R-09g fehlendes letztes Stück und zusätzliches Stück: verboten', async () => {
+    const db = as('member');
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'files/f1/chunks/0'), chunkBytes(CHUNK));
+      tx.set(doc(db, 'files/f1'), fileMeta('member', CHUNK + 1)); // 2 Stücke angegeben, nur eines geschrieben
+    }));
+    await assertFails(runTransaction(db, async (tx) => {
+      tx.set(doc(db, 'files/f2/chunks/0'), chunkBytes(1000));
+      tx.set(doc(db, 'files/f2/chunks/1'), chunkBytes(10)); // zusätzliches Stück
+      tx.set(doc(db, 'files/f2'), fileMeta('member', 1000));
+    }));
+    await assertFails(setDoc(doc(db, 'files/f3'), fileMeta('member', 1000))); // Metadaten ohne Stück
+  });
+
+  it('R-09h Stücke: zu groß, leer, falsche Nummer, Zusatzfeld, falscher Typ; Ändern verboten', async () => {
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/0'), chunkBytes(CHUNK + 1)));
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/0'), chunkBytes(0)));
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/10'), chunkBytes(10)));
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/abc'), chunkBytes(10)));
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/0'), { ...chunkBytes(10), extra: 1 }));
+    await assertFails(setDoc(doc(db, 'files/f1/chunks/0'), { data: 'kein Bytes-Wert' }));
+    await assertSucceeds(setDoc(doc(db, 'files/f1/chunks/0'), chunkBytes(CHUNK)));
+    await assertFails(updateDoc(doc(db, 'files/f1/chunks/0'), chunkBytes(10)));
+  });
+
+  it('R-09i ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedFile('f1');
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'files/f1')));
+      await assertFails(getDocs(collection(db, 'files/f1/chunks')));
+      await assertFails(setDoc(doc(db, 'files/f9/chunks/0'), chunkBytes(10)));
+      await assertFails(deleteDoc(doc(db, 'files/f1')));
+      await assertFails(runTransaction(db, async (tx) => { stageFile(tx, db, 'nobody', 'f9'); }));
+    }
+  });
+
+  it('R-09j Metadaten sind unveränderlich; Dateien lassen sich nicht auflisten', async () => {
+    await seedFile('f1');
+    const db = as('member');
+    await assertFails(updateDoc(doc(db, 'files/f1'), { name: 'anders.jpg' }));
+    await assertFails(setDoc(doc(db, 'files/f1'), fileMeta('member')));
+    await assertFails(getDocs(collection(db, 'files')));
+  });
+
+  it('R-09k Beleg-Verweis auf nicht vorhandene Datei, mit falschen Angaben oder auf Einnahme: verboten', async () => {
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'transactions/t1'), booking('member', { receipt: receiptRef('gibt-es-nicht') })));
+    await assertFails(createWithReceipt(db, 'member', 't2', 'f2', 1000, { receipt: receiptRef('f2', 1000, { name: 'andere.jpg' }) }));
+    await assertFails(createWithReceipt(db, 'member', 't3', 'f3', 1000, { receipt: receiptRef('f3', 999) }));
+    await assertFails(createWithReceipt(db, 'member', 't4', 'f4', 1000, { receipt: receiptRef('f4', 1000, { contentType: 'application/pdf' }) }));
+    await assertFails(createWithReceipt(db, 'member', 't5', 'f5', 1000, { type: 'INCOME', settlement: 'SETTLED' }));
+    await assertFails(createWithReceipt(db, 'member', 't6', 'f6', 1000, { receipt: { ...receiptRef('f6'), extra: 1 } }));
+    await assertFails(createWithReceipt(db, 'member', 't7', 'f7', 1000, { receipt: without(receiptRef('f7'), 'name') }));
+  });
+
+  it('R-09l bereits vorhandene Datei kann nicht an eine zweite Buchung gehängt werden', async () => {
+    await seedReceiptBooking('b1', 'f1');
+    await seedBooking('b2');
+    const db = as('member');
+    await assertFails(setDoc(doc(db, 'transactions/t-new'), booking('member', { receipt: receiptRef('f1') })));
+    await assertFails(updateDoc(doc(db, 'transactions/b2'), edit('member', { receipt: receiptRef('f1') })));
+  });
+
+  it('R-09n Buchung mit Beleg bearbeiten (Beleg unverändert): erlaubt, auch als Erstattet-Markierung', async () => {
+    await seedReceiptBooking('b1', 'f1');
+    const db = as('admin');
+    await assertSucceeds(updateDoc(doc(db, 'transactions/b1'), edit('admin', { amountCents: 5100 })));
+    await assertSucceeds(updateDoc(doc(db, 'transactions/b1'), edit('admin', { settlement: 'SETTLED', settledAt: serverTimestamp(), settledBy: 'admin' })));
+    await assertFails(updateDoc(doc(db, 'transactions/b1'), edit('admin', { receipt: receiptRef('f1', 1000, { name: 'umbenannt.jpg' }) })));
+  });
+
+  it('R-09o Beleg nachträglich an bestehende Ausgabe hängen (Datei im selben Schritt)', async () => {
+    await seedBooking('b1');
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'f1', 1000);
+      tx.update(doc(db, 'transactions/b1'), edit('member', { receipt: receiptRef('f1') }));
+    }));
+    const b = await assertSucceeds(getDoc(doc(db, 'transactions/b1')));
+    if (b.data().receipt.fileId !== 'f1') throw new Error('Verweis fehlt');
+  });
+
+  it('R-09p Beleg entfernen: Verweis löschen und Datei im selben Schritt löschen', async () => {
+    await seedReceiptBooking('b1', 'f1', CHUNK + 1);
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.update(doc(db, 'transactions/b1'), edit('member', { receipt: deleteField() }));
+      stageDeleteFile(tx, db, 'f1', CHUNK + 1);
+    }));
+    const f = await assertSucceeds(getDoc(doc(db, 'files/f1')));
+    if (f.exists()) throw new Error('Datei muss gelöscht sein');
+    const chunks = await assertSucceeds(getDocs(collection(db, 'files/f1/chunks')));
+    if (chunks.size !== 0) throw new Error('Stücke müssen gelöscht sein');
+  });
+
+  it('R-09q Beleg ersetzen in zwei Schritten: neue Datei mit neuem Verweis, danach alte Datei löschen', async () => {
+    await seedReceiptBooking('b1', 'f-alt');
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'f-neu', 2000);
+      tx.update(doc(db, 'transactions/b1'), edit('member', { receipt: receiptRef('f-neu', 2000) }));
+    }));
+    await assertSucceeds(runTransaction(db, async (tx) => { stageDeleteFile(tx, db, 'f-alt'); }));
+    const b = await assertSucceeds(getDoc(doc(db, 'transactions/b1')));
+    if (b.data().receipt.fileId !== 'f-neu') throw new Error('neuer Verweis fehlt');
+  });
+
+  it('R-09r Buchung mit Beleg löschen: Buchung und Datei in einer Transaktion; größte Datei (11 Schreibvorgänge)', async () => {
+    await seedReceiptBooking('b1', 'f1', MAX_FILE);
+    const db = as('admin');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.delete(doc(db, 'transactions/b1'));
+      stageDeleteFile(tx, db, 'f1', MAX_FILE);
+    }));
+    const f = await assertSucceeds(getDoc(doc(db, 'files/f1')));
+    if (f.exists()) throw new Error('Datei muss gelöscht sein');
+  });
+
+  it('R-09s Regression: Ausgabe ohne Beleg, Kauf einer Planung und Import funktionieren unverändert', async () => {
+    const db = as('member');
+    await assertSucceeds(setDoc(doc(db, 'transactions/t1'), booking('member')));
+    await seedPlanned('p1');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    const adminDb = as('admin');
+    await assertSucceeds(runTransaction(adminDb, async (tx) => {
+      for (let i = 0; i < 10; i++) {
+        tx.set(doc(adminDb, `transactions/xl-${i}`), booking('admin', { paidByUid: 'member', importRef: `xl-${i}`, settlement: 'SETTLED' }));
+      }
+    }));
   });
 });

@@ -15,12 +15,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.data.auth.AuthUser
+import de.hagi089.obelix.data.files.FileRef
 import de.hagi089.obelix.ui.screens.SectionNotAvailableScreen
 import de.hagi089.obelix.ui.screens.SettingsScreen
 import de.hagi089.obelix.ui.finance.BookingFormScreen
 import de.hagi089.obelix.ui.finance.BookingFormViewModel
 import de.hagi089.obelix.ui.finance.FinanceScreen
 import de.hagi089.obelix.ui.finance.FinanceViewModel
+import de.hagi089.obelix.ui.finance.ReceiptScreen
+import de.hagi089.obelix.ui.finance.ReceiptViewModel
 import de.hagi089.obelix.ui.importing.ImportScreen
 import de.hagi089.obelix.ui.importing.ImportViewModel
 import de.hagi089.obelix.ui.planned.PlannedFormScreen
@@ -104,11 +107,28 @@ fun ObelixNavHost(
                             finance = container.financeRepository,
                             categories = container.categoryRepository,
                             users = container.userRepository,
+                            fileReader = container.localFileReader,
                         )
                     }
                 },
             )
-            BookingFormScreen(viewModel = formViewModel, onFinished = { navController.navigateUp() })
+            BookingFormScreen(
+                viewModel = formViewModel,
+                onFinished = { navController.navigateUp() },
+                onViewReceipt = { ref ->
+                    navController.navigate(ReceiptRoute(ref.fileId, ref.name, ref.contentType, ref.sizeBytes))
+                },
+            )
+        }
+        composable<ReceiptRoute> { entry ->
+            val route = entry.toRoute<ReceiptRoute>()
+            val ref = FileRef(route.fileId, route.name, route.contentType, route.sizeBytes)
+            val receiptViewModel: ReceiptViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { ReceiptViewModel(ref, container.fileStore, container.receiptCache) }
+                },
+            )
+            ReceiptScreen(viewModel = receiptViewModel, ref = ref)
         }
         composable<ImportRoute> {
             val importViewModel: ImportViewModel = viewModel(

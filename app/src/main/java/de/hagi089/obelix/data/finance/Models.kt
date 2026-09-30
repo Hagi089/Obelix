@@ -1,5 +1,8 @@
 package de.hagi089.obelix.data.finance
 
+import de.hagi089.obelix.data.files.FileRef
+import de.hagi089.obelix.data.files.NewFile
+
 /** Einnahme oder Ausgabe. Der Betrag ist immer positiv; das Vorzeichen ergibt sich aus dem Typ. */
 enum class BookingType {
     INCOME,
@@ -44,7 +47,21 @@ data class Booking(
     val importRef: String?,
     /** Nur bei Buchungen, die aus einer geplanten Ausgabe entstanden sind (Phase 5): Verweis auf die Planung. */
     val plannedExpenseId: String? = null,
+    /** Beleg (Phase 6): Verweis auf die Datei in der Dateiablage; nur bei Ausgaben. */
+    val receipt: FileRef? = null,
 )
+
+/** Was beim Speichern einer bestehenden Buchung mit ihrem Beleg geschehen soll (Phase 6). */
+sealed interface ReceiptChange {
+    /** Beleg unverändert lassen (auch wenn keiner vorhanden ist). */
+    data object Keep : ReceiptChange
+
+    /** Beleg entfernen; die Datei wird im selben Schritt gelöscht. */
+    data object Remove : ReceiptChange
+
+    /** Neuen Beleg speichern; ein vorhandener alter Beleg wird danach gelöscht. */
+    class Replace(val file: NewFile) : ReceiptChange
+}
 
 /** Eingabe zum Anlegen oder Ändern einer Buchung. */
 data class BookingInput(

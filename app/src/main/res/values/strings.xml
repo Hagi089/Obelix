@@ -250,4 +250,29 @@
     <string name="error_planned_title_required">Bitte gib eine Bezeichnung ein.</string>
     <string name="error_planned_title_too_long">Die Bezeichnung darf höchstens 200 Zeichen lang sein.</string>
     <string name="error_planned_link_invalid">Bitte gib einen Link an, der mit http:// oder https:// beginnt (höchstens 500 Zeichen, ohne Leerzeichen).</string>
+
+    <!-- Dateiablage und Belege (Phase 6) -->
+    <string name="error_file_corrupt">Die Datei ist unvollständig gespeichert und kann nicht angezeigt werden.</string>
+    <string name="error_file_type">Bitte wähle ein Bild oder eine PDF-Datei.</string>
+    <string name="error_file_empty">Die Datei ist leer.</string>
+    <string name="error_file_too_large">Die Datei ist zu groß. Erlaubt sind höchstens 8 MB.</string>
+    <string name="error_image_source_too_large">Das Bild ist zu groß (höchstens 30 MB).</string>
+    <string name="error_file_unreadable">Die Datei konnte nicht gelesen werden. Bitte wähle eine andere Datei.</string>
+    <string name="receipt_title">Beleg</string>
+    <string name="receipt_hint">Bild oder PDF, höchstens 8 MB. Bilder werden automatisch verkleinert.</string>
+    <string name="receipt_add">Beleg hinzufügen</string>
+    <string name="receipt_replace">Ersetzen</string>
+    <string name="receipt_view">Ansehen</string>
+    <string name="receipt_remove">Entfernen</string>
+    <string name="receipt_undo">Rückgängig</string>
+    <string name="receipt_preparing">Datei wird vorbereitet …</string>
+    <string name="receipt_new_info">Neu: %1$s (%2$s)</string>
+    <string name="receipt_saved_info">%1$s (%2$s)</string>
+    <string name="receipt_will_be_removed">Der Beleg wird beim Speichern entfernt.</string>
+    <string name="receipt_income_removes">Einnahmen haben keinen Beleg: Der vorhandene Beleg wird beim Speichern entfernt.</string>
+    <string name="receipt_loading">Beleg wird geladen …</string>
+    <string name="receipt_image_description">Foto des Belegs</string>
+    <string name="receipt_pdf_info">Dieser Beleg ist eine PDF-Datei (%1$s). Sie wird in einer anderen App geöffnet.</string>
+    <string name="receipt_open_pdf">PDF öffnen</string>
+    <string name="receipt_no_pdf_app">Auf diesem Gerät ist keine App zum Anzeigen von PDF-Dateien installiert.</string>
 </resources>

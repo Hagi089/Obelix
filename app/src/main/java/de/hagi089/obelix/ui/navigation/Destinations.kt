@@ -30,6 +30,9 @@ import kotlinx.serialization.Serializable
 /** Formular einer geplanten Ausgabe; plannedId = null legt eine neue an. */
 @Serializable data class PlannedFormRoute(val plannedId: String? = null)
 
+/** Anzeige eines Belegs (aus dem Buchungsformular). Die Angaben der Datei stehen in der Route. */
+@Serializable data class ReceiptRoute(val fileId: String, val name: String, val contentType: String, val sizeBytes: Long)
+
 /** Einmaliger Excel-Import (nur ADMIN, aus den Einstellungen). */
 @Serializable data object ImportRoute
 

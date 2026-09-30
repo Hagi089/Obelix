@@ -29,6 +29,8 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     INVALID_ACCESS_CODE(R.string.error_access_code_invalid),
     /** Der Stand hat sich zwischenzeitlich geändert (z. B. Planung wurde schon gekauft). */
     CONFLICT(R.string.error_conflict),
+    /** Eine gespeicherte Datei ist unvollständig (Stücke fehlen oder passen nicht zu den Metadaten). */
+    FILE_CORRUPT(R.string.error_file_corrupt),
     UNKNOWN(R.string.error_unknown),
 }
 

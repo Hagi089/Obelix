@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
-// Phase 5: geplante Ausgaben).
+// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -47,7 +47,7 @@ service cloud.firestore {
     function validBooking(d) {
       return d.keys().hasOnly(['type', 'date', 'amountCents', 'categoryId', 'paidByUid', 'settlement',
                                'description', 'comment', 'settledAt', 'settledBy', 'importRef',
-                               'plannedExpenseId', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+                               'plannedExpenseId', 'receipt', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
         && d.keys().hasAll(['type', 'date', 'amountCents', 'categoryId', 'settlement', 'description',
                             'comment', 'createdAt', 'createdBy'])
         && d.type in ['INCOME', 'EXPENSE']
@@ -63,7 +63,54 @@ service cloud.firestore {
         && (!('importRef' in d) || validText(d.importRef, 20))
         && (!('plannedExpenseId' in d) || (validText(d.plannedExpenseId, 128) && d.type == 'EXPENSE'))
         && (!('settledBy' in d) || validText(d.settledBy, 128))
-        && (!('settledAt' in d) || d.settledAt is timestamp);
+        && (!('settledAt' in d) || d.settledAt is timestamp)
+        && (!('receipt' in d) || (d.type == 'EXPENSE' && validReceiptRef(d.receipt)));
+    }
+
+    // ---------------------------------------------------------------------
+    // Dateiablage (Phase 6, Option F: Dateien in Stücken in Firestore).
+    // files/{fileId}            Metadaten (unveränderlich)
+    // files/{fileId}/chunks/{n} Stücke (Feld data), n = 0 bis chunkCount-1, je höchstens 900 KiB
+    // Grenzen müssen zu data/files/FileLimits.kt passen: 900 KiB je Stück, höchstens 10 Stücke,
+    // höchstens 8 MiB je Datei.
+    // Regelabfragen je Schreibvorgang (Firestore: höchstens 20 je Transaktion): Stück 1 (isUser),
+    // Datei 3, Buchung mit neuem Beleg 3. Eine Datei mit 10 Stücken und Buchung: 1 + 3 + 3 + 10 = 16.
+    // ---------------------------------------------------------------------
+    function filePath(fileId) {
+      return /databases/$(database)/documents/files/$(fileId);
+    }
+    function chunkPath(fileId, chunkId) {
+      return /databases/$(database)/documents/files/$(fileId)/chunks/$(chunkId);
+    }
+    function validFile(d) {
+      return d.keys().hasOnly(['name', 'contentType', 'sizeBytes', 'chunkCount', 'createdAt', 'createdBy'])
+        && d.keys().hasAll(['name', 'contentType', 'sizeBytes', 'chunkCount', 'createdAt', 'createdBy'])
+        && validText(d.name, 200)
+        && d.contentType in ['image/jpeg', 'application/pdf']
+        && d.sizeBytes is int && d.sizeBytes >= 1 && d.sizeBytes <= 8388608
+        && d.chunkCount is int && d.chunkCount >= 1 && d.chunkCount <= 10
+        && d.sizeBytes <= d.chunkCount * 921600
+        && d.sizeBytes > (d.chunkCount - 1) * 921600;
+    }
+    // Verweis einer Ausgabe auf ihren Beleg (Feld receipt der Buchung).
+    function validReceiptRef(r) {
+      return r is map
+        && r.keys().hasOnly(['fileId', 'name', 'contentType', 'sizeBytes'])
+        && r.keys().hasAll(['fileId', 'name', 'contentType', 'sizeBytes'])
+        && validText(r.fileId, 128)
+        && validText(r.name, 200)
+        && r.contentType in ['image/jpeg', 'application/pdf']
+        && r.sizeBytes is int;
+    }
+    // Ein neuer Beleg darf nur angehängt werden, wenn seine Datei im selben Schritt entsteht (vorher nicht
+    // vorhanden, nachher vorhanden, Angaben gleich; den Ersteller prüft die Regel der Datei). So gehört jede
+    // Datei zu genau einer Buchung.
+    function newReceiptOk(r) {
+      let f = getAfter(filePath(r.fileId)).data;
+      return !exists(filePath(r.fileId))
+        && f.name == r.name
+        && f.contentType == r.contentType
+        && f.sizeBytes == r.sizeBytes;
     }
 
     function transactionPath(bookingId) {
@@ -157,7 +204,9 @@ service cloud.firestore {
         // auf PURCHASED gesetzt wird und auf diese Buchung verweist.
         && (!('plannedExpenseId' in request.resource.data) || (
               getAfter(plannedPath(request.resource.data.plannedExpenseId)).data.status == 'PURCHASED'
-              && getAfter(plannedPath(request.resource.data.plannedExpenseId)).data.purchasedTransactionId == bookingId));
+              && getAfter(plannedPath(request.resource.data.plannedExpenseId)).data.purchasedTransactionId == bookingId))
+        // Ein Beleg braucht seine Datei, die im selben Schritt entsteht (Phase 6).
+        && (!('receipt' in request.resource.data) || newReceiptOk(request.resource.data.receipt));
 
       allow update: if isUser()
         && validBooking(request.resource.data)
@@ -167,7 +216,11 @@ service cloud.firestore {
         && request.resource.data.get('plannedExpenseId', null) == resource.data.get('plannedExpenseId', null)
         && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
         && request.resource.data.updatedBy == request.auth.uid
-        && request.resource.data.updatedAt == request.time;
+        && request.resource.data.updatedAt == request.time
+        // Beleg unverändert, entfernt oder neu (dann mit neuer Datei im selben Schritt).
+        && (request.resource.data.get('receipt', null) == resource.data.get('receipt', null)
+            || !('receipt' in request.resource.data)
+            || newReceiptOk(request.resource.data.receipt));
 
       allow delete: if isUser();
     }
@@ -213,6 +266,43 @@ service cloud.firestore {
         );
 
       allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // files/{fileId} und files/{fileId}/chunks/{chunkId}: Dateiablage (Phase 6). Jeder Benutzer darf
+    // lesen, anlegen und löschen; geändert wird nie. Die Datei und ihre Stücke entstehen in einem Schritt
+    // (Transaktion der App, zusammen mit der Buchung, die auf sie verweist).
+    // =====================================================================
+    match /files/{fileId} {
+      allow get: if isUser();
+      allow list: if false;
+
+      // Das letzte Stück muss im selben Schritt entstehen, ein weiteres darf es nicht geben.
+      // (Die Stück-Nummern stehen in Listen, weil Regeln keine Zahl in einen Pfad einsetzen können.)
+      allow create: if isUser()
+        && validFile(request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && existsAfter(chunkPath(fileId, ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'][request.resource.data.chunkCount - 1]))
+        && (request.resource.data.chunkCount == 10
+            || !existsAfter(chunkPath(fileId, ['1', '2', '3', '4', '5', '6', '7', '8', '9'][request.resource.data.chunkCount - 1])));
+
+      allow update: if false;
+      allow delete: if isUser();
+
+      match /chunks/{chunkId} {
+        allow get, list: if isUser();
+
+        allow create: if isUser()
+          && chunkId in ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9']
+          && request.resource.data.keys().hasOnly(['data'])
+          && request.resource.data.data is bytes
+          && request.resource.data.data.size() >= 1
+          && request.resource.data.data.size() <= 921600;
+
+        allow update: if false;
+        allow delete: if isUser();
+      }
     }
 
     // =====================================================================
