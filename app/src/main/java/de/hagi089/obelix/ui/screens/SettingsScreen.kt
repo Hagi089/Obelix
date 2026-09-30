@@ -125,11 +125,10 @@ fun SettingsScreen(
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         }
-        if (profile != null) {
-            HorizontalDivider()
-            CategorySection(viewModel = categoriesViewModel, isAdmin = profile.isAdmin)
-        }
         if (profile?.isAdmin == true) {
+            // Kategorien verwalten: nur ADMIN (Mitglieder sehen den Bereich nicht).
+            HorizontalDivider()
+            CategorySection(viewModel = categoriesViewModel, isAdmin = true)
             HorizontalDivider()
             SectionTitle(R.string.settings_import)
             Text(text = stringResource(R.string.settings_import_intro), style = MaterialTheme.typography.bodyMedium)
