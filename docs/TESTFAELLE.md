@@ -16,7 +16,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 |---|---|---|
 | Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
-| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ⏳ 11 Fälle (G3-01 bis G3-11) |
+| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 3 von 11 (G3-01 bis G3-03), ⏳ 8 offen |
 | Alle weiteren Bereiche (ab Phase 4) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `656d1e9`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (22 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 30/30 (siehe 2.5).
@@ -81,9 +81,9 @@ Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer 
 
 | ID | Schritte | Erwartet | Ergebnis |
 |---|---|---|---|
-| G3-01 | Mit deinem **vorhandenen Konto aus Phase 2** anmelden | Kein Hauptbereich, sondern „Zugangscode eingeben" mit „Weiter" und „Abmelden". Ohne veröffentlichte Regeln erscheint stattdessen „Benutzerdaten konnten nicht geladen werden … Dafür fehlt dir die Berechtigung" | ⏳ |
-| G3-02 | Dort den Code aus `config/access` eingeben (mit oder ohne Bindestriche, auch Kleinbuchstaben) | Hauptbereich öffnet sich. Einstellungen: dein Name, E-Mail, „Deine Rolle: Mitglied" | ⏳ |
-| G3-03 | In der Firebase-Konsole in `users/<deine uid>` das Feld `role` auf `ADMIN` setzen; in der App Einstellungen neu öffnen | „Deine Rolle: Admin"; Abschnitte „Zugangscode" (Code sichtbar, Kopieren, Teilen, „Neuen Zugangscode erzeugen") und „Benutzer" (du mit „(du)", ohne Menü) | ⏳ |
+| G3-01 | Mit deinem **vorhandenen Konto aus Phase 2** anmelden | Kein Hauptbereich, sondern „Zugangscode eingeben" mit „Weiter" und „Abmelden". Ohne veröffentlichte Regeln erscheint stattdessen „Benutzerdaten konnten nicht geladen werden … Dafür fehlt dir die Berechtigung" | ✅ (30.09.2026, Benutzer, nach Fix `e2b2483`) |
+| G3-02 | Dort den Code aus `config/access` eingeben (mit oder ohne Bindestriche, auch Kleinbuchstaben) | Hauptbereich öffnet sich. Einstellungen: dein Name, E-Mail, „Deine Rolle: Mitglied" | ✅ (30.09.2026, Benutzer) |
+| G3-03 | In der Firebase-Konsole in `users/<deine uid>` das Feld `role` auf `ADMIN` setzen; in der App Einstellungen neu öffnen | „Deine Rolle: Admin"; Abschnitte „Zugangscode" (Code sichtbar, Kopieren, Teilen, „Neuen Zugangscode erzeugen") und „Benutzer" (du mit „(du)", ohne Menü) | ✅ (30.09.2026, Benutzer) |
 | G3-04 | Abmelden, „Konto erstellen" mit neuer E-Mail und **falschem Code** (z. B. `AAAAAAAA22222222`) | Zurück zur Anmeldung mit „Der Zugangscode ist ungültig oder nicht mehr gültig." In der Konsole (Authentication) **kein** Konto zu dieser E-Mail | ⏳ |
 | G3-05 | Registrieren mit leerem oder zu kurzem Code | Meldung am Feld, kein Serveraufruf, kein neues Konto | ⏳ |
 | G3-06 | **Zweite Person** registriert sich mit Name, E-Mail, gültigem Code, Passwort | Direkt der Hauptbereich. Einstellungen: „Deine Rolle: Mitglied", **kein** Zugangscode, **keine** Benutzerliste | ⏳ |
@@ -148,3 +148,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | Phase 3 umgesetzt: Sicherheitsregeln, Zugangscode-Registrierung mit gemeinsamem Code und Start-Code, Haushalt/Rollen/Mitgliederverwaltung. Automatisch grün (Bau, Lint, 24 Unit-Tests, Regel-Tests im Emulator). Gerätefälle G3-01 bis G3-13 offen |
 | 30.09.2026 | **Haushalt entfernt** (Entscheidung des Benutzers): keine Haushalte und Parteien, alle Benutzer teilen einen Datenbestand; Registrierung mit gemeinsamem Zugangscode, Admin = Projektinhaber. Regeln und Tests neu (29 Regel-Tests, 22 Unit-Tests, alles grün, Commit `656d1e9`). Gerätefälle neu: G3-01 bis G3-11 |
 | 30.09.2026 | **Fehler beim Gerätetest gefunden (G3-01):** Konto ohne Freischaltung sah „Benutzerdaten konnten nicht geladen werden – Dafür fehlt dir die Berechtigung" statt „Zugangscode eingeben". Ursache: Regel erlaubte das Abfragen des eigenen, noch nicht vorhandenen Benutzerdokuments nicht. Behoben in `e2b2483`, Test R-03d ergänzt (30/30 grün). Regeln müssen neu veröffentlicht werden |
+| 30.09.2026 | Benutzer meldet G3-01 bis G3-03 als bestanden (Freischaltung mit Zugangscode, Rolle ADMIN per Konsole). Offen: G3-04 bis G3-11 |
