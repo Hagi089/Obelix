@@ -128,7 +128,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 6 abgenommen. Phase 6 (Dateiablage und Belege) ist Version 10 (Version 09 = Commit 5956f25, Version 10 = Fehlerkorrektur nach G6-05; Bau, Lint, 96 Unit-Tests, 76 Regel-Tests grün). Gerätetest G6-01 bis G6-14 bestanden. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht.
+Stand: Phase 1 bis 6 abgenommen. Phase 6 (Dateiablage und Belege) ist Version 10 (Version 09 = Commit 5956f25, Version 10 = Fehlerkorrektur nach G6-05; Bau, Lint, 96 Unit-Tests, 76 Regel-Tests grün). Gerätetest G6-01 bis G6-14 bestanden. Gemessene Fotogröße nach der Kompression: 687 KB auf 85 KB. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht.
 
 Auftrag jetzt: PHASE 7 – Kalender gemäß Plan (Überschneidung vor dem Speichern eindeutig anzeigen, Speichern nur nach ausdrücklicher Bestätigung). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
