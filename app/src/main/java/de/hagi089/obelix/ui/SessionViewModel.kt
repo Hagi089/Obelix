@@ -60,7 +60,10 @@ class SessionViewModel(
                 }
             }
         }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), SessionState.Loading)
+        // Eagerly statt WhileSubscribed: Kehrt man nach mehr als 5 s aus einer anderen App zurück (z. B. Dateiauswahl
+        // für einen Beleg), darf das Benutzerdokument nicht neu geladen werden. Sonst ersetzt der Ladebildschirm
+        // (oder bei einem Netzfehler die Fehlerseite) den Hauptbereich und verwirft das offene Formular.
+        .stateIn(viewModelScope, SharingStarted.Eagerly, SessionState.Loading)
 
     /** Benutzerdokument neu vom Server laden (nach Einlösen des Codes oder bei „Erneut versuchen"). */
     fun reloadProfile() = reloadTrigger.update { it + 1 }

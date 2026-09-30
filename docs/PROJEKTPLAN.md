@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 12: **Phase 6 – Dateiablage und Belege umgesetzt** (Version 09), Bau, Lint und Tests grün, **Gerätetest G6-01 bis G6-14 offen**; Phase 5 abgenommen (G5 bestanden); Phase 4 abgenommen; UI-Überarbeitung abgenommen (GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 5 abgenommen, Phase 6 wartet auf den Gerätetest, danach Phase 7).
+Stand: 30.09.2026 (Rev. 12: **Phase 6 – Dateiablage und Belege umgesetzt** (Version 09, Fehlerkorrektur Version 10), Bau, Lint und Tests grün, **Gerätetest G6-01 bis G6-14 offen**; Phase 5 abgenommen (G5 bestanden); Phase 4 abgenommen; UI-Überarbeitung abgenommen (GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 5 abgenommen, Phase 6 wartet auf den Gerätetest, danach Phase 7).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -557,6 +557,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Das Ansehen lädt immer vom Server (kein Zwischenspeicher, wie im ganzen Projekt): offline gibt es eine Fehlermeldung mit „Erneut versuchen“.
   - Kein Kamera-Direktzugriff, kein Zoom, keine Vorschau im Formular (nur Name und Größe): Verbesserungsvorschläge, nicht umgesetzt (Abschnitt 13).
   - Kein automatischer Test der Bildverkleinerung und der Transaktion gegen echtes Firestore (kein Gerät/Emulator für die App in der Cloud-Sitzung): nur der Rechenteil (`ImageScaling`) ist getestet.
+- **Fehler im Gerätetest (G6-05, Version 09):** Nach der Dateiauswahl erschien die Fehlerseite „Benutzerdaten konnten nicht geladen werden“. Vermutete Ursache (aus dem Code, nicht auf dem Gerät bestätigt): Der Sitzungsstand (`SessionViewModel`) wurde nach mehr als 5 s Abwesenheit der App neu geladen und ersetzte den Hauptbereich samt offenem Formular. **Version 10:** `SharingStarted.Eagerly` statt `WhileSubscribed(5_000)`; das Benutzerdokument wird nicht mehr beim Zurückkehren neu geladen (Rolle weiter beim Start und beim Öffnen der Einstellungen). Bekannte Grenze: Beendet Android die App-Prozesse während der Dateiauswahl (wenig Speicher), geht das offene Formular trotzdem verloren (Formularzustand wird nicht gesichert).
 - **Nicht Teil von Phase 6:** Stellplatzfotos (Phase 9), Dokumente (Phase 10), Büroklammer-Symbol in der Buchungsliste (Vorschlag).
 
 ### Phase 7 – Kalender
