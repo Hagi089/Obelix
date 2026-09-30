@@ -18,8 +18,8 @@ android {
         applicationId = "de.hagi089.obelix"
         minSdk = 26
         targetSdk = 36
-        versionCode = 13
-        versionName = "13" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
+        versionCode = 14
+        versionName = "14" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
     }
 
     buildTypes {
@@ -67,6 +67,10 @@ dependencies {
     implementation(platform(libs.firebase.bom))
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
+
+    // Phase 9: Standort (Google Play Services) und Karte (OpenStreetMap, ohne API-Schlüssel)
+    implementation(libs.play.services.location)
+    implementation(libs.osmdroid.android)
 
     testImplementation(libs.junit)
 }

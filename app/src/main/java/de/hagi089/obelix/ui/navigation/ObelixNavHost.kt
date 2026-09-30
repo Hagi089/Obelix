@@ -34,6 +34,11 @@ import de.hagi089.obelix.ui.planned.PlannedFormScreen
 import de.hagi089.obelix.ui.planned.PlannedFormViewModel
 import de.hagi089.obelix.ui.planned.PlannedListScreen
 import de.hagi089.obelix.ui.planned.PlannedListViewModel
+import de.hagi089.obelix.data.campsites.GeoFormat
+import de.hagi089.obelix.ui.campsites.CampsiteFormScreen
+import de.hagi089.obelix.ui.campsites.CampsiteFormViewModel
+import de.hagi089.obelix.ui.campsites.CampsiteListScreen
+import de.hagi089.obelix.ui.campsites.CampsiteListViewModel
 import de.hagi089.obelix.ui.repairs.RepairFormScreen
 import de.hagi089.obelix.ui.repairs.RepairFormViewModel
 import de.hagi089.obelix.ui.repairs.RepairListScreen
@@ -194,7 +199,41 @@ fun ObelixNavHost(
             )
             RepairFormScreen(viewModel = repairFormViewModel, onFinished = { navController.navigateUp() })
         }
-        composable<CampsitesRoute> { SectionNotAvailableScreen() }
+        composable<CampsitesRoute> {
+            val campsiteListViewModel: CampsiteListViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        CampsiteListViewModel(container.campsiteRepository, container.userRepository, container.locationProvider)
+                    }
+                },
+            )
+            CampsiteListScreen(
+                viewModel = campsiteListViewModel,
+                onLocated = { position -> navController.navigate(CampsiteFormRoute(position = GeoFormat.encode(position))) },
+                onOpen = { id -> navController.navigate(CampsiteFormRoute(campsiteId = id)) },
+            )
+        }
+        composable<CampsiteFormRoute> { entry ->
+            val route = entry.toRoute<CampsiteFormRoute>()
+            val campsiteFormViewModel: CampsiteFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        CampsiteFormViewModel(
+                            campsiteId = route.campsiteId,
+                            initialPosition = GeoFormat.decode(route.position),
+                            uid = user.uid,
+                            campsites = container.campsiteRepository,
+                            fileReader = container.localFileReader,
+                        )
+                    }
+                },
+            )
+            CampsiteFormScreen(
+                viewModel = campsiteFormViewModel,
+                newCaptureUri = container.photoCameraCache::newCaptureUri,
+                onFinished = { navController.navigateUp() },
+            )
+        }
         composable<DocumentsRoute> { SectionNotAvailableScreen() }
         composable<SettingsRoute> {
             val settingsViewModel: SettingsViewModel = viewModel(

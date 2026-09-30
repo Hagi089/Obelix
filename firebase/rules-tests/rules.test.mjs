@@ -175,8 +175,8 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
   it('R-03c noch nicht freigegebene Sammlungen sind für alle gesperrt', async () => {
     for (const uid of ['admin', 'member']) {
       const db = as(uid);
-      await assertFails(setDoc(doc(db, 'campsites/t1'), { amountCents: 100 }));
-      await assertFails(getDoc(doc(db, 'campsites/t1')));
+      await assertFails(setDoc(doc(db, 'documents/t1'), { amountCents: 100 }));
+      await assertFails(getDoc(doc(db, 'documents/t1')));
       await assertFails(setDoc(doc(db, 'irgendwas/x'), { a: 1 }));
       await assertFails(setDoc(doc(db, 'config/other'), { a: 1 }));
     }
@@ -1308,13 +1308,271 @@ describe('R-11 Auffälligkeiten (repairs)', () => {
     if (open.size !== 1) throw new Error(`erwartet 1 offenen Eintrag, gefunden ${open.size}`);
   });
 
-  it('R-11h Regression: Finanzen, Kalender und geplante Ausgaben unverändert; Stellplätze weiter gesperrt', async () => {
+  it('R-11h Regression: Finanzen, Kalender und geplante Ausgaben unverändert; Dokumente weiter gesperrt', async () => {
     const db = as('member');
     await assertSucceeds(setDoc(doc(db, 'transactions/t1'), booking('member')));
     await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
     await seedPlanned('p1');
     await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
     await assertSucceeds(setDoc(doc(db, 'repairs/r1'), repair('member')));
-    await assertFails(setDoc(doc(db, 'campsites/x'), { a: 1 }));
+    await assertFails(setDoc(doc(db, 'documents/x'), { a: 1 }));
+  });
+});
+
+// =====================================================================
+// Phase 9: Stellplätze. Testdaten nur für den Emulator.
+
+/** Verweis eines Stellplatzes auf ein Foto (Feld photos), wie CampsiteRepository ihn schreibt. */
+const photoRef = (fileId, size = 1000, o = {}) => ({ fileId, name: 'beleg.jpg', contentType: 'image/jpeg', sizeBytes: size, ...o }); // Name wie fileMeta()
+
+/** Was die App beim Anlegen eines Stellplatzes schreibt (CampsiteRepository.create). */
+function campsite(uid, o = {}) {
+  return {
+    latitude: 48.137154,
+    longitude: 11.576124,
+    date: '2026-10-01',
+    comment: 'Ruhig, am See',
+    photos: [],
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+/** Stellplatz anlegen, dabei neue Fotos (eine Datei mit einem Stück je Foto) in derselben Transaktion. */
+function createCampsite(db, uid, id, photoIds = [], size = CHUNK, o = {}) {
+  return runTransaction(db, async (tx) => {
+    for (const fileId of photoIds) stageFile(tx, db, uid, fileId, size);
+    tx.set(doc(db, `campsites/${id}`), campsite(uid, { photos: photoIds.map((f) => photoRef(f, size)), ...o }));
+  });
+}
+
+/** Bestehender Stellplatz mit Fotos (Dateien und Stellplatz, ohne Regelprüfung). */
+async function seedCampsite(id = 's1', photoIds = [], size = 1000, o = {}) {
+  for (const fileId of photoIds) await seedFile(fileId, size);
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `campsites/${id}`), {
+      ...without(campsite('member'), 'createdAt'),
+      createdAt: Timestamp.now(),
+      photos: photoIds.map((f) => photoRef(f, size)),
+      ...o,
+    });
+  });
+}
+
+/** Was die App beim Ändern schreibt (CampsiteRepository.update): Audit gesetzt, Fotoliste wie gewünscht. */
+const campsiteEdit = (uid, o = {}) => ({ comment: 'Geändert', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+
+describe('R-12 Stellplätze (campsites)', () => {
+  it('R-12a MEMBER und ADMIN dürfen anlegen und lesen; optionale Felder und Grenzwerte gültig', async () => {
+    for (const uid of ['member', 'admin']) {
+      await assertSucceeds(setDoc(doc(as(uid), `campsites/s-${uid}`), campsite(uid)));
+    }
+    await assertSucceeds(setDoc(doc(as('member'), 'campsites/opt'), campsite('member', {
+      name: 'Seeblick', address: 'Seestraße 1, 12345 Ort', note: 'Zufahrt schmal', rating: 5,
+    })));
+    // Grenzwerte: Pole, Datumsgrenze, ganze Zahlen, längste Texte, Bewertung 1
+    await assertSucceeds(setDoc(doc(as('member'), 'campsites/g1'), campsite('member', {
+      latitude: 90, longitude: 180, rating: 1, name: 'x'.repeat(100), address: 'x'.repeat(200), note: 'x'.repeat(500), comment: 'x'.repeat(500),
+    })));
+    await assertSucceeds(setDoc(doc(as('member'), 'campsites/g2'), campsite('member', { latitude: -90, longitude: -180, comment: 'x' })));
+    await assertSucceeds(setDoc(doc(as('member'), 'campsites/g3'), campsite('member', { latitude: 0, longitude: 0 })));
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'campsites')));
+    if (list.size !== 6) throw new Error(`erwartet 6 Stellplätze, gefunden ${list.size}`);
+    await assertSucceeds(getDoc(doc(as('admin'), 'campsites/opt')));
+  });
+
+  it('R-12b ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedCampsite();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'campsites/s1')));
+      await assertFails(getDocs(collection(db, 'campsites')));
+      await assertFails(setDoc(doc(db, 'campsites/neu'), campsite('nobody')));
+      await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'campsites/s1')));
+    }
+  });
+
+  it('R-12c Validierung beim Anlegen: Position, Pflichtfelder, Formate, Längen, Bewertung, Audit', async () => {
+    const db = as('member');
+    const bad = (o) => assertFails(setDoc(doc(db, 'campsites/x'), campsite('member', o)));
+    await bad({ latitude: 90.0001 });
+    await bad({ latitude: -90.0001 });
+    await bad({ longitude: 180.0001 });
+    await bad({ longitude: -180.5 });
+    await bad({ latitude: '48.1' });
+    await bad({ longitude: null });
+    await bad({ comment: '' });
+    await bad({ comment: 'x'.repeat(501) });
+    await bad({ comment: 5 });
+    await bad({ date: '01.10.2026' });
+    await bad({ date: 20261001 });
+    await bad({ name: '' });
+    await bad({ name: 'x'.repeat(101) });
+    await bad({ address: 'x'.repeat(201) });
+    await bad({ note: 'x'.repeat(501) });
+    await bad({ note: '' });
+    await bad({ rating: 0 });
+    await bad({ rating: 6 });
+    await bad({ rating: 2.5 });
+    await bad({ rating: '3' });
+    await bad({ photos: 'keine' });
+    await bad({ photos: null });
+    await bad({ createdBy: 'admin' });
+    await bad({ createdAt: Timestamp.now() });
+    await bad({ updatedAt: serverTimestamp(), updatedBy: 'member' });
+    await bad({ extra: 1 });
+    for (const key of ['latitude', 'longitude', 'date', 'comment', 'photos']) {
+      await assertFails(setDoc(doc(db, 'campsites/x'), without(campsite('member'), key)));
+    }
+  });
+
+  it('R-12d ein, zwei und drei Fotos mit voller Stückgröße (900 KiB) in einer Transaktion (Grenze der Regelabfragen)', async () => {
+    await assertSucceeds(createCampsite(as('member'), 'member', 's1', ['f1']));
+    await assertSucceeds(createCampsite(as('member'), 'member', 's2', ['f2', 'f3']));
+    await assertSucceeds(createCampsite(as('member'), 'member', 's3', ['f4', 'f5', 'f6'])); // 19 Regelabfragen, Grenze 20
+    const db = as('admin');
+    const s3 = await assertSucceeds(getDoc(doc(db, 'campsites/s3')));
+    if (s3.data().photos.length !== 3) throw new Error('drei Fotoverweise erwartet');
+    for (const f of ['f4', 'f5', 'f6']) {
+      const meta = await assertSucceeds(getDoc(doc(db, `files/${f}`)));
+      if (!meta.exists() || meta.data().chunkCount !== 1) throw new Error(`Datei ${f} fehlt oder hat nicht genau ein Stück`);
+      await assertSucceeds(getDoc(doc(db, `files/${f}/chunks/0`)));
+    }
+  });
+
+  it('R-12e vier Fotos sind verboten (auch wenn das vierte im selben Schritt entsteht)', async () => {
+    await seedCampsite('s1', ['a', 'b', 'c']);
+    const db = as('member');
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'd');
+      tx.update(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: ['a', 'b', 'c', 'd'].map((f) => photoRef(f)) }));
+    }));
+    // Gegenprobe: drei Fotos bleiben gültig (Kommentar ändern, Fotoliste unverändert)
+    await assertSucceeds(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: ['a', 'b', 'c'].map((f) => photoRef(f)) })));
+  });
+
+  it('R-12f Fotos: nur JPEG, höchstens ein Stück (900 KiB), gültiger Verweis, keine Dublette', async () => {
+    const db = as('member');
+    // ein Byte mehr als ein Stück: zwei Stücke, als Foto verboten
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'big', CHUNK + 1);
+      tx.set(doc(db, 'campsites/x1'), campsite('member', { photos: [photoRef('big', CHUNK + 1)] }));
+    }));
+    // PDF als Foto
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'pdf', 1000, { contentType: 'application/pdf', name: 'a.pdf' });
+      tx.set(doc(db, 'campsites/x2'), campsite('member', { photos: [photoRef('pdf', 1000, { contentType: 'application/pdf', name: 'a.pdf' })] }));
+    }));
+    // Verweis mit Zusatzfeld, ohne Namen, mit leerer Kennung
+    for (const [i, o] of [{ extra: 1 }, { name: '' }, { fileId: '' }, { sizeBytes: 0 }, { sizeBytes: '1000' }].entries()) {
+      await assertFails(runTransaction(db, async (tx) => {
+        stageFile(tx, db, 'member', `r${i}`);
+        tx.set(doc(db, `campsites/y${i}`), campsite('member', { photos: [photoRef(`r${i}`, 1000, o)] }));
+      }));
+    }
+    // dieselbe Datei zweimal
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'dup');
+      tx.set(doc(db, 'campsites/x3'), campsite('member', { photos: [photoRef('dup'), photoRef('dup')] }));
+    }));
+    // Größe im Verweis passt nicht zur Datei
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'sz', 1000);
+      tx.set(doc(db, 'campsites/x4'), campsite('member', { photos: [photoRef('sz', 2000)] }));
+    }));
+    // Gegenprobe: genau ein volles Stück ist gültig
+    await assertSucceeds(createCampsite(db, 'member', 'ok', ['fok'], CHUNK));
+  });
+
+  it('R-12g Fotos nur mit ihrer Datei im selben Schritt; bestehende Dateien lassen sich nicht einhängen', async () => {
+    await seedCampsite('s1', ['f1']);
+    const db = as('member');
+    // Verweis ohne Datei
+    await assertFails(setDoc(doc(db, 'campsites/x1'), campsite('member', { photos: [photoRef('fehlt')] })));
+    // Verweis auf eine schon vorhandene Datei eines anderen Stellplatzes (Einmalverwendung)
+    await assertFails(setDoc(doc(db, 'campsites/x2'), campsite('member', { photos: [photoRef('f1')] })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: [photoRef('f1'), photoRef('f1')] })));
+    await seedCampsite('s2', []);
+    await assertFails(updateDoc(doc(db, 'campsites/s2'), campsiteEdit('member', { photos: [photoRef('f1')] })));
+    // Gegenprobe: ein Stellplatz ganz ohne Foto bleibt gültig
+    await assertSucceeds(setDoc(doc(db, 'campsites/ohne'), campsite('member')));
+  });
+
+  it('R-12h Bearbeiten: Audit Pflicht, Position/Datum/Herkunft unveränderlich, Validierung gilt weiter', async () => {
+    await seedCampsite('s1', [], 1000, { name: 'Alt', rating: 3 });
+    const db = as('member');
+    await assertSucceeds(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { name: 'Neu', rating: 4 })));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'campsites/s1'), campsiteEdit('admin', { rating: deleteField(), name: deleteField() })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), { comment: 'Ohne Audit' }));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('admin')));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { updatedAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { latitude: 49 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { longitude: 12 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { date: '2026-11-01' })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { createdAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { comment: '' })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { rating: 9 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { extra: 1 })));
+  });
+
+  it('R-12i Fotos ändern: hinzufügen, entfernen (mit Datei), ersetzen; Verweise ohne Änderung kosten keine Prüfung', async () => {
+    await seedCampsite('s1', ['a', 'b']);
+    const db = as('member');
+    // hinzufügen: drittes Foto
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'c');
+      tx.update(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: ['a', 'b', 'c'].map((f) => photoRef(f)) }));
+    }));
+    // entfernen: nur Verweis (Datei bleibt zunächst bestehen, danach eigener Aufräumschritt)
+    await assertSucceeds(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: [photoRef('a'), photoRef('c')] })));
+    await assertSucceeds(runTransaction(db, async (tx) => { stageDeleteFile(tx, db, 'b'); }));
+    // ersetzen in einem Schritt: a durch d, c bleibt
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'd');
+      tx.update(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: [photoRef('d'), photoRef('c')] }));
+    }));
+    const s1 = await assertSucceeds(getDoc(doc(as('admin'), 'campsites/s1')));
+    const ids = s1.data().photos.map((p) => p.fileId).join(',');
+    if (ids !== 'd,c') throw new Error(`erwartet d,c, gefunden ${ids}`);
+    // alle Fotos entfernen
+    await assertSucceeds(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { photos: [] })));
+  });
+
+  it('R-12j Löschen: jeder Benutzer; Stellplatz mit drei Fotos samt Dateien in einer Transaktion', async () => {
+    await seedCampsite('s1', ['a', 'b', 'c'], CHUNK);
+    await seedCampsite('s2', []);
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      for (const f of ['a', 'b', 'c']) stageDeleteFile(tx, db, f, CHUNK);
+      tx.delete(doc(db, 'campsites/s1'));
+    }));
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'campsites/s2')));
+    const list = await assertSucceeds(getDocs(collection(as('admin'), 'campsites')));
+    if (list.size !== 0) throw new Error('Stellplätze müssen gelöscht sein');
+    const files = await assertSucceeds(getDoc(doc(as('admin'), 'files/a')));
+    if (files.exists()) throw new Error('Datei muss gelöscht sein');
+  });
+
+  it('R-12k Liste abfragbar und nach Datum sortierbar (App lädt alle Stellplätze einmal)', async () => {
+    await seedCampsite('s1', [], 1000, { date: '2026-09-01' });
+    await seedCampsite('s2', [], 1000, { date: '2026-10-01' });
+    const list = await assertSucceeds(getDocs(query(collection(as('member'), 'campsites'), orderBy('date', 'desc'))));
+    if (list.size !== 2 || list.docs[0].id !== 's2') throw new Error('Sortierung nach Datum erwartet');
+  });
+
+  it('R-12l Regression: Finanzen, Kalender, Auffälligkeiten, geplante Ausgaben und Belege unverändert; Dokumente gesperrt', async () => {
+    const db = as('member');
+    await assertSucceeds(createWithReceipt(db, 'member', 't1', 'fr'));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
+    await assertSucceeds(setDoc(doc(db, 'repairs/r1'), repair('member')));
+    await seedPlanned('p1');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    await assertSucceeds(setDoc(doc(db, 'campsites/s1'), campsite('member')));
+    await assertFails(setDoc(doc(db, 'documents/x'), { a: 1 }));
+    // Ein Beleg darf nicht auf ein Foto-Stück eines Stellplatzes zeigen (Einmalverwendung der Datei)
+    await seedCampsite('s9', ['foto9']);
+    await assertFails(setDoc(doc(db, 'transactions/t9'), booking('member', { receipt: receiptRef('foto9') })));
   });
 });

@@ -30,6 +30,12 @@ import kotlinx.serialization.Serializable
 /** Formular einer Auffälligkeit; repairId = null legt eine neue an. */
 @Serializable data class RepairFormRoute(val repairId: String? = null)
 
+/**
+ * Formular eines Stellplatzes. Neu: [position] trägt die ermittelte Position (Text, siehe GeoFormat.encode), campsiteId = null.
+ * Bearbeiten: campsiteId gesetzt. Die Position ist bewusst ein Text, damit keine Null-Zahlen als Navigationsargument nötig sind.
+ */
+@Serializable data class CampsiteFormRoute(val campsiteId: String? = null, val position: String? = null)
+
 /** Liste der geplanten Ausgaben (aus dem Finanzbereich). */
 @Serializable data object PlannedListRoute
 

@@ -1,7 +1,8 @@
 rules_version = '2';
 
 // OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
-// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender; Phase 8: Auffälligkeiten).
+// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender; Phase 8: Auffälligkeiten;
+// Phase 9: Stellplätze).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -167,6 +168,54 @@ service cloud.firestore {
         && d.status in ['OPEN', 'DONE']
         && (!('priority' in d) || d.priority in ['LOW', 'MEDIUM', 'HIGH'])
         && d.comment is string && d.comment.size() <= 500;
+    }
+
+    // Stellplatz (Phase 9): gespeicherte Position mit Kommentar und bis zu 3 Fotos. Breite/Länge als Zahl im
+    // gültigen Bereich; comment ist Pflicht (Anforderung 22), name, address, note und rating sind optional.
+    // Fotos stehen als Verweise in photos (wie Belege, Feld fileId/name/contentType/sizeBytes), **nur JPEG und
+    // höchstens ein Stück (900 KiB)**: So braucht ein Stellplatz mit drei neuen Fotos rund 19 Regelabfragen
+    // (Stück 1 + Datei 3 + Verweis 2 je Foto, Stellplatz 1) und bleibt unter der Grenze von 20 je Transaktion.
+    // Muss zu data/campsites/CampsiteValidator.kt und FileLimits passen.
+    function validCoordinate(value, limit) {
+      return value is number && value >= -limit && value <= limit;
+    }
+    function validPhotoRef(p) {
+      return validReceiptRef(p)
+        && p.contentType == 'image/jpeg'
+        && p.sizeBytes >= 1 && p.sizeBytes <= 921600;
+    }
+    // Ein Foto ist gültig, wenn es schon im Stellplatz stand (unverändert) oder seine Datei im selben Schritt neu
+    // entsteht (Einmalverwendung wie bei Belegen). Regeln kennen keine Schleifen: Listen werden mit Indizes geprüft.
+    function photoOk(p, old) {
+      return (old.size() > 0 && p == old[0])
+        || (old.size() > 1 && p == old[1])
+        || (old.size() > 2 && p == old[2])
+        || newReceiptOk(p);
+    }
+    function photosOk(photos, old) {
+      return (photos.size() < 1 || photoOk(photos[0], old))
+        && (photos.size() < 2 || photoOk(photos[1], old))
+        && (photos.size() < 3 || photoOk(photos[2], old));
+    }
+    function validCampsite(d) {
+      return d.keys().hasOnly(['latitude', 'longitude', 'date', 'comment', 'name', 'address', 'note', 'rating',
+                               'photos', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['latitude', 'longitude', 'date', 'comment', 'photos', 'createdAt', 'createdBy'])
+        && validCoordinate(d.latitude, 90)
+        && validCoordinate(d.longitude, 180)
+        && validDay(d.date)
+        && validText(d.comment, 500)
+        && (!('name' in d) || validText(d.name, 100))
+        && (!('address' in d) || validText(d.address, 200))
+        && (!('note' in d) || validText(d.note, 500))
+        && (!('rating' in d) || (d.rating is int && d.rating >= 1 && d.rating <= 5))
+        && d.photos is list && d.photos.size() <= 3
+        && (d.photos.size() < 1 || validPhotoRef(d.photos[0]))
+        && (d.photos.size() < 2 || validPhotoRef(d.photos[1]))
+        && (d.photos.size() < 3 || validPhotoRef(d.photos[2]))
+        // dieselbe Datei nicht zweimal
+        && (d.photos.size() < 2 || d.photos[0].fileId != d.photos[1].fileId)
+        && (d.photos.size() < 3 || (d.photos[0].fileId != d.photos[2].fileId && d.photos[1].fileId != d.photos[2].fileId));
     }
 
     // =====================================================================
@@ -347,6 +396,37 @@ service cloud.firestore {
         && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // campsites/{id}: Stellplätze (Phase 9). Alle Benutzer dürfen lesen, anlegen, ändern und löschen
+    // (Entscheidung 4). Audit-Felder werden erzwungen. Die Position (latitude, longitude) und das Datum sind
+    // nach dem Anlegen unveränderlich. Neue Fotos entstehen im selben Schritt wie der Stellplatz (Dateien in
+    // files/), bereits gespeicherte Fotos bleiben unverändert oder werden aus der Liste entfernt.
+    // =====================================================================
+    match /campsites/{campsiteId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validCampsite(request.resource.data)
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && photosOk(request.resource.data.photos, []);
+
+      allow update: if isUser()
+        && validCampsite(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.latitude == resource.data.latitude
+        && request.resource.data.longitude == resource.data.longitude
+        && request.resource.data.date == resource.data.date
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time
+        && photosOk(request.resource.data.photos, resource.data.photos);
 
       allow delete: if isUser();
     }

@@ -12,11 +12,16 @@ import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
 import de.hagi089.obelix.data.calendar.CalendarRepository
+import de.hagi089.obelix.data.campsites.CampsiteRepository
+import de.hagi089.obelix.data.campsites.FirestoreCampsiteRepository
+import de.hagi089.obelix.data.campsites.FusedLocationProvider
+import de.hagi089.obelix.data.campsites.LocationProvider
 import de.hagi089.obelix.data.calendar.FirestoreCalendarRepository
 import de.hagi089.obelix.data.files.AndroidFileReader
 import de.hagi089.obelix.data.files.FileStore
 import de.hagi089.obelix.data.files.FirestoreFileStore
 import de.hagi089.obelix.data.files.LocalFileReader
+import de.hagi089.obelix.data.files.PhotoCameraCache
 import de.hagi089.obelix.data.files.ReceiptCache
 import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
@@ -68,6 +73,14 @@ class AppContainer(context: Context) {
     val plannedExpenseRepository: PlannedExpenseRepository by lazy { FirestorePlannedExpenseRepository(firestore) }
 
     val calendarRepository: CalendarRepository by lazy { FirestoreCalendarRepository(firestore) }
+
+    val campsiteRepository: CampsiteRepository by lazy { FirestoreCampsiteRepository(firestore, fileStore) }
+
+    /** Einmalige Standortbestimmung (nur auf Knopfdruck). */
+    val locationProvider: LocationProvider by lazy { FusedLocationProvider(appContext) }
+
+    /** Zielordner für Kameraaufnahmen (Stellplatzfotos). */
+    val photoCameraCache: PhotoCameraCache by lazy { PhotoCameraCache(appContext) }
 
     /** Übergabe von Code und Name zwischen Registrierungsformular und Codebildschirm. */
     val registrationHandoff = RegistrationHandoff()

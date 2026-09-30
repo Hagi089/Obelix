@@ -11,6 +11,8 @@ navigation = "2.10.2"
 kotlinxSerialization = "1.11.0"
 firebaseBom = "34.19.0"
 googleServices = "4.5.0"
+osmdroid = "6.1.20"
+playServicesLocation = "21.4.0"
 junit = "4.13.2"
 
 [libraries]
@@ -31,6 +33,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
+osmdroid-android = { group = "org.osmdroid", name = "osmdroid-android", version.ref = "osmdroid" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]

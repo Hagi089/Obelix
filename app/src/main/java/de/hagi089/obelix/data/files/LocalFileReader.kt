@@ -25,15 +25,25 @@ class FileReadException(@param:StringRes val messageRes: Int, cause: Throwable? 
 interface LocalFileReader {
     /** Liefert die fertig aufbereitete Datei (Bilder verkleinert als JPEG, PDF unverändert) oder eine [FileReadException]. */
     suspend fun read(uri: Uri): Result<NewFile>
+
+    /**
+     * Wie [read], aber nur für Bilder und so verkleinert, dass das JPEG in ein einziges Stück passt
+     * ([FileLimits.MAX_PHOTO_BYTES]): Stellplatzfotos (Phase 9). Eine PDF wird abgelehnt.
+     */
+    suspend fun readPhoto(uri: Uri): Result<NewFile>
 }
 
 class AndroidFileReader(context: Context) : LocalFileReader {
 
     private val resolver = context.applicationContext.contentResolver
 
-    override suspend fun read(uri: Uri): Result<NewFile> = withContext(Dispatchers.IO) {
+    override suspend fun read(uri: Uri): Result<NewFile> = guarded { readBlocking(uri) }
+
+    override suspend fun readPhoto(uri: Uri): Result<NewFile> = guarded { readPhotoBlocking(uri) }
+
+    private suspend fun guarded(block: () -> NewFile): Result<NewFile> = withContext(Dispatchers.IO) {
         try {
-            Result.success(readBlocking(uri))
+            Result.success(block())
         } catch (e: CancellationException) {
             throw e
         } catch (e: FileReadException) {
@@ -49,15 +59,33 @@ class AndroidFileReader(context: Context) : LocalFileReader {
 
     private fun readBlocking(uri: Uri): NewFile {
         val mime = resolver.getType(uri)
-        val rawName = resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
-            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getString(0) else null
-        }
+        val rawName = displayName(uri)
         return when {
             mime == FileLimits.MIME_PDF -> readPdf(uri, rawName)
             mime != null && mime.startsWith("image/") -> readImage(uri, rawName)
             else -> throw FileReadException(R.string.error_file_type)
         }
     }
+
+    private fun readPhotoBlocking(uri: Uri): NewFile {
+        val mime = resolver.getType(uri)
+        if (mime == null || !mime.startsWith("image/")) throw FileReadException(R.string.error_photo_type)
+        val rawName = displayName(uri)
+        val source = readCapped(uri, FileLimits.MAX_SOURCE_IMAGE_BYTES, R.string.error_image_source_too_large)
+        // Stufenweise kleiner, bis das JPEG in ein Stück passt (Regelbudget, siehe FileLimits.MAX_PHOTO_BYTES).
+        for (step in PhotoCompression.steps) {
+            val jpeg = compressToJpeg(source, step.maxSide, step.quality)
+            if (PhotoCompression.fits(jpeg.size)) {
+                return NewFile(FileValidator.jpegName(FileValidator.cleanName(rawName, "Foto")), FileLimits.MIME_JPEG, jpeg)
+            }
+        }
+        throw FileReadException(R.string.error_photo_too_large)
+    }
+
+    private fun displayName(uri: Uri): String? =
+        resolver.query(uri, arrayOf(OpenableColumns.DISPLAY_NAME), null, null, null)?.use { cursor ->
+            if (cursor.moveToFirst() && !cursor.isNull(0)) cursor.getString(0) else null
+        }
 
     private fun readPdf(uri: Uri, rawName: String?): NewFile {
         val bytes = readCapped(uri, FileLimits.MAX_FILE_BYTES, R.string.error_file_too_large)
@@ -92,15 +120,20 @@ class AndroidFileReader(context: Context) : LocalFileReader {
 
     /**
      * Dekodiert verkleinert (nie das ganze Originalbild), dreht nach den Exif-Angaben, skaliert auf höchstens
-     * [FileLimits.IMAGE_MAX_SIDE_PX] an der langen Seite und speichert als JPEG (Hintergrund weiß statt schwarz).
+     * [maxSide] an der langen Seite (Standard [FileLimits.IMAGE_MAX_SIDE_PX]) und speichert als JPEG mit [quality]
+     * (Hintergrund weiß statt schwarz).
      */
-    private fun compressToJpeg(source: ByteArray): ByteArray {
+    private fun compressToJpeg(
+        source: ByteArray,
+        maxSide: Int = FileLimits.IMAGE_MAX_SIDE_PX,
+        quality: Int = FileLimits.JPEG_QUALITY,
+    ): ByteArray {
         val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
         BitmapFactory.decodeByteArray(source, 0, source.size, bounds)
         if (bounds.outWidth <= 0 || bounds.outHeight <= 0) throw FileReadException(R.string.error_file_unreadable)
 
         val options = BitmapFactory.Options().apply {
-            inSampleSize = ImageScaling.sampleSize(bounds.outWidth, bounds.outHeight, FileLimits.IMAGE_MAX_SIDE_PX)
+            inSampleSize = ImageScaling.sampleSize(bounds.outWidth, bounds.outHeight, maxSide)
         }
         val decoded = BitmapFactory.decodeByteArray(source, 0, source.size, options)
             ?: throw FileReadException(R.string.error_file_unreadable)
@@ -112,7 +145,7 @@ class AndroidFileReader(context: Context) : LocalFileReader {
             val swapsSides = applyExifOrientation(matrix, exifOrientation(source))
             val width = if (swapsSides) decoded.height else decoded.width
             val height = if (swapsSides) decoded.width else decoded.height
-            val (targetWidth, _) = ImageScaling.targetSize(width, height, FileLimits.IMAGE_MAX_SIDE_PX)
+            val (targetWidth, _) = ImageScaling.targetSize(width, height, maxSide)
             val scale = targetWidth.toFloat() / width
             if (scale < 1f) matrix.postScale(scale, scale)
 
@@ -123,7 +156,7 @@ class AndroidFileReader(context: Context) : LocalFileReader {
                 drawBitmap(transformed, 0f, 0f, null)
             }
             val out = ByteArrayOutputStream()
-            if (!flattened.compress(Bitmap.CompressFormat.JPEG, FileLimits.JPEG_QUALITY, out)) {
+            if (!flattened.compress(Bitmap.CompressFormat.JPEG, quality, out)) {
                 throw FileReadException(R.string.error_file_unreadable)
             }
             return out.toByteArray()

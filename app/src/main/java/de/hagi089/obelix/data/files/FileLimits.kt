@@ -22,6 +22,12 @@ object FileLimits {
     /** Bilder werden vor dem Verkleinern gelesen; größere Quelldateien werden abgelehnt (Speicherschutz). */
     const val MAX_SOURCE_IMAGE_BYTES = 30 * 1024 * 1024
 
+    /**
+     * Ein Stellplatzfoto darf höchstens ein Stück groß sein (Phase 9): so bleibt ein Stellplatz mit drei neuen Fotos
+     * unter dem Regelbudget von 20 Abfragen je Transaktion. Muss zu firebase/firestore.rules (validPhotoRef) passen.
+     */
+    const val MAX_PHOTO_BYTES = CHUNK_SIZE_BYTES
+
     const val MIME_JPEG = "image/jpeg"
     const val MIME_PDF = "application/pdf"
 

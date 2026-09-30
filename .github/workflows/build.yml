@@ -38,6 +38,14 @@ jobs:
           msg=$(sed ':a;N;$!ba;s/%/%25/g;s/\r/%0D/g;s/\n/%0A/g' errors.txt | head -c 3500)
           echo "::error title=Build-Fehler::${msg}"
 
+      # Phase 9: Kontrolle, welche Berechtigungen die fertige App wirklich anfordert (Kartenbibliothek bringt eigene mit).
+      - name: Berechtigungen der App anzeigen
+        if: success()
+        run: |
+          f=$(find app/build/intermediates -name AndroidManifest.xml -path "*merged_manifest*" -path "*ebug*" | head -1)
+          echo "Manifest: $f"
+          grep -o 'uses-permission[^>]*android:name="[^"]*"' "$f" | grep -o 'android:name="[^"]*"' | sort -u
+
       - name: Debug-APK hochladen
         if: success()
         uses: actions/upload-artifact@v6

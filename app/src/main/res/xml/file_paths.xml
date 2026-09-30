@@ -2,4 +2,6 @@
 <!-- Nur der Ordner mit dem zuletzt geöffneten PDF-Beleg (ReceiptCache) wird für externe PDF-Apps freigegeben. -->
 <paths>
     <cache-path name="receipts" path="receipts/" />
+    <!-- Zielordner für Kameraaufnahmen der Stellplatzfotos (PhotoCameraCache). -->
+    <cache-path name="camera" path="camera/" />
 </paths>
