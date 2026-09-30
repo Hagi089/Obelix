@@ -42,7 +42,10 @@ service cloud.firestore {
     // users/{uid}: Name und Rolle. Alle Benutzer sehen alle Namen („Bezahlt von").
     // =====================================================================
     match /users/{userId} {
-      allow get, list: if isUser();
+      // Das eigene Dokument darf jeder Angemeldete abfragen, auch wenn es noch nicht existiert:
+      // so erkennt die App „noch nicht freigeschaltet" (sonst käme „keine Berechtigung").
+      allow get: if isUser() || (signedIn() && userId == request.auth.uid);
+      allow list: if isUser();
 
       // Registrierung: nur für sich selbst, nur als MEMBER, nur mit dem gültigen Zugangscode.
       allow create: if signedIn() && userId == request.auth.uid

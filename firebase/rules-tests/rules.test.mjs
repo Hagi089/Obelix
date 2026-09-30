@@ -155,6 +155,13 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
     await assertFails(setDoc(doc(db, 'config/access'), newCode('stranger', CODE_NEW)));
   });
 
+  it('R-03d eigenes (noch nicht vorhandenes) Benutzerdokument ist abfragbar, fremde nicht', async () => {
+    const db = as('stranger');
+    const snap = await assertSucceeds(getDoc(doc(db, 'users/stranger')));
+    if (snap.exists()) throw new Error('darf nicht existieren');
+    await assertFails(getDoc(doc(db, 'users/member')));
+  });
+
   it('R-03b entfernter Benutzer hat keinen Zugriff mehr', async () => {
     await assertSucceeds(deleteDoc(doc(as('admin'), 'users/member')));
     await assertFails(getDocs(collection(as('member'), 'users')));
