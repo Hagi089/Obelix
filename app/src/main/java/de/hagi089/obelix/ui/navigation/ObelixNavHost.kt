@@ -34,6 +34,10 @@ import de.hagi089.obelix.ui.planned.PlannedFormScreen
 import de.hagi089.obelix.ui.planned.PlannedFormViewModel
 import de.hagi089.obelix.ui.planned.PlannedListScreen
 import de.hagi089.obelix.ui.planned.PlannedListViewModel
+import de.hagi089.obelix.ui.repairs.RepairFormScreen
+import de.hagi089.obelix.ui.repairs.RepairFormViewModel
+import de.hagi089.obelix.ui.repairs.RepairListScreen
+import de.hagi089.obelix.ui.repairs.RepairListViewModel
 import de.hagi089.obelix.ui.settings.CategoriesViewModel
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
@@ -169,7 +173,27 @@ fun ObelixNavHost(
             )
             ImportScreen(viewModel = importViewModel)
         }
-        composable<TasksRoute> { SectionNotAvailableScreen() }
+        composable<TasksRoute> {
+            val repairListViewModel: RepairListViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { RepairListViewModel(container.repairRepository, container.userRepository) }
+                },
+            )
+            RepairListScreen(
+                viewModel = repairListViewModel,
+                onAdd = { navController.navigate(RepairFormRoute()) },
+                onOpen = { id -> navController.navigate(RepairFormRoute(repairId = id)) },
+            )
+        }
+        composable<RepairFormRoute> { entry ->
+            val route = entry.toRoute<RepairFormRoute>()
+            val repairFormViewModel: RepairFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { RepairFormViewModel(repairId = route.repairId, uid = user.uid, repairs = container.repairRepository) }
+                },
+            )
+            RepairFormScreen(viewModel = repairFormViewModel, onFinished = { navController.navigateUp() })
+        }
         composable<CampsitesRoute> { SectionNotAvailableScreen() }
         composable<DocumentsRoute> { SectionNotAvailableScreen() }
         composable<SettingsRoute> {

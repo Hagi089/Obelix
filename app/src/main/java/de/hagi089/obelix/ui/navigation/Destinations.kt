@@ -27,6 +27,9 @@ import kotlinx.serialization.Serializable
 /** Formular eines Kalendereintrags; entryId = null legt einen neuen an. */
 @Serializable data class CalendarFormRoute(val entryId: String? = null)
 
+/** Formular einer Auffälligkeit; repairId = null legt eine neue an. */
+@Serializable data class RepairFormRoute(val repairId: String? = null)
+
 /** Liste der geplanten Ausgaben (aus dem Finanzbereich). */
 @Serializable data object PlannedListRoute
 

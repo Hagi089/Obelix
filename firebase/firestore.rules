@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
-// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender).
+// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender; Phase 8: Auffälligkeiten).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -155,6 +155,20 @@ service cloud.firestore {
         && d.comment is string && d.comment.size() <= 500;
     }
 
+    // Auffälligkeit (Phase 8): Problem oder offene Arbeit am Wohnmobil. Status OPEN oder DONE (Oberfläche:
+    // OFFEN / ERLEDIGT), priority optional. Muss zu data/repairs/RepairValidator.kt passen.
+    function validRepair(d) {
+      return d.keys().hasOnly(['title', 'description', 'date', 'status', 'priority', 'comment',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['title', 'description', 'date', 'status', 'comment', 'createdAt', 'createdBy'])
+        && validText(d.title, 200)
+        && validText(d.description, 2000)
+        && validDay(d.date)
+        && d.status in ['OPEN', 'DONE']
+        && (!('priority' in d) || d.priority in ['LOW', 'MEDIUM', 'HIGH'])
+        && d.comment is string && d.comment.size() <= 500;
+    }
+
     // =====================================================================
     // users/{uid}: Name und Rolle. Alle Benutzer sehen alle Namen („Bezahlt von").
     // =====================================================================
@@ -302,6 +316,32 @@ service cloud.firestore {
 
       allow update: if isUser()
         && validCalendar(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // repairs/{id}: Auffälligkeiten (Phase 8). Alle Benutzer dürfen lesen, anlegen, ändern und löschen
+    // (Entscheidung 4). Neue Auffälligkeiten sind OPEN; Erledigen und Wiederöffnen sind Änderungen des Status
+    // mit Audit. Audit-Felder werden erzwungen.
+    // =====================================================================
+    match /repairs/{repairId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validRepair(request.resource.data)
+        && request.resource.data.status == 'OPEN'
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isUser()
+        && validRepair(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
         && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data

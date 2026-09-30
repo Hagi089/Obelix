@@ -49,6 +49,7 @@ import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.PlannedFormRoute
 import de.hagi089.obelix.ui.navigation.PlannedListRoute
 import de.hagi089.obelix.ui.navigation.ReceiptRoute
+import de.hagi089.obelix.ui.navigation.RepairFormRoute
 import de.hagi089.obelix.ui.navigation.SettingsRoute
 import de.hagi089.obelix.ui.navigation.TopLevelDestination
 import de.hagi089.obelix.ui.navigation.navigateToTopLevel
@@ -152,6 +153,7 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                             currentDestination?.hasRoute(SettingsRoute::class) == true -> R.string.nav_settings
                             currentDestination?.hasRoute(BookingFormRoute::class) == true -> R.string.finance_form_title
                             currentDestination?.hasRoute(CalendarFormRoute::class) == true -> R.string.calendar_form_title
+                            currentDestination?.hasRoute(RepairFormRoute::class) == true -> R.string.repair_form_title
                             currentDestination?.hasRoute(ReceiptRoute::class) == true -> R.string.receipt_title
                             currentDestination?.hasRoute(ImportRoute::class) == true -> R.string.import_title
                             currentDestination?.hasRoute(PlannedListRoute::class) == true -> R.string.planned_title

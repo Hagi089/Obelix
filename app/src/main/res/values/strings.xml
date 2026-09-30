@@ -251,6 +251,29 @@
     <string name="error_planned_title_too_long">Die Bezeichnung darf höchstens 200 Zeichen lang sein.</string>
     <string name="error_planned_link_invalid">Bitte gib einen Link an, der mit http:// oder https:// beginnt (höchstens 500 Zeichen, ohne Leerzeichen).</string>
 
+    <!-- Auffälligkeiten (Phase 8) -->
+    <string name="repair_form_title">Auffälligkeit</string>
+    <string name="repair_add">Auffälligkeit hinzufügen</string>
+    <string name="repair_empty">Noch keine Auffälligkeiten eingetragen.</string>
+    <string name="repair_empty_open">Keine offenen Auffälligkeiten.</string>
+    <string name="repair_empty_done">Noch nichts als erledigt markiert.</string>
+    <string name="repair_filter_open">Offen</string>
+    <string name="repair_filter_done">Erledigt</string>
+    <string name="repair_summary_open">Offene Auffälligkeiten</string>
+    <string name="repair_created_by">Erstellt von %1$s</string>
+    <string name="repair_row_done">Erledigt</string>
+    <string name="repair_status_open">Status: Offen</string>
+    <string name="repair_status_done">Status: Erledigt</string>
+    <string name="repair_action_done">Als erledigt markieren</string>
+    <string name="repair_action_reopen">Wieder öffnen</string>
+    <string name="field_repair_date">Datum</string>
+    <string name="repair_delete_title">Auffälligkeit löschen?</string>
+    <string name="repair_delete_text">Die Auffälligkeit wird endgültig gelöscht.</string>
+    <string name="error_repair_title_required">Bitte gib einen Titel ein.</string>
+    <string name="error_repair_title_too_long">Der Titel darf höchstens 200 Zeichen lang sein.</string>
+    <string name="error_repair_description_required">Bitte gib eine Beschreibung ein.</string>
+    <string name="error_repair_description_too_long">Die Beschreibung darf höchstens 2000 Zeichen lang sein.</string>
+
     <!-- Dateiablage und Belege (Phase 6) -->
     <string name="error_file_corrupt">Die Datei ist unvollständig gespeichert und kann nicht angezeigt werden.</string>
     <string name="error_file_type">Bitte wähle ein Bild oder eine PDF-Datei.</string>

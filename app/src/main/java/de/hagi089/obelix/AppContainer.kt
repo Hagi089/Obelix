@@ -24,6 +24,8 @@ import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
 import de.hagi089.obelix.data.finance.FirestoreFinanceRepository
 import de.hagi089.obelix.data.planned.FirestorePlannedExpenseRepository
 import de.hagi089.obelix.data.planned.PlannedExpenseRepository
+import de.hagi089.obelix.data.repairs.FirestoreRepairRepository
+import de.hagi089.obelix.data.repairs.RepairRepository
 import de.hagi089.obelix.data.settings.ThemePreference
 import de.hagi089.obelix.data.user.FirestoreUserRepository
 import de.hagi089.obelix.data.user.UserRepository
@@ -47,6 +49,7 @@ class AppContainer(context: Context) {
 
     val authRepository: AuthRepository by lazy { FirebaseAuthRepository(auth) }
 
+    val repairRepository: RepairRepository by lazy { FirestoreRepairRepository(firestore) }
     val userRepository: UserRepository by lazy { FirestoreUserRepository(firestore) }
 
     /** Dateiablage (Belege; später Stellplatzfotos und Dokumente). */

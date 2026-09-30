@@ -175,8 +175,8 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
   it('R-03c noch nicht freigegebene Sammlungen sind für alle gesperrt', async () => {
     for (const uid of ['admin', 'member']) {
       const db = as(uid);
-      await assertFails(setDoc(doc(db, 'repairs/t1'), { amountCents: 100 }));
-      await assertFails(getDoc(doc(db, 'repairs/t1')));
+      await assertFails(setDoc(doc(db, 'campsites/t1'), { amountCents: 100 }));
+      await assertFails(getDoc(doc(db, 'campsites/t1')));
       await assertFails(setDoc(doc(db, 'irgendwas/x'), { a: 1 }));
       await assertFails(setDoc(doc(db, 'config/other'), { a: 1 }));
     }
@@ -1179,5 +1179,142 @@ describe('R-10 Kalender (calendarEntries)', () => {
     await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
     await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
     await assertFails(setDoc(doc(db, 'nichtFreigegeben/x'), { a: 1 }));
+  });
+});
+
+// =====================================================================
+// Phase 8: Auffälligkeiten. Testdaten nur für den Emulator.
+
+/** Was die App beim Anlegen einer Auffälligkeit schreibt (RepairRepository.create). */
+function repair(uid, o = {}) {
+  return {
+    title: 'Wasserhahn tropft',
+    description: 'Der Hahn in der Küche tropft dauerhaft.',
+    date: '2026-10-10',
+    status: 'OPEN',
+    comment: '',
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+async function seedRepair(id = 'r1', o = {}) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `repairs/${id}`), {
+      ...without(repair('member'), 'createdAt'),
+      createdAt: Timestamp.now(),
+      ...o,
+    });
+  });
+}
+
+/** Was die App beim Ändern schreibt (RepairRepository.update): Status und Audit gesetzt. */
+const repairEdit = (uid, o = {}) => ({ title: 'Geändert', status: 'OPEN', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+
+describe('R-11 Auffälligkeiten (repairs)', () => {
+  it('R-11a MEMBER und ADMIN dürfen anlegen und lesen; Priorität und Kommentar optional gültig', async () => {
+    for (const uid of ['member', 'admin']) {
+      await assertSucceeds(setDoc(doc(as(uid), `repairs/r-${uid}`), repair(uid)));
+    }
+    for (const priority of ['LOW', 'MEDIUM', 'HIGH']) {
+      await assertSucceeds(setDoc(doc(as('member'), `repairs/p-${priority}`), repair('member', { priority, comment: 'Bitte bald' })));
+    }
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'repairs')));
+    if (list.size !== 5) throw new Error(`erwartet 5 Einträge, gefunden ${list.size}`);
+    await assertSucceeds(getDoc(doc(as('admin'), 'repairs/p-HIGH')));
+  });
+
+  it('R-11b ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedRepair();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'repairs/r1')));
+      await assertFails(getDocs(collection(db, 'repairs')));
+      await assertFails(setDoc(doc(db, 'repairs/neu'), repair('nobody')));
+      await assertFails(updateDoc(doc(db, 'repairs/r1'), repairEdit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'repairs/r1')));
+    }
+  });
+
+  it('R-11c Validierung beim Anlegen: Pflichtfelder, Format, Längen, Status, Audit', async () => {
+    const db = as('member');
+    const bad = (o) => assertFails(setDoc(doc(db, 'repairs/x'), repair('member', o)));
+    await bad({ title: '' });
+    await bad({ title: 'x'.repeat(201) });
+    await bad({ title: 5 });
+    await bad({ description: '' });
+    await bad({ description: 'x'.repeat(2001) });
+    await bad({ date: '10.10.2026' });
+    await bad({ date: 20261010 });
+    await bad({ status: 'DONE' }); // neue Auffälligkeiten sind immer offen
+    await bad({ status: 'CLOSED' });
+    await bad({ status: 'open' });
+    await bad({ priority: 'URGENT' });
+    await bad({ priority: 3 });
+    await bad({ comment: 'x'.repeat(501) });
+    await bad({ comment: 5 });
+    await bad({ createdBy: 'admin' });
+    await bad({ createdAt: Timestamp.now() });
+    await bad({ updatedAt: serverTimestamp(), updatedBy: 'member' });
+    await bad({ extra: 1 });
+    for (const key of ['title', 'description', 'date', 'status', 'comment']) {
+      await assertFails(setDoc(doc(db, 'repairs/x'), without(repair('member'), key)));
+    }
+    // Grenzwerte sind gültig: längste Texte
+    await assertSucceeds(setDoc(doc(db, 'repairs/g1'), repair('member', {
+      title: 'x'.repeat(200), description: 'x'.repeat(2000), comment: 'x'.repeat(500),
+    })));
+  });
+
+  it('R-11d Erledigen und Wiederöffnen sind Statuswechsel mit Audit, jeder Benutzer darf beides', async () => {
+    await seedRepair();
+    await assertSucceeds(updateDoc(doc(as('admin'), 'repairs/r1'), repairEdit('admin', { status: 'DONE' })));
+    const done = await assertSucceeds(getDoc(doc(as('member'), 'repairs/r1')));
+    if (done.data().status !== 'DONE') throw new Error('Status muss ERLEDIGT sein');
+    await assertSucceeds(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { status: 'OPEN' })));
+    const open = await assertSucceeds(getDoc(doc(as('admin'), 'repairs/r1')));
+    if (open.data().status !== 'OPEN') throw new Error('Status muss OFFEN sein');
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { status: 'CLOSED' })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), { status: 'DONE' })); // ohne Audit
+  });
+
+  it('R-11e Bearbeiten: Audit Pflicht, Herkunft unveränderlich, Priorität entfernbar, Validierung gilt weiter', async () => {
+    await seedRepair('r1', { priority: 'HIGH' });
+    await assertSucceeds(updateDoc(doc(as('admin'), 'repairs/r1'), repairEdit('admin', { description: 'Neu beschrieben' })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { priority: deleteField() })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), { title: 'Ohne Audit' }));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('admin')));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { updatedAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { createdAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { title: '' })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { date: 'gestern' })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { extra: 1 })));
+  });
+
+  it('R-11f Löschen: jeder freigeschaltete Benutzer, auch fremde und erledigte Einträge', async () => {
+    await seedRepair('r1');
+    await seedRepair('r2', { status: 'DONE' });
+    await assertSucceeds(deleteDoc(doc(as('member'), 'repairs/r1')));
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'repairs/r2')));
+    const list = await assertSucceeds(getDocs(collection(as('admin'), 'repairs')));
+    if (list.size !== 0) throw new Error('Einträge müssen gelöscht sein');
+  });
+
+  it('R-11g Liste nach Status abfragbar (Filter Offen/Erledigt)', async () => {
+    await seedRepair('r1');
+    await seedRepair('r2', { status: 'DONE' });
+    const open = await assertSucceeds(getDocs(query(collection(as('member'), 'repairs'), where('status', '==', 'OPEN'))));
+    if (open.size !== 1) throw new Error(`erwartet 1 offenen Eintrag, gefunden ${open.size}`);
+  });
+
+  it('R-11h Regression: Finanzen, Kalender und geplante Ausgaben unverändert; Stellplätze weiter gesperrt', async () => {
+    const db = as('member');
+    await assertSucceeds(setDoc(doc(db, 'transactions/t1'), booking('member')));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
+    await seedPlanned('p1');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    await assertSucceeds(setDoc(doc(db, 'repairs/r1'), repair('member')));
+    await assertFails(setDoc(doc(db, 'campsites/x'), { a: 1 }));
   });
 });
