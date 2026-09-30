@@ -24,6 +24,9 @@ import kotlinx.serialization.Serializable
 /** Formular für eine Buchung; bookingId = null legt eine neue an. */
 @Serializable data class BookingFormRoute(val bookingId: String? = null)
 
+/** Formular eines Kalendereintrags; entryId = null legt einen neuen an. */
+@Serializable data class CalendarFormRoute(val entryId: String? = null)
+
 /** Liste der geplanten Ausgaben (aus dem Finanzbereich). */
 @Serializable data object PlannedListRoute
 

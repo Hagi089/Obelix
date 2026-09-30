@@ -16,6 +16,10 @@ import androidx.navigation.toRoute
 import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.data.files.FileRef
+import de.hagi089.obelix.ui.calendar.CalendarFormScreen
+import de.hagi089.obelix.ui.calendar.CalendarFormViewModel
+import de.hagi089.obelix.ui.calendar.CalendarScreen
+import de.hagi089.obelix.ui.calendar.CalendarViewModel
 import de.hagi089.obelix.ui.screens.SectionNotAvailableScreen
 import de.hagi089.obelix.ui.screens.SettingsScreen
 import de.hagi089.obelix.ui.finance.BookingFormScreen
@@ -48,7 +52,32 @@ fun ObelixNavHost(
     ) {
         // Die Bereiche werden in den jeweiligen Phasen umgesetzt (docs/PROJEKTPLAN.md).
         composable<DashboardRoute> { SectionNotAvailableScreen() }
-        composable<CalendarRoute> { SectionNotAvailableScreen() }
+        composable<CalendarRoute> {
+            val calendarViewModel: CalendarViewModel = viewModel(
+                factory = viewModelFactory { initializer { CalendarViewModel(container.calendarRepository) } },
+            )
+            CalendarScreen(
+                viewModel = calendarViewModel,
+                onAdd = { navController.navigate(CalendarFormRoute()) },
+                onOpen = { id -> navController.navigate(CalendarFormRoute(entryId = id)) },
+            )
+        }
+        composable<CalendarFormRoute> { entry ->
+            val route = entry.toRoute<CalendarFormRoute>()
+            val calendarFormViewModel: CalendarFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        CalendarFormViewModel(
+                            entryId = route.entryId,
+                            uid = user.uid,
+                            calendar = container.calendarRepository,
+                            users = container.userRepository,
+                        )
+                    }
+                },
+            )
+            CalendarFormScreen(viewModel = calendarFormViewModel, onFinished = { navController.navigateUp() })
+        }
         composable<FinanceRoute> {
             val financeViewModel: FinanceViewModel = viewModel(
                 factory = viewModelFactory {

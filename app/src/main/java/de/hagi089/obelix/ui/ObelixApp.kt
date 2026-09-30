@@ -43,6 +43,7 @@ import de.hagi089.obelix.ui.auth.AuthScreens
 import de.hagi089.obelix.ui.auth.AuthViewModel
 import de.hagi089.obelix.ui.components.OfflineBanner
 import de.hagi089.obelix.ui.navigation.BookingFormRoute
+import de.hagi089.obelix.ui.navigation.CalendarFormRoute
 import de.hagi089.obelix.ui.navigation.ImportRoute
 import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.PlannedFormRoute
@@ -127,7 +128,7 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
     val currentTopLevel = TopLevelDestination.entries.firstOrNull { currentDestination.isIn(it) }
-    // Alles außer den sechs Hauptbereichen (Einstellungen, Buchungsformular, geplante Ausgaben, Import) ist ein Unterbildschirm mit Zurück-Pfeil.
+    // Alles außer den sechs Hauptbereichen (Einstellungen, Buchungs- und Kalenderformular, geplante Ausgaben, Import) ist ein Unterbildschirm mit Zurück-Pfeil.
     val isSubScreen = currentDestination != null && currentTopLevel == null
 
     NavigationSuiteScaffold(
@@ -150,6 +151,7 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                         val titleRes = when {
                             currentDestination?.hasRoute(SettingsRoute::class) == true -> R.string.nav_settings
                             currentDestination?.hasRoute(BookingFormRoute::class) == true -> R.string.finance_form_title
+                            currentDestination?.hasRoute(CalendarFormRoute::class) == true -> R.string.calendar_form_title
                             currentDestination?.hasRoute(ReceiptRoute::class) == true -> R.string.receipt_title
                             currentDestination?.hasRoute(ImportRoute::class) == true -> R.string.import_title
                             currentDestination?.hasRoute(PlannedListRoute::class) == true -> R.string.planned_title

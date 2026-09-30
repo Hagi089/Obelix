@@ -14,10 +14,13 @@ import {
   doc,
   getDoc,
   getDocs,
+  orderBy,
+  query,
   runTransaction,
   serverTimestamp,
   setDoc,
   updateDoc,
+  where,
 } from 'firebase/firestore';
 
 // ---------- Testdaten (nur für den Emulator, keine echten Daten) ----------
@@ -1038,5 +1041,143 @@ describe('R-09 Dateiablage und Belege (files, chunks, transactions.receipt)', ()
         tx.set(doc(adminDb, `transactions/xl-${i}`), booking('admin', { paidByUid: 'member', importRef: `xl-${i}`, settlement: 'SETTLED' }));
       }
     }));
+  });
+});
+
+// =====================================================================
+// Phase 7: Kalender. Testdaten nur für den Emulator.
+
+/** Was die App beim Anlegen eines Kalendereintrags schreibt (CalendarRepository.create). */
+function entry(uid, o = {}) {
+  return {
+    startDate: '2026-10-10',
+    endDate: '2026-10-18',
+    personUid: uid,
+    personName: 'Mitglied',
+    comment: '',
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+async function seedEntry(id = 'c1', o = {}) {
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `calendarEntries/${id}`), {
+      ...without(entry('member'), 'createdAt'),
+      createdAt: Timestamp.now(),
+      ...o,
+    });
+  });
+}
+
+/** Was die App beim Ändern schreibt (CalendarRepository.update): Audit gesetzt, Ziel optional wieder entfernt. */
+const entryEdit = (uid, o = {}) => ({ endDate: '2026-10-20', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+
+describe('R-10 Kalender (calendarEntries)', () => {
+  it('R-10a MEMBER und ADMIN dürfen Einträge anlegen und lesen; Ziel und Kommentar optional gültig', async () => {
+    for (const uid of ['member', 'admin']) {
+      await assertSucceeds(setDoc(doc(as(uid), `calendarEntries/c-${uid}`), entry(uid)));
+    }
+    await assertSucceeds(setDoc(doc(as('member'), 'calendarEntries/c3'),
+      entry('member', { destination: 'Italien', comment: 'Herbsturlaub' })));
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'calendarEntries')));
+    if (list.size !== 3) throw new Error(`erwartet 3 Einträge, gefunden ${list.size}`);
+    await assertSucceeds(getDoc(doc(as('admin'), 'calendarEntries/c3')));
+  });
+
+  it('R-10b ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff', async () => {
+    await seedEntry();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'calendarEntries/c1')));
+      await assertFails(getDocs(collection(db, 'calendarEntries')));
+      await assertFails(setDoc(doc(db, 'calendarEntries/neu'), entry('nobody')));
+      await assertFails(updateDoc(doc(db, 'calendarEntries/c1'), entryEdit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'calendarEntries/c1')));
+    }
+  });
+
+  it('R-10c Validierung beim Anlegen: Pflichtfelder, Datumsbereich, Längen, Audit', async () => {
+    const db = as('member');
+    const bad = (o) => assertFails(setDoc(doc(db, 'calendarEntries/x'), entry('member', o)));
+    await bad({ startDate: '10.10.2026' });
+    await bad({ endDate: '2026-10' });
+    await bad({ startDate: '' });
+    await bad({ startDate: 20261010 });
+    await bad({ endDate: '2026-10-09' }); // Ende vor Start
+    await bad({ personUid: '' });
+    await bad({ personUid: 5 });
+    await bad({ personName: '' });
+    await bad({ personName: 'x'.repeat(51) });
+    await bad({ destination: '' });
+    await bad({ destination: 'x'.repeat(101) });
+    await bad({ destination: 5 });
+    await bad({ comment: 'x'.repeat(501) });
+    await bad({ comment: 5 });
+    await bad({ createdBy: 'admin' });
+    await bad({ createdAt: Timestamp.now() });
+    await bad({ updatedAt: serverTimestamp(), updatedBy: 'member' });
+    await bad({ extra: 1 });
+    for (const key of ['startDate', 'endDate', 'personUid', 'personName', 'comment']) {
+      await assertFails(setDoc(doc(db, 'calendarEntries/x'), without(entry('member'), key)));
+    }
+    // Grenzwerte sind gültig: ein Tag (Start = Ende), längste Texte
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/g1'), entry('member', { startDate: '2026-10-10', endDate: '2026-10-10' })));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/g2'), entry('member', {
+      personName: 'x'.repeat(50), destination: 'x'.repeat(100), comment: 'x'.repeat(500),
+    })));
+    // Jahreswechsel: Textvergleich entspricht der Reihenfolge der Tage
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/g3'), entry('member', { startDate: '2026-12-30', endDate: '2027-01-03' })));
+    await assertFails(setDoc(doc(db, 'calendarEntries/g4'), entry('member', { startDate: '2027-01-03', endDate: '2026-12-30' })));
+  });
+
+  it('R-10d Überschneidungen sind erlaubt (Entscheidung 5): gleicher, angrenzender und umschließender Zeitraum', async () => {
+    await seedEntry('c1');
+    const db = as('admin');
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c2'), entry('admin', { personName: 'Admin' })));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c3'), entry('admin', { startDate: '2026-10-18', endDate: '2026-10-20' })));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c4'), entry('admin', { startDate: '2026-10-01', endDate: '2026-10-31' })));
+  });
+
+  it('R-10e Bearbeiten: jeder Benutzer, Audit Pflicht, Herkunft unveränderlich, Validierung gilt weiter', async () => {
+    await seedEntry();
+    await assertSucceeds(updateDoc(doc(as('admin'), 'calendarEntries/c1'), entryEdit('admin', { destination: 'Kroatien' })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { personUid: 'admin', personName: 'Admin' })));
+    // Ziel wieder entfernen (so schreibt die App, wenn das Feld geleert wird)
+    await assertSucceeds(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { destination: deleteField() })));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), { endDate: '2026-10-21' }));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('admin')));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { updatedAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { createdAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { endDate: '2026-10-09' })));
+    await assertFails(updateDoc(doc(as('member'), 'calendarEntries/c1'), entryEdit('member', { personName: '' })));
+  });
+
+  it('R-10f Löschen: jeder freigeschaltete Benutzer, auch fremde Einträge', async () => {
+    await seedEntry('c1');
+    await seedEntry('c2');
+    await assertSucceeds(deleteDoc(doc(as('member'), 'calendarEntries/c1')));
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'calendarEntries/c2')));
+    const list = await assertSucceeds(getDocs(collection(as('admin'), 'calendarEntries')));
+    if (list.size !== 0) throw new Error('Einträge müssen gelöscht sein');
+  });
+
+  it('R-10g Die Abfrage der Überschneidungsprüfung (startDate <= Ende, nach Start sortiert) ist erlaubt', async () => {
+    await seedEntry('c1');
+    await seedEntry('c2', { startDate: '2026-11-01', endDate: '2026-11-05' });
+    const result = await assertSucceeds(getDocs(query(
+      collection(as('member'), 'calendarEntries'), where('startDate', '<=', '2026-10-31'), orderBy('startDate'),
+    )));
+    if (result.size !== 1) throw new Error(`erwartet 1 Eintrag, gefunden ${result.size}`);
+  });
+
+  it('R-10h Regression: Finanzen, geplante Ausgaben und Dateien sind unverändert erreichbar', async () => {
+    const db = as('member');
+    await assertSucceeds(setDoc(doc(db, 'transactions/t1'), booking('member')));
+    await seedPlanned('p1');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
+    await assertFails(setDoc(doc(db, 'nichtFreigegeben/x'), { a: 1 }));
   });
 });

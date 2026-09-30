@@ -11,6 +11,8 @@ import de.hagi089.obelix.core.network.NetworkMonitor
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
+import de.hagi089.obelix.data.calendar.CalendarRepository
+import de.hagi089.obelix.data.calendar.FirestoreCalendarRepository
 import de.hagi089.obelix.data.files.AndroidFileReader
 import de.hagi089.obelix.data.files.FileStore
 import de.hagi089.obelix.data.files.FirestoreFileStore
@@ -61,6 +63,8 @@ class AppContainer(context: Context) {
     val categoryRepository: CategoryRepository by lazy { FirestoreCategoryRepository(firestore) }
 
     val plannedExpenseRepository: PlannedExpenseRepository by lazy { FirestorePlannedExpenseRepository(firestore) }
+
+    val calendarRepository: CalendarRepository by lazy { FirestoreCalendarRepository(firestore) }
 
     /** Übergabe von Code und Name zwischen Registrierungsformular und Codebildschirm. */
     val registrationHandoff = RegistrationHandoff()

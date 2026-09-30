@@ -1,7 +1,7 @@
 rules_version = '2';
 
 // OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
-// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege).
+// Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -136,6 +136,25 @@ service cloud.firestore {
         && (!('purchasedTransactionId' in d) || validText(d.purchasedTransactionId, 128));
     }
 
+    // Kalendereintrag (Phase 7): Nutzung des Wohnmobils von startDate bis endDate (beide Tage einschließlich).
+    // Die Tage stehen als yyyy-MM-dd; der Textvergleich entspricht dann der zeitlichen Reihenfolge. personUid ist
+    // der Benutzer, der das Wohnmobil nutzt, personName sein Name zum Zeitpunkt des Eintrags (bleibt lesbar, auch
+    // wenn das Konto später entfernt wird). Überschneidungen mit anderen Einträgen sind ausdrücklich erlaubt
+    // (Entscheidung 5): Die App zeigt sie vor dem Speichern an, die Regeln verbieten sie nicht.
+    // Muss zu data/calendar/CalendarValidator.kt passen.
+    function validCalendar(d) {
+      return d.keys().hasOnly(['startDate', 'endDate', 'personUid', 'personName', 'destination', 'comment',
+                               'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['startDate', 'endDate', 'personUid', 'personName', 'comment', 'createdAt', 'createdBy'])
+        && validDay(d.startDate)
+        && validDay(d.endDate)
+        && d.endDate >= d.startDate
+        && validText(d.personUid, 128)
+        && validText(d.personName, 50)
+        && (!('destination' in d) || validText(d.destination, 100))
+        && d.comment is string && d.comment.size() <= 500;
+    }
+
     // =====================================================================
     // users/{uid}: Name und Rolle. Alle Benutzer sehen alle Namen („Bezahlt von").
     // =====================================================================
@@ -264,6 +283,30 @@ service cloud.firestore {
                    .hasOnly(['status', 'purchasedTransactionId', 'updatedAt', 'updatedBy'])
               && !existsAfter(transactionPath(resource.data.purchasedTransactionId)))
         );
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // calendarEntries/{id}: Nutzung des Wohnmobils (Phase 7). Alle Benutzer dürfen lesen, anlegen, ändern
+    // und löschen (Entscheidung 4). Audit-Felder werden erzwungen. Überschneidungen sind erlaubt.
+    // =====================================================================
+    match /calendarEntries/{entryId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validCalendar(request.resource.data)
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time;
+
+      allow update: if isUser()
+        && validCalendar(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
 
       allow delete: if isUser();
     }
