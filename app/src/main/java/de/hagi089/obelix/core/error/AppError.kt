@@ -3,7 +3,11 @@ package de.hagi089.obelix.core.error
 import android.util.Log
 import androidx.annotation.StringRes
 import com.google.firebase.FirebaseNetworkException
+import com.google.firebase.FirebaseTooManyRequestsException
+import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthUserCollisionException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.firestore.FirebaseFirestoreException
 import de.hagi089.obelix.R
 import java.io.IOException
@@ -18,22 +22,37 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     NOT_FOUND(R.string.error_not_found),
     UNAUTHENTICATED(R.string.error_unauthenticated),
     UNAVAILABLE(R.string.error_unavailable),
+    INVALID_CREDENTIALS(R.string.error_invalid_credentials),
+    EMAIL_IN_USE(R.string.error_email_in_use),
+    WEAK_PASSWORD(R.string.error_weak_password),
+    TOO_MANY_REQUESTS(R.string.error_too_many_requests),
     UNKNOWN(R.string.error_unknown),
 }
+
+/** Bereits abgebildeter Fehler, der durch die Schichten gereicht wird. */
+class AppException(val error: AppError, cause: Throwable? = null) : Exception(error.name, cause)
 
 object ErrorMapper {
 
     private const val TAG = "Obelix"
 
     fun map(throwable: Throwable): AppError {
-        val error = when (throwable) {
-            is FirebaseNetworkException, is IOException -> AppError.NETWORK
-            is FirebaseAuthInvalidUserException -> AppError.UNAUTHENTICATED
-            is FirebaseFirestoreException -> mapFirestore(throwable.code)
-            else -> AppError.UNKNOWN
-        }
+        val error = classify(throwable)
         Log.w(TAG, "Fehler abgebildet auf $error", throwable)
         return error
+    }
+
+    internal fun classify(throwable: Throwable): AppError = when (throwable) {
+        is AppException -> throwable.error
+        is FirebaseNetworkException, is IOException -> AppError.NETWORK
+        is FirebaseTooManyRequestsException -> AppError.TOO_MANY_REQUESTS
+        // Reihenfolge wichtig: WeakPassword ist eine Unterart von InvalidCredentials.
+        is FirebaseAuthWeakPasswordException -> AppError.WEAK_PASSWORD
+        is FirebaseAuthInvalidCredentialsException -> AppError.INVALID_CREDENTIALS
+        is FirebaseAuthUserCollisionException -> AppError.EMAIL_IN_USE
+        is FirebaseAuthInvalidUserException -> AppError.UNAUTHENTICATED
+        is FirebaseFirestoreException -> mapFirestore(throwable.code)
+        else -> AppError.UNKNOWN
     }
 
     internal fun mapFirestore(code: FirebaseFirestoreException.Code): AppError = when (code) {

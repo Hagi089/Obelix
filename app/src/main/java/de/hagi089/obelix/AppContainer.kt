@@ -8,6 +8,8 @@ import com.google.firebase.firestore.FirebaseFirestoreSettings
 import com.google.firebase.firestore.MemoryCacheSettings
 import de.hagi089.obelix.core.network.ConnectivityNetworkMonitor
 import de.hagi089.obelix.core.network.NetworkMonitor
+import de.hagi089.obelix.data.auth.AuthRepository
+import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 
 /**
  * Einfache manuelle Dependency Injection (bewusst ohne Hilt, siehe docs/PROJEKTPLAN.md).
@@ -22,6 +24,8 @@ class AppContainer(context: Context) {
     val isFirebaseConfigured: Boolean = FirebaseApp.getApps(appContext).isNotEmpty()
 
     val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
+
+    val authRepository: AuthRepository by lazy { FirebaseAuthRepository(auth) }
 
     val firestore: FirebaseFirestore by lazy {
         FirebaseFirestore.getInstance().apply {

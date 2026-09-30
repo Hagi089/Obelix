@@ -1,6 +1,7 @@
 package de.hagi089.obelix.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
@@ -10,6 +11,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CloudOff
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -26,6 +28,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -33,6 +38,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.R
+import de.hagi089.obelix.data.auth.AuthUser
+import de.hagi089.obelix.ui.auth.AuthScreens
+import de.hagi089.obelix.ui.auth.AuthViewModel
 import de.hagi089.obelix.ui.components.OfflineBanner
 import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.SettingsRoute
@@ -46,12 +54,37 @@ fun ObelixApp(container: AppContainer) {
         return
     }
     val isOnline by container.networkMonitor.isOnline.collectAsStateWithLifecycle(initialValue = true)
-    ObelixMainScaffold(isOnline = isOnline)
+    val sessionViewModel: SessionViewModel = viewModel(
+        factory = viewModelFactory { initializer { SessionViewModel(container.authRepository) } },
+    )
+    val session by sessionViewModel.session.collectAsStateWithLifecycle()
+
+    when (val current = session) {
+        SessionState.Loading -> LoadingScreen()
+        SessionState.SignedOut -> {
+            val authViewModel: AuthViewModel = viewModel(
+                factory = viewModelFactory { initializer { AuthViewModel(container.authRepository) } },
+            )
+            AuthScreens(viewModel = authViewModel, isOnline = isOnline)
+        }
+        is SessionState.SignedIn -> ObelixMainScaffold(
+            user = current.user,
+            isOnline = isOnline,
+            onSignOut = sessionViewModel::signOut,
+        )
+    }
+}
+
+@Composable
+private fun LoadingScreen() {
+    Surface(modifier = Modifier.fillMaxSize()) {
+        Box(contentAlignment = Alignment.Center) { CircularProgressIndicator() }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ObelixMainScaffold(isOnline: Boolean) {
+private fun ObelixMainScaffold(user: AuthUser, isOnline: Boolean, onSignOut: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -111,7 +144,12 @@ private fun ObelixMainScaffold(isOnline: Boolean) {
                     .consumeWindowInsets(innerPadding),
             ) {
                 if (!isOnline) OfflineBanner()
-                ObelixNavHost(navController = navController, modifier = Modifier.fillMaxSize())
+                ObelixNavHost(
+                    navController = navController,
+                    user = user,
+                    onSignOut = onSignOut,
+                    modifier = Modifier.fillMaxSize(),
+                )
             }
         }
     }

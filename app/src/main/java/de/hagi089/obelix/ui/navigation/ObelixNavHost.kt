@@ -6,10 +6,17 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.ui.screens.SectionNotAvailableScreen
+import de.hagi089.obelix.ui.screens.SettingsScreen
 
 @Composable
-fun ObelixNavHost(navController: NavHostController, modifier: Modifier = Modifier) {
+fun ObelixNavHost(
+    navController: NavHostController,
+    user: AuthUser,
+    onSignOut: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     NavHost(
         navController = navController,
         startDestination = DashboardRoute,
@@ -22,7 +29,7 @@ fun ObelixNavHost(navController: NavHostController, modifier: Modifier = Modifie
         composable<TasksRoute> { SectionNotAvailableScreen() }
         composable<CampsitesRoute> { SectionNotAvailableScreen() }
         composable<DocumentsRoute> { SectionNotAvailableScreen() }
-        composable<SettingsRoute> { SectionNotAvailableScreen() }
+        composable<SettingsRoute> { SettingsScreen(user = user, onSignOut = onSignOut) }
     }
 }
 
