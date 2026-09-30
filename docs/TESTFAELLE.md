@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 30.09.2026 · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung: Gerätetest GU offen · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 30.09.2026 · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung abgenommen (GU bestanden) · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -19,7 +19,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ✅ 11 von 11 (G3-01 bis G3-11) |
 | Finanzen und Excel-Import (Phase 4) | ✅ 27 neue Unit-Tests, ✅ 15 neue Regel-Tests (R-06, R-07) | ✅ 16 von 16 (G4-01 bis G4-16) |
 | Geplante Ausgaben (Phase 5, Version 08) | ✅ 14 neue Unit-Tests, ✅ 13 neue Regel-Tests (R-08) | ✅ 12 von 12 (G5-01 bis G5-12, vom Auftraggeber am 30.09.2026 gemeldet) |
-| UI-Überarbeitung (Version 07) | ✅ Bau, Lint | ⏳ 0 von 10 (GU-01 bis GU-10), Ergebnisse noch nicht gemeldet |
+| UI-Überarbeitung (Version 07) | ✅ Bau, Lint | ✅ 10 von 10 (GU-01 bis GU-10, vom Auftraggeber am 30.09.2026 gemeldet) |
 | Alle weiteren Bereiche (ab Phase 6) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `d20c658`, Lauf 36743799578):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (63 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 58/58 (siehe 2.5). Vorheriger Stand (Phase 4, Commit `d870760`): 49 Unit-Tests, 45 Regel-Tests.
@@ -127,22 +127,22 @@ Voraussetzung: Regeln aus `firebase/firestore.rules` in der Firebase-Konsole ver
 | G4-15 | Mit Robert anmelden | Sieht dieselben Buchungen und Summen | ✅ |
 | G4-16 | Rundungsstichprobe und Regression: Anteil Schaden 1.361,47 €, Schneidebrett 6,30 €, 2xTöpfe 29,73 €; Einstellungen (Code, Benutzer, Abmelden) funktionieren wie zuvor | Werte stimmen, keine Regression | ✅ |
 
-### 2.4b Gerätetest UI-Überarbeitung (⏳ offen)
+### 2.4b Gerätetest UI-Überarbeitung (✅ bestanden 30.09.2026, Version 07)
 
 Bau und Lint grün (Commit `833599b`, Lauf 36739044165). Das Aussehen kann ich nicht prüfen (kein Gerät). Vor dem Installieren die alte App deinstallieren.
 
 | ID | Schritte | Erwartet | Status |
 |---|---|---|---|
-| GU-01 | App auf dem Startbildschirm und in der App-Liste ansehen | Neues Icon (Wohnmobil mit OBELIX), nicht abgeschnitten, keine weißen Ränder | ⏳ |
-| GU-02 | Abmelden, Login-Bildschirm ansehen (hell und dunkel) | Hintergrundbild vollflächig, Formular auf Karte gut lesbar | ⏳ |
-| GU-03 | Login, Registrierung, Passwort vergessen umschalten; Tastatur öffnen | Alle Felder erreichbar, Bildschirm scrollt, nichts verdeckt | ⏳ |
-| GU-04 | Anmelden, untere Leiste ansehen | Nur Symbole, keine Texte, kein Umbrechen; Auswahl erkennbar; alle sechs Bereiche erreichbar | ⏳ |
-| GU-05 | TalkBack (optional): Symbole in der Leiste | Jedes Symbol wird mit seinem Namen vorgelesen | ⏳ |
-| GU-07 | Einstellungen: Symbol ganz oben antippen (als ADMIN und als MEMBER) | Wechsel Hell/Dunkel sofort, Symbol wechselt (Mond/Sonne), auch Status- und Navigationsleiste passend | ⏳ |
-| GU-08 | App komplett schließen und neu öffnen | Gewählte Darstellung bleibt erhalten | ⏳ |
-| GU-09 | Einstellungen ganz nach unten scrollen | „Version 07" sichtbar | ⏳ |
-| GU-10 | Einstellungen als MEMBER (Robert) und als ADMIN | Abschnitt „Kategorien" nur beim ADMIN; Import und Benutzerverwaltung weiterhin nur beim ADMIN | ⏳ |
-| GU-06 | Regression: Finanzen, Einstellungen, Abmelden und Anmelden, Zugangscode-Bildschirm (frisches Konto) | Verhalten wie zuvor | ⏳ |
+| GU-01 | App auf dem Startbildschirm und in der App-Liste ansehen | Neues Icon (Wohnmobil mit OBELIX), nicht abgeschnitten, keine weißen Ränder | ✅ |
+| GU-02 | Abmelden, Login-Bildschirm ansehen (hell und dunkel) | Hintergrundbild vollflächig, Formular auf Karte gut lesbar | ✅ |
+| GU-03 | Login, Registrierung, Passwort vergessen umschalten; Tastatur öffnen | Alle Felder erreichbar, Bildschirm scrollt, nichts verdeckt | ✅ |
+| GU-04 | Anmelden, untere Leiste ansehen | Nur Symbole, keine Texte, kein Umbrechen; Auswahl erkennbar; alle sechs Bereiche erreichbar | ✅ |
+| GU-05 | TalkBack (optional): Symbole in der Leiste | Jedes Symbol wird mit seinem Namen vorgelesen | ✅ |
+| GU-07 | Einstellungen: Symbol ganz oben antippen (als ADMIN und als MEMBER) | Wechsel Hell/Dunkel sofort, Symbol wechselt (Mond/Sonne), auch Status- und Navigationsleiste passend | ✅ |
+| GU-08 | App komplett schließen und neu öffnen | Gewählte Darstellung bleibt erhalten | ✅ |
+| GU-09 | Einstellungen ganz nach unten scrollen | „Version 07" sichtbar | ✅ |
+| GU-10 | Einstellungen als MEMBER (Robert) und als ADMIN | Abschnitt „Kategorien" nur beim ADMIN; Import und Benutzerverwaltung weiterhin nur beim ADMIN | ✅ |
+| GU-06 | Regression: Finanzen, Einstellungen, Abmelden und Anmelden, Zugangscode-Bildschirm (frisches Konto) | Verhalten wie zuvor | ✅ |
 
 ### 2.4c Gerätetest Phase 5 – Geplante Ausgaben (✅ bestanden 30.09.2026, Version 08)
 
@@ -229,4 +229,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen. Bau, Lint, 49 Unit-Tests, 45 Regel-Tests grün (Commit `833599b`). Gerätefälle GU-01 bis GU-06 offen |
 | 30.09.2026 | Version 07: Hell-/Dunkelmodus-Umschalter, Versionsanzeige, Kategorien nur für ADMIN. Bau, Lint, Tests grün (Commit `5543941`). Gerätefälle GU-07 bis GU-10 offen |
 | 30.09.2026 | **Phase 5 umgesetzt** (Geplante Ausgaben, Version 08): Sammlung `plannedExpenses`, Kauf in einer Transaktion (tatsächlicher Betrag), Liste/Formular/Dialog, Regeln. Automatisch grün: Bau, Lint, 63 Unit-Tests (14 neu), 58 Regel-Tests (13 neu, R-08) (Commit `d20c658`, Lauf 36743799578; Zwischenstand `29eea16`, Lauf 36743091193: gleiche Ergebnisse, R-08d danach um einen Fall erweitert). Gerätefälle G5-01 bis G5-12 offen; Regeln müssen neu veröffentlicht werden. |
-| 30.09.2026 | **Phase 5 abgenommen:** Gerätetest G5-01 bis G5-12 (Version 08) vom Auftraggeber als bestanden gemeldet (Regeln in der Firebase-Konsole veröffentlicht). Nicht geändert: GU-01 bis GU-10 bleiben offen (keine Rückmeldung). Gerätetest GU (Version 07): Ergebnisse dem Entwickler noch nicht gemeldet, bleibt offen |
+| 30.09.2026 | **Phase 5 abgenommen:** Gerätetest G5-01 bis G5-12 (Version 08) vom Auftraggeber als bestanden gemeldet (Regeln in der Firebase-Konsole veröffentlicht). Zusätzlich gemeldet: GU-01 bis GU-10 (Version 07, UI-Überarbeitung) bestanden. Gerätetest GU (Version 07): Ergebnisse dem Entwickler noch nicht gemeldet, bleibt offen |

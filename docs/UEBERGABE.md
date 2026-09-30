@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) umgesetzt, Gerätetest GU offen · **Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden)** · danach: **Phase 6 – Dateiablage und Belege**
+Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · **Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden)** · danach: **Phase 6 – Dateiablage und Belege**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -15,7 +15,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 2 | Authentifizierung (Registrieren, Anmelden, Abmelden, Passwort-Reset) | ✅ auf dem Gerät abgenommen (G1-01 bis G2-09) |
 | 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
-| UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ⏳ Gerätetest GU-01 bis GU-10 offen |
+| UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ✅ Gerätetest GU-01 bis GU-10 bestanden |
 | 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ✅ Gerätetest G5-01 bis G5-12 bestanden |
 | **6** | **Dateiablage und Belege** | **⬜ nächste Phase** (Phase 5 abgenommen) |
 | 7–12 | Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
@@ -54,7 +54,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 ## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
 - Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
 - **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 09, 10, … in `app/build.gradle.kts`). Version 08 = Phase 5; nächstes Deployment ist Version 09.
-- **Offen:** Gerätetest GU-01 bis GU-10 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
+- **Abgenommen:** Gerätetest GU-01 bis GU-10 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 3c. Phase 5 – Geplante Ausgaben (30.09.2026, Details: Plan, Phase 5)
 - **Umgesetzt (Commit `d20c658`, Version 08):** Sammlung `plannedExpenses` (Bezeichnung, geschätzter Betrag, Plandatum, Status `PLANNED`/`PURCHASED`, optional Priorität, Link, Kommentar), Regeln `validPlanned` + Tests R-08. Einstieg über die Schaltfläche „Geplante Ausgaben" im Finanzbereich; Liste mit Filter Geplant (Standard)/Gekauft/Alle und Summe der offenen Schätzungen; Formular; Dialog „Gekauft" (tatsächlicher Betrag, Kaufdatum, Bezahlt von, Kategorie, Abrechnung).
@@ -113,7 +113,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 5 abgenommen. Phase 5 (Geplante Ausgaben) ist Version 08 (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün); Gerätetest G5-01 bis G5-12 bestanden; die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht. Gerätetest GU-01 bis GU-10 (Version 07): [bestanden / Ergebnisse hier eintragen; bisher nicht gemeldet, gilt als offen].
+Stand: Phase 1 bis 5 abgenommen. Phase 5 (Geplante Ausgaben) ist Version 08 (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün); Gerätetest G5-01 bis G5-12 bestanden; die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht. Gerätetest GU-01 bis GU-10 (Version 07): bestanden.
 
 Auftrag jetzt: PHASE 6 – Dateiablage und Belege gemäß Plan (Dateien gestückelt in Firestore, Option F). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
