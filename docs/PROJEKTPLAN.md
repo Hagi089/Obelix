@@ -423,6 +423,8 @@ Reihenfolge nach deiner Entscheidung: Finanzen (mit Import) und geplante Ausgabe
 
 Nach **jeder** Phase: implementieren → kompilieren → Tests → Fehler beheben → Ergebnis prüfen → dieses Dokument aktualisieren → offene Punkte notieren → erst dann weiter.
 
+**Testfälle** stehen in einer eigenen Datei: [`TESTFAELLE.md`](TESTFAELLE.md) (aktuelle und zu erledigende Fälle, mit Status). Sie wird nach jeder Phase und jedem Testlauf aktualisiert.
+
 ### Phase 0 – Analyse und Architektur ✅ (dieses Dokument)
 Abschlusskriterium: Freigabe durch dich.
 
@@ -445,16 +447,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Abschluss:** Alle genannten Fälle manuell und per Test bestanden.
 - **Umgesetzt (Commit `432e9fa`, CI grün):** `AuthRepository` (Firebase Auth), Formulare Anmelden / Konto erstellen / Passwort zurücksetzen, Sitzungsstatus (ohne Anmeldung sieht man nur die Anmeldeseiten), Einstellungen mit Konto und „Abmelden", Fehlermeldungen auf Deutsch. Passwort mindestens 8 Zeichen. Bei „falsche E-Mail" und „falsches Passwort" erscheint dieselbe Meldung (verrät nicht, ob es ein Konto gibt); beim Passwort-Reset erscheint immer dieselbe neutrale Bestätigung.
 - **Automatisch geprüft (Unit-Tests in CI):** Validierung von E-Mail, Passwort und Name; Abbildung der Firebase-Fehler auf Meldungen (falsche Zugangsdaten, Konto existiert, zu schwaches Passwort, zu viele Versuche, kein Netz).
-- **Noch nicht geprüft – bitte auf dem Gerät testen** (mit der Debug-APK aus dem GitHub-Lauf, sie enthält jetzt die Firebase-Konfiguration):
-  1. Registrieren mit gültigen Daten → App zeigt danach den Hauptbereich; in der Firebase-Konsole (Authentication → Benutzer) erscheint das Konto.
-  2. Registrieren mit bereits vorhandener E-Mail → Meldung „Zu dieser E-Mail-Adresse gibt es bereits ein Konto".
-  3. Registrieren mit zu kurzem Passwort / ungültiger E-Mail / leerem Namen → Meldung am Feld, kein Serveraufruf.
-  4. Abmelden (Zahnrad → Abmelden) → Anmeldeseite; App schließen und neu öffnen → bleibt abgemeldet.
-  5. Anmelden mit richtigen Daten → Hauptbereich; App schließen und neu öffnen → bleibt angemeldet.
-  6. Anmelden mit falschem Passwort und mit unbekannter E-Mail → jeweils „E-Mail-Adresse oder Passwort ist falsch".
-  7. Passwort zurücksetzen → Bestätigungstext; E-Mail kommt an (Spam prüfen), Link setzt das Passwort, danach Anmeldung mit dem neuen Passwort.
-  8. Flugmodus an → oben erscheint der Offline-Hinweis; Anmelden zeigt „Keine Verbindung zum Server …", keine Erfolgsmeldung.
-  9. Passwort ein-/ausblenden funktioniert; Bildschirm drehen behält die Eingaben.
+- **Noch nicht geprüft – Gerätetest durch den Benutzer:** 9 Fälle (G2-01 bis G2-09) plus 3 Fälle zur Projektbasis (G1-01 bis G1-03), siehe [`TESTFAELLE.md`](TESTFAELLE.md). Die Debug-APK aus dem obersten GitHub-Lauf enthält die Firebase-Konfiguration.
 - **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Die Datenrechte kommen in Phase 3 über die Firestore-Regeln (Zugriff nur mit Einladungscode). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
 ### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis)

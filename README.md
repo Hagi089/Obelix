@@ -37,6 +37,8 @@ app/src/main/java/de/hagi089/obelix/
 ```
 
 ## Tests
+Testfälle und Ergebnisse: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md).
+
 ```bash
 ./gradlew testDebugUnitTest    # Unit-Tests
 ./gradlew lintDebug            # Android Lint
