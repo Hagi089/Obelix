@@ -49,6 +49,9 @@
 
     <!-- Einstellungen -->
     <string name="settings_account">Konto</string>
+    <string name="settings_theme_to_dark">Dunkelmodus einschalten</string>
+    <string name="settings_theme_to_light">Hellmodus einschalten</string>
+    <string name="settings_version">Version %1$s</string>
     <string name="action_sign_out">Abmelden</string>
 
     <!-- Validierung -->

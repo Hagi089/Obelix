@@ -15,6 +15,7 @@ import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
 import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
 import de.hagi089.obelix.data.finance.FirestoreFinanceRepository
+import de.hagi089.obelix.data.settings.ThemePreference
 import de.hagi089.obelix.data.user.FirestoreUserRepository
 import de.hagi089.obelix.data.user.UserRepository
 
@@ -26,6 +27,9 @@ class AppContainer(context: Context) {
     private val appContext = context.applicationContext
 
     val networkMonitor: NetworkMonitor = ConnectivityNetworkMonitor(appContext)
+
+    /** Lokale Wahl Hell-/Dunkelmodus. */
+    val themePreference = ThemePreference(appContext)
 
     /** true, wenn google-services.json beim Build vorhanden war und Firebase initialisiert ist. */
     val isFirebaseConfigured: Boolean = FirebaseApp.getApps(appContext).isNotEmpty()

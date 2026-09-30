@@ -4,6 +4,8 @@ import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.os.Build
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -16,6 +18,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.DarkMode
+import androidx.compose.material.icons.filled.LightMode
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -66,6 +70,8 @@ fun SettingsScreen(
     user: AuthUser,
     onSignOut: () -> Unit,
     onOpenImport: () -> Unit,
+    isDark: Boolean,
+    onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -79,6 +85,15 @@ fun SettingsScreen(
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        // Ganz oben: Umschalter Hell-/Dunkelmodus (zeigt das Symbol des Modus, zu dem gewechselt wird).
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
+            IconButton(onClick = onToggleTheme) {
+                Icon(
+                    imageVector = if (isDark) Icons.Filled.LightMode else Icons.Filled.DarkMode,
+                    contentDescription = stringResource(if (isDark) R.string.settings_theme_to_light else R.string.settings_theme_to_dark),
+                )
+            }
+        }
         SectionTitle(R.string.settings_account)
         (profile?.displayName ?: user.displayName)?.takeIf { it.isNotBlank() }?.let {
             Text(text = it, style = MaterialTheme.typography.bodyLarge)
@@ -136,6 +151,12 @@ fun SettingsScreen(
                 )
             }
         }
+        HorizontalDivider()
+        Text(
+            text = stringResource(R.string.settings_version, appVersion()),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 
     when (val pending = confirm) {
@@ -154,6 +175,23 @@ fun SettingsScreen(
             onDismiss = { confirm = null },
         )
         null -> Unit
+    }
+}
+
+/** Versionsname der installierten App (Quelle: `versionName` in app/build.gradle.kts). */
+@Composable
+private fun appVersion(): String {
+    val context = LocalContext.current
+    return remember {
+        runCatching {
+            val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                context.packageManager.getPackageInfo(context.packageName, PackageManager.PackageInfoFlags.of(0))
+            } else {
+                @Suppress("DEPRECATION")
+                context.packageManager.getPackageInfo(context.packageName, 0)
+            }
+            info.versionName
+        }.getOrNull() ?: "?"
     }
 }
 

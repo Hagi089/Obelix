@@ -1,6 +1,9 @@
 package de.hagi089.obelix.ui.navigation
 
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.lifecycle.viewmodel.initializer
@@ -88,12 +91,16 @@ fun ObelixNavHost(
             val categoriesViewModel: CategoriesViewModel = viewModel(
                 factory = viewModelFactory { initializer { CategoriesViewModel(container.categoryRepository, user.uid) } },
             )
+            val chosenDark by container.themePreference.darkMode.collectAsStateWithLifecycle()
+            val isDark = chosenDark ?: isSystemInDarkTheme()
             SettingsScreen(
                 viewModel = settingsViewModel,
                 categoriesViewModel = categoriesViewModel,
                 user = user,
                 onSignOut = onSignOut,
                 onOpenImport = { navController.navigate(ImportRoute) },
+                isDark = isDark,
+                onToggleTheme = { container.themePreference.setDarkMode(!isDark) },
             )
         }
     }
