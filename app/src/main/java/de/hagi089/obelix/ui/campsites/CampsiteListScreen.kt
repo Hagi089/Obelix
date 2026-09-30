@@ -37,6 +37,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
@@ -115,7 +116,8 @@ fun CampsiteListScreen(
                 )
             }
         }
-        Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+        // clipToBounds: die Kartenansicht (Android-View) darf nicht über den Umschalter Liste/Karte zeichnen.
+        Box(modifier = Modifier.weight(1f).fillMaxWidth().clipToBounds()) {
             when {
                 !state.hasLoaded && state.error != null -> Column(
                     modifier = Modifier.fillMaxSize().padding(24.dp),
