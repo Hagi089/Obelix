@@ -86,6 +86,12 @@ jobs:
           set -o pipefail
           firebase emulators:exec --only firestore --project demo-obelix "npm --prefix rules-tests test" 2>&1 | tee -a ../rules.log
 
+      - name: Ergebnis der Regel-Tests ausgeben
+        if: always()
+        run: |
+          summary=$(grep -E "^(ℹ|#) (tests|suites|pass|fail|cancelled|skipped)" rules.log | tr '\n' ' ')
+          echo "::notice title=Regel-Tests::${summary:-keine Testzusammenfassung im Log gefunden}"
+
       - name: Fehler zusammenfassen
         if: failure()
         run: |
