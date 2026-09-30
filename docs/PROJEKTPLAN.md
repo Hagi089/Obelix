@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 12: **Phase 6 – Dateiablage und Belege umgesetzt** (Version 09, Fehlerkorrektur Version 10), Bau, Lint und Tests grün, **Gerätetest G6-01 bis G6-14 offen**; Phase 5 abgenommen (G5 bestanden); Phase 4 abgenommen; UI-Überarbeitung abgenommen (GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 5 abgenommen, Phase 6 wartet auf den Gerätetest, danach Phase 7).
+Stand: 30.09.2026 (Rev. 12: **Phase 6 – Dateiablage und Belege abgenommen** (Version 09, Fehlerkorrektur Version 10), Bau, Lint und Tests grün, Gerätetest G6-01 bis G6-14 bestanden; Phase 5 abgenommen (G5 bestanden); Phase 4 abgenommen; UI-Überarbeitung abgenommen (GU bestanden)) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 6 abgenommen, nächste Phase 7).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -540,7 +540,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test der Oberfläche und der Transaktion gegen echtes Firestore (kein Emulator für die App in der Cloud-Sitzung).
 - **Nicht Teil von Phase 5:** Dashboard-Zähler für offene Anschaffungen (Phase 11); Belege (Phase 6).
 
-### Phase 6 – Dateiablage und Belege ✅ umgesetzt (30.09.2026, Version 09), Bau und Tests grün, **Gerätetest G6-01 bis G6-14 offen**
+### Phase 6 – Dateiablage und Belege ✅ abgenommen (30.09.2026, Version 10), Gerätetest G6-01 bis G6-14 bestanden
 - **Ziel:** Gemeinsame Dateiablage (`FileStore`), Bildverkleinerung, Belege an Ausgaben.
 - **Umgesetzt (Commit `5956f25`):**
   - `firebase/firestore.rules`: `files` und `chunks`, Beleg in Buchungen (siehe Abschnitt 7, Entscheidung 24 bis 29). Regel-Tests R-09 (18 Fälle).
@@ -549,7 +549,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Oberfläche: Abschnitt „Beleg“ im Buchungsformular (hinzufügen, ansehen, ersetzen, entfernen, rückgängig, Fortschritt, Fehler, Hinweis auf die Grenzen; nur bei Ausgaben oder wenn schon ein Beleg besteht), neuer Bildschirm „Beleg“ (`ReceiptRoute`: Laden, Fehler mit Wiederholen, Bild, PDF-Hinweis mit „PDF öffnen“); FileProvider im Manifest (`res/xml/file_paths.xml`, nur `receipts/` im Cache).
   - Version 09 (`versionCode 9`).
 - **Automatisch geprüft (GitHub Actions, Commit `5956f25`, Lauf 36748194004):** Android-Bau, Lint und Unit-Tests grün; **76 von 76 Regel-Tests** im Emulator (18 neu, R-09). Die Zahl der Unit-Tests **96** (63 + 33 neu) ist aus den Quelltexten gezählt; die CI-Anzeige der Testanzahl ist von hier aus nicht lesbar. Details: [`TESTFAELLE.md`](TESTFAELLE.md).
-- **Noch nicht geprüft (von dir zu prüfen, Tests G6-01 bis G6-14):** Regeln in der Firebase-Konsole **neu veröffentlichen**; Auswahl von Bildern und PDFs auf dem Gerät; Verkleinerung und EXIF-Drehung bei echten Fotos; Öffnen einer PDF in einer externen App; Dauer von Hoch- und Herunterladen im Mobilfunknetz; **gemessene Fotogröße** (Formular zeigt sie); ob die Transaktion mit 10 Stücken gegen die **echte** Datenbank durchgeht (Emulator: ja); Darstellung (Abschnitt „Beleg“, Bildschirm „Beleg“, Hell/Dunkel).
+- **Gerätetest:** G6-01 bis G6-14 vom Benutzer am 30.09.2026 als bestanden gemeldet (G6-01 bis G6-04 mit Version 09, G6-05 bis G6-14 mit Version 10). Damit sind Auswahl, Verkleinerung, PDF-Öffnen und die Transaktion gegen das echte Projekt auf dem Gerät bestätigt. **Nicht gemeldet und daher offen im Plan:** die gemessene Fotogröße und die Dauer mit der großen PDF. Ursprünglich zu prüfen (Tests G6-01 bis G6-14): Regeln in der Firebase-Konsole **neu veröffentlichen**; Auswahl von Bildern und PDFs auf dem Gerät; Verkleinerung und EXIF-Drehung bei echten Fotos; Öffnen einer PDF in einer externen App; Dauer von Hoch- und Herunterladen im Mobilfunknetz; **gemessene Fotogröße** (Formular zeigt sie); ob die Transaktion mit 10 Stücken gegen die **echte** Datenbank durchgeht (Emulator: ja); Darstellung (Abschnitt „Beleg“, Bildschirm „Beleg“, Hell/Dunkel).
 - **Erkenntnisse / Grenzen:**
   - Firestore begrenzt die Regelabfragen je Schreibvorgang auf 20; die Regeln sind deshalb so gebaut, dass ein Stück nur einen Zugriff kostet und nur das **letzte** Stück geprüft wird. Fehlt ein mittleres Stück, merkt das die App beim Öffnen (`FILE_CORRUPT`, „Die Datei ist unvollständig gespeichert …“) – die App schreibt immer alle Stücke in einer Transaktion, sodass das nur bei einem manipulierten Client vorkommen kann.
   - Ersetzen in zwei Schritten (Entscheidung 27): in seltenen Fällen bleibt eine unsichtbare alte Datei im Speicher; sie zählt zum Kontingent, stört aber sonst nicht. Kein Aufräumwerkzeug (nicht verlangt).
@@ -701,5 +701,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 3 Benutzer, Rollen, Regeln, Zugangscode | umgesetzt (Haushalt am 30.09.2026 wieder entfernt), Bau und Regel-Tests grün, **abgenommen** (Gerätetests G3-01 bis G3-11 ✅) | 30.09.2026 | – |
 | 4 Finanzen und Excel-Import | ✅ abgenommen: Bau, 49 Unit-Tests und 45 Regel-Tests grün (Commit `d870760`); Gerätetest G4-01 bis G4-16 bestanden (Benutzer, 30.09.2026), Import in das echte Projekt durchgeführt | 30.09.2026 | – |
 | 5 Geplante Ausgaben | abgenommen (Version 08): Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün; **Gerätetest G5-01 bis G5-12 bestanden (abgenommen)** | 30.09.2026 | – |
-| 6 Dateiablage und Belege | umgesetzt (Version 09): Bau, Lint und Unit-Tests grün (96 aus den Quellen gezählt), **76 Regel-Tests grün** (Commit `5956f25`, Lauf 36748194004); **Gerätetest G6-01 bis G6-14 offen** | 30.09.2026 | Regeln in der Konsole neu veröffentlichen; Fotogröße messen (G6-02); 10-Stücke-Transaktion gegen echte Datenbank (G6-06) |
+| 6 Dateiablage und Belege | abgenommen (Version 10): Bau, Lint und Unit-Tests grün (96 aus den Quellen gezählt), **76 Regel-Tests grün** (Commit `5956f25`, Lauf 36748194004); **Gerätetest G6-01 bis G6-14 bestanden** | 30.09.2026 | Fotogröße (G6-02) nicht gemeldet, nicht nachgetragen |
 | 7–12 | nicht begonnen | | |

@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · **Phase 6 – Dateiablage und Belege umgesetzt (Version 09), Gerätetest G6 offen** · danach: **Phase 7 – Kalender**
+Stand: 30.09.2026 · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · **Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden)** · danach: **Phase 7 – Kalender**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -17,8 +17,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
 | UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ✅ Gerätetest GU-01 bis GU-10 bestanden |
 | 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ✅ Gerätetest G5-01 bis G5-12 bestanden |
-| 6 | Dateiablage und Belege (Version 09) | ✅ umgesetzt, Bau, Lint, 96 Unit-Tests (aus den Quellen gezählt) und 76 Regel-Tests grün (Commit `5956f25`) · ⏳ Gerätetest G6-01 bis G6-14 offen |
-| **7** | **Kalender** | **⬜ nächste Phase** (nach Abnahme von Phase 6, Gerätetest G6) |
+| 6 | Dateiablage und Belege (Version 09) | ✅ abgenommen: Bau, Lint, 96 Unit-Tests (aus den Quellen gezählt) und 76 Regel-Tests grün (Commit `5956f25`, Fehlerkorrektur Version 10) · ✅ Gerätetest G6-01 bis G6-14 bestanden |
+| **7** | **Kalender** | **⬜ nächste Phase** (Phase 6 abgenommen) |
 | 8–12 | Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
@@ -70,9 +70,9 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Bilder/PDF:** `AndroidFileReader` (`OpenDocument`, keine Berechtigung): Bilder mit `inSampleSize` dekodiert, EXIF gedreht, höchstens 1800 px, weißer Grund, JPEG 80 %, Quelle bis 30 MB; PDF unverändert bis 8 MiB. PDF wird über FileProvider (`${applicationId}.fileprovider`, Cache-Ordner `receipts/`) in einer externen App geöffnet. Grenzen an einer Stelle: `FileLimits`; Zeitlimit für Dateivorgänge 120 s.
 - **Fallstrick Regelabfragen:** Je Transaktion höchstens 20. Stück = 1 Zugriff (`isUser`), Metadaten = 3, Buchung mit Beleg = 3 → rund 16 bei 10 Stücken, ohne Zwischenspeicherung der Regelauswertung gerechnet. Zahlen lassen sich in Regelpfade nicht einsetzen: Stück-IDs kommen aus Listenkonstanten, indiziert mit `chunkCount - 1`. Nur das letzte Stück wird geprüft (`existsAfter`); mittlere Stücke prüft die App beim Zusammensetzen (`FILE_CORRUPT`).
 - **Annahmen des Entwicklers (nicht ausdrücklich beschlossen):** Einnahme-Umwandlung entfernt den Beleg; PDF extern statt in der App; keine Kamera in Phase 6 (kommt mit Phase 9); kein Zoom; Dateiname wird bei Bildern `.jpg`.
-- **Von mir nicht prüfbar (Gerätetest G6-01 bis G6-14, [`TESTFAELLE.md`](TESTFAELLE.md), 2.4d):** Bild/PDF auswählen, Verkleinerung und Drehung, PDF öffnen, Dauer im Mobilfunk, **gemessene Fotogröße** (das Formular zeigt sie; bitte melden), 10-Stücke-Transaktion gegen die **echte** Datenbank (Emulator: bestanden). Hinweis: **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jedes Speichern eines Belegs fehl. Alte App vor der Installation deinstallieren; unten in den Einstellungen steht „Version 09“.
+- **Abgenommen:** Gerätetest G6-01 bis G6-14 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4d); gemessene Fotogröße und Dauer wurden nicht gemeldet. Ursprünglich von mir nicht prüfbar: Bild/PDF auswählen, Verkleinerung und Drehung, PDF öffnen, Dauer im Mobilfunk, **gemessene Fotogröße** (das Formular zeigt sie; bitte melden), 10-Stücke-Transaktion gegen die **echte** Datenbank (Emulator: bestanden). Hinweis: **Die Regeln müssen in der Firebase-Konsole neu veröffentlicht werden**, sonst schlägt jedes Speichern eines Belegs fehl. Alte App vor der Installation deinstallieren; unten in den Einstellungen steht „Version 09“.
 - **Neu im Code:** `data/files/*` (siehe Plan, Phase 6), `ui/finance/ReceiptScreen.kt` und `ReceiptViewModel.kt`, Abschnitt „Beleg“ in `BookingFormScreen`/`BookingFormViewModel`, `Booking.receipt`, `ReceiptChange`, `AppError.FILE_CORRUPT`, `AppContainer.fileStore/localFileReader/receiptCache`, `ReceiptRoute` in `ui/navigation/`, Manifest und `res/xml/file_paths.xml`.
-- **Fehler im Gerätetest G6-05 (Version 09 → 10):** Nach der Dateiauswahl kam die Fehlerseite „Benutzerdaten konnten nicht geladen werden“ (G6-01 bis G6-04 bestanden). Vermutete Ursache: `SessionViewModel` lud das Benutzerdokument nach mehr als 5 s Abwesenheit neu (`WhileSubscribed(5_000)`) und ersetzte den Hauptbereich samt Formular. Behoben mit `SharingStarted.Eagerly` (Version 10); Bestätigung steht aus (G6-05/G6-06 wiederholen). **Nächste Version ist 11.**
+- **Fehler im Gerätetest G6-05 (Version 09 → 10):** Nach der Dateiauswahl kam die Fehlerseite „Benutzerdaten konnten nicht geladen werden“ (G6-01 bis G6-04 bestanden). Vermutete Ursache: `SessionViewModel` lud das Benutzerdokument nach mehr als 5 s Abwesenheit neu (`WhileSubscribed(5_000)`) und ersetzte den Hauptbereich samt Formular. Behoben mit `SharingStarted.Eagerly` (Version 10); Mit Version 10 bestätigt (G6-05/G6-06 bestanden). **Nächste Version ist 11.**
 - **Vorschläge (nicht umgesetzt):** Büroklammer-Symbol in der Buchungsliste, Zoom im Bildschirm „Beleg“, Kamera-Aufnahme im Formular (mit Phase 9).
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
@@ -101,7 +101,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 15c | Nullbeträge der Excel (25 Zeilen) | ✅ erledigt: nicht importiert, in der Vorschau aufgelistet |
 | – | API-Schlüssel in der Google Cloud Console auf die App beschränken | braucht festen Debug-Schlüssel (SHA-1); CI erzeugt bei jedem Bau einen neuen. Vorschlag: festen Debug-Schlüssel für CI anlegen (nur zum Testen, keine Geheimnisse) |
 | 6a | Belege: Büroklammer in der Liste, Zoom, Kamera-Aufnahme (Kamera mit Phase 9) | Büroklammer und Zoom auf Wunsch; Kamera in Phase 9 |
-| 6b | Fotogröße nach der Kompression (Annahme 200–500 KB) | mit G6-02 messen und im Plan nachtragen |
+| 6b | Fotogröße nach der Kompression (Annahme 200–500 KB) | bei Gelegenheit die im Formular angezeigte Größe eines Fotos nennen und im Plan nachtragen |
 | – | `targetSdk` von 36 auf 37 | später |
 | – | ViewModel-Tests (Coroutine-Testbibliothek einbinden), jetzt auch für Einrichtung und Einstellungen | bei Gelegenheit |
 | – | Mutationsprüfung der Regel-Tests (Regel bewusst schwächen, Test muss rot werden) | bei Gelegenheit |
@@ -128,7 +128,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 5 abgenommen. Phase 6 (Dateiablage und Belege) ist Version 10 (Version 09 = Commit 5956f25, Version 10 = Fehlerkorrektur nach G6-05; Bau, Lint, 96 Unit-Tests, 76 Regel-Tests grün). Gerätetest G6-01 bis G6-14: <HIER ERGEBNIS EINTRAGEN: bestanden / Abweichungen>. Gemessene Fotogröße nach der Kompression: <KB eintragen>. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht: <ja/nein>.
+Stand: Phase 1 bis 6 abgenommen. Phase 6 (Dateiablage und Belege) ist Version 10 (Version 09 = Commit 5956f25, Version 10 = Fehlerkorrektur nach G6-05; Bau, Lint, 96 Unit-Tests, 76 Regel-Tests grün). Gerätetest G6-01 bis G6-14 bestanden. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole veröffentlicht.
 
 Auftrag jetzt: PHASE 7 – Kalender gemäß Plan (Überschneidung vor dem Speichern eindeutig anzeigen, Speichern nur nach ausdrücklicher Bestätigung). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
