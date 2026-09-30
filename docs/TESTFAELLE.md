@@ -16,10 +16,10 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 |---|---|---|
 | Projektbasis (Phase 1) | ✅ Build, Lint | ✅ 3 Fälle |
 | Authentifizierung (Phase 2) | ✅ 13 Unit-Tests | ✅ 9 Fälle |
-| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 29 Regel-Tests (Emulator) | ⏳ 11 Fälle (G3-01 bis G3-11) |
+| Benutzer, Rollen, Zugangscode (Phase 3) | ✅ 9 neue Unit-Tests, ✅ 30 Regel-Tests (Emulator) | ⏳ 11 Fälle (G3-01 bis G3-11) |
 | Alle weiteren Bereiche (ab Phase 4) | ⬜ | ⬜ |
 
-**Automatische Prüfung insgesamt (GitHub, Commit `656d1e9`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (22 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 29/29 (siehe 2.5).
+**Automatische Prüfung insgesamt (GitHub, Commit `656d1e9`):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (22 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 30/30 (siehe 2.5).
 
 ---
 
@@ -95,13 +95,13 @@ Ergebnis: alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) wurden vom Benutzer 
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
-Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `656d1e9`: **29 von 29 bestanden**.
+Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `e2b2483`: **30 von 30 bestanden**.
 
 | ID | Prüft | Fälle |
 |---|---|---|
 | R-01 | Ohne Anmeldung kein Lesen, kein Schreiben, keine Registrierung | 2 |
 | R-02 | Registrierung nur mit gültigem Code: gültig, mehrere Personen, falscher Code, ohne/leer/falsches Format, erneuerter Code (alt ungültig, neu gültig), gesperrt (`code = null`), ohne `config/access`, **als ADMIN verboten**, nicht für andere, Zusatzfelder/leerer/zu langer Name/falsche Zeit, kein Überschreiben, als Transaktion | 12 |
-| R-03 | Angemeldet ohne Benutzerdokument sieht und ändert nichts; entfernter Benutzer verliert den Zugriff; noch nicht freigegebene Sammlungen für alle gesperrt | 3 |
+| R-03 | Angemeldet ohne Benutzerdokument sieht und ändert nichts, darf aber das **eigene** (noch fehlende) Dokument abfragen; entfernter Benutzer verliert den Zugriff; noch nicht freigegebene Sammlungen für alle gesperrt | 4 |
 | R-04 | Rollen: **keine Selbst-Beförderung**, MEMBER darf andere nicht ändern und den Code weder lesen noch ändern, eigener Name änderbar, ADMIN befördert/degradiert andere, ADMIN kann sich nicht selbst degradieren/entfernen, zwei ADMINs, Entfernen | 8 |
 | R-05 | Zugangscode: ADMIN liest und erneuert, falsches Format/Zusatzfelder/falscher Bearbeiter verboten, Löschen verboten, als Transaktion | 4 |
 
@@ -147,3 +147,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | Phase-3-Testplan erweitert: Registrierung nur mit Zugangscode (ohne/falscher/abgelaufener/benutzter Code, Konto ohne Mitgliedschaft) |
 | 30.09.2026 | Phase 3 umgesetzt: Sicherheitsregeln, Zugangscode-Registrierung mit gemeinsamem Code und Start-Code, Haushalt/Rollen/Mitgliederverwaltung. Automatisch grün (Bau, Lint, 24 Unit-Tests, Regel-Tests im Emulator). Gerätefälle G3-01 bis G3-13 offen |
 | 30.09.2026 | **Haushalt entfernt** (Entscheidung des Benutzers): keine Haushalte und Parteien, alle Benutzer teilen einen Datenbestand; Registrierung mit gemeinsamem Zugangscode, Admin = Projektinhaber. Regeln und Tests neu (29 Regel-Tests, 22 Unit-Tests, alles grün, Commit `656d1e9`). Gerätefälle neu: G3-01 bis G3-11 |
+| 30.09.2026 | **Fehler beim Gerätetest gefunden (G3-01):** Konto ohne Freischaltung sah „Benutzerdaten konnten nicht geladen werden – Dafür fehlt dir die Berechtigung" statt „Zugangscode eingeben". Ursache: Regel erlaubte das Abfragen des eigenen, noch nicht vorhandenen Benutzerdokuments nicht. Behoben in `e2b2483`, Test R-03d ergänzt (30/30 grün). Regeln müssen neu veröffentlicht werden |
