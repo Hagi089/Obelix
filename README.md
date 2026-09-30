@@ -1,0 +1,48 @@
+# OBELIX
+
+Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils: Kalender, Einnahmen und Ausgaben, Auffälligkeiten, geplante Anschaffungen, Stellplätze und Dokumente.
+
+Status: **Phase 1 (Projektbasis)**. Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md).
+
+## Technologien
+- Kotlin, Jetpack Compose, Material 3 (adaptive Navigation: Leiste auf Smartphones, Rail auf Tablets)
+- Navigation Compose mit typsicheren Routen
+- Firebase Authentication und Cloud Firestore (kostenloser Spark-Tarif, Region `europe-west3`)
+- Dateien (Fotos, Belege, Dokumente) werden in Firestore abgelegt, kein Firebase Storage (siehe Plan, Abschnitt 6)
+- Kein Analytics, kein Tracking, keine Werbung
+
+## Architektur
+```
+UI (Compose) → ViewModel (StateFlow) → Repository → Firebase
+```
+Orientiert am [Android-Architekturleitfaden](https://developer.android.com/topic/architecture) (UI-Layer, Data-Layer, unidirektionaler Datenfluss), am [Kotlin-Styleguide](https://developer.android.com/kotlin/style-guide) und an [Material 3](https://m3.material.io). Manuelle Dependency Injection über `AppContainer`, kein Hilt.
+
+```
+app/src/main/java/de/hagi089/obelix/
+  AppContainer.kt, ObelixApplication.kt, MainActivity.kt
+  core/error      Fehler → verständliche deutsche Meldungen
+  core/network    Erkennung der Internetverbindung
+  ui/             App-Gerüst, Navigation, Theme, Bildschirme
+```
+
+## Einrichtung
+1. Android Studio (aktuelle stabile Version) mit JDK 17 oder neuer.
+2. Firebase-Projekt anlegen: [`docs/FIREBASE-EINRICHTUNG.md`](docs/FIREBASE-EINRICHTUNG.md).
+3. `google-services.json` nach `app/` kopieren. Die Datei wird **nicht** committet.
+   Ohne die Datei baut das Projekt trotzdem; die App zeigt dann „Backend nicht eingerichtet".
+
+## Build
+```bash
+./gradlew assembleDebug        # Debug-APK: app/build/outputs/apk/debug/
+```
+
+## Tests
+```bash
+./gradlew testDebugUnitTest    # Unit-Tests
+./gradlew lintDebug            # Android Lint
+```
+Jeder Push auf `main` baut die App in GitHub Actions (`.github/workflows/build.yml`).
+
+## Daten und Datenschutz
+- Private Daten (Excel-Datei, Analysen mit Namen und Beträgen) liegen im Ordner `private/` und werden nie committet.
+- Keine Passwörter, Schlüssel oder `google-services.json` im Repository.

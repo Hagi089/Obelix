@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">OBELIX</string>
+
+    <!-- Hauptbereiche -->
+    <string name="nav_dashboard">Dashboard</string>
+    <string name="nav_calendar">Kalender</string>
+    <string name="nav_finance">Finanzen</string>
+    <string name="nav_tasks">Aufgaben</string>
+    <string name="nav_campsites">Stellplätze</string>
+    <string name="nav_documents">Dokumente</string>
+    <string name="nav_settings">Einstellungen</string>
+    <string name="action_open_settings">Einstellungen öffnen</string>
+    <string name="action_back">Zurück</string>
+
+    <!-- Zustände -->
+    <string name="offline_banner">Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell.</string>
+    <string name="section_not_available">Dieser Bereich ist noch nicht verfügbar.</string>
+    <string name="firebase_missing_title">Backend nicht eingerichtet</string>
+    <string name="firebase_missing_text">Die Verbindung zu Firebase ist nicht konfiguriert. Die App kann ohne Backend keine Daten laden oder speichern.</string>
+
+    <!-- Fehlermeldungen -->
+    <string name="error_network">Keine Verbindung zum Server. Bitte überprüfe deine Internetverbindung und versuche es erneut.</string>
+    <string name="error_permission_denied">Dafür fehlt dir die Berechtigung.</string>
+    <string name="error_not_found">Der Eintrag wurde nicht gefunden. Möglicherweise wurde er inzwischen gelöscht.</string>
+    <string name="error_unauthenticated">Du bist nicht mehr angemeldet. Bitte melde dich erneut an.</string>
+    <string name="error_unavailable">Der Server ist gerade nicht erreichbar. Bitte versuche es später erneut.</string>
+    <string name="error_unknown">Es ist ein unerwarteter Fehler aufgetreten. Bitte versuche es erneut.</string>
+</resources>

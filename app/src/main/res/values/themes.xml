@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Nur für das Fenster vor dem ersten Compose-Frame; das eigentliche Theme liegt in ui/theme. -->
+    <style name="Theme.Obelix" parent="android:Theme.Material.Light.NoActionBar" />
+</resources>
