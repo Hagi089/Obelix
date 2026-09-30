@@ -16,7 +16,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 3 | Benutzer, Rollen, Zugangscode, Firestore-Sicherheitsregeln | ✅ umgesetzt, Bau und Regel-Tests grün · ✅ Gerätetest G3-01 bis G3-11 bestanden |
 | 4 | Finanzen, Kategorien, Excel-Import | ✅ abgenommen (G4-01 bis G4-16 bestanden, Import durchgeführt) |
 | UI | App-Icon, Login-Hintergrund, Menü nur mit Symbolen, Hell-/Dunkelmodus, Versionsanzeige (Version 07) | ✅ umgesetzt, Bau grün (`5543941`) · ⏳ Gerätetest GU-01 bis GU-10 offen |
-| 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `@@SHA@@`) · ⏳ Gerätetest G5-01 bis G5-12 offen, Regeln neu veröffentlichen |
+| 5 | Geplante Ausgaben (Version 08) | ✅ umgesetzt, Bau, Lint, 63 Unit-Tests und 58 Regel-Tests grün (Commit `d20c658`) · ⏳ Gerätetest G5-01 bis G5-12 offen, Regeln neu veröffentlichen |
 | **6** | **Dateiablage und Belege** | **⬜ nächste Phase** (nach Abnahme von Phase 5 durch den Gerätetest, sonst auf Wunsch) |
 | 7–12 | Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
@@ -57,7 +57,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Offen:** Gerätetest GU-01 bis GU-10 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 3c. Phase 5 – Geplante Ausgaben (30.09.2026, Details: Plan, Phase 5)
-- **Umgesetzt (Commit `@@SHA@@`, Version 08):** Sammlung `plannedExpenses` (Bezeichnung, geschätzter Betrag, Plandatum, Status `PLANNED`/`PURCHASED`, optional Priorität, Link, Kommentar), Regeln `validPlanned` + Tests R-08. Einstieg über die Schaltfläche „Geplante Ausgaben" im Finanzbereich; Liste mit Filter Geplant (Standard)/Gekauft/Alle und Summe der offenen Schätzungen; Formular; Dialog „Gekauft" (tatsächlicher Betrag, Kaufdatum, Bezahlt von, Kategorie, Abrechnung).
+- **Umgesetzt (Commit `d20c658`, Version 08):** Sammlung `plannedExpenses` (Bezeichnung, geschätzter Betrag, Plandatum, Status `PLANNED`/`PURCHASED`, optional Priorität, Link, Kommentar), Regeln `validPlanned` + Tests R-08. Einstieg über die Schaltfläche „Geplante Ausgaben" im Finanzbereich; Liste mit Filter Geplant (Standard)/Gekauft/Alle und Summe der offenen Schätzungen; Formular; Dialog „Gekauft" (tatsächlicher Betrag, Kaufdatum, Bezahlt von, Kategorie, Abrechnung).
 - **Kauf = eine Transaktion** (`PlannedExpenseRepository.purchase`): liest den Status, legt die Ausgabe mit dem **tatsächlichen** Betrag an (`plannedExpenseId` gesetzt) und setzt die Planung auf `PURCHASED`. Die Regeln erzwingen das (`existsAfter`/`getAfter`), eine gekaufte Planung ist nicht mehr änderbar. Geplante Ausgaben zählen **nie** im Kontostand.
 - **Buchung löschen** (`FinanceRepository.delete(id, plannedExpenseId, uid)`): stammt sie aus einem Kauf, wird die Planung im selben Schritt wieder `PLANNED` (Annahme des Entwicklers, Plan Entscheidung 23; auf Wunsch änderbar). Buchungen aus einem Kauf bleiben Ausgaben (Art gesperrt).
 - **Neu im Code:** `data/planned/*` (Modelle, `PlannedValidator`, `PurchasePlanner`, `PlannedCalculator`, Repository), `ui/planned/*`, `AppError.CONFLICT`, gemeinsame Funktion `bookingCreateData` und Sammlungsnamen in `FinanceRepository.kt`, `AppContainer.plannedExpenseRepository`.
@@ -113,7 +113,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 4 abgenommen. Phase 5 (Geplante Ausgaben) ist als Version 08 gebaut (Commit @@SHA@@; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün). Gerätetest GU-01 bis GU-10 (Version 07): [bestanden / Ergebnisse hier eintragen]. Gerätetest G5-01 bis G5-12 (Version 08): [bestanden / Ergebnisse hier eintragen]. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole [neu veröffentlicht / noch nicht].
+Stand: Phase 1 bis 4 abgenommen. Phase 5 (Geplante Ausgaben) ist als Version 08 gebaut (Commit d20c658; Bau, Lint, 63 Unit-Tests, 58 Regel-Tests grün). Gerätetest GU-01 bis GU-10 (Version 07): [bestanden / Ergebnisse hier eintragen]. Gerätetest G5-01 bis G5-12 (Version 08): [bestanden / Ergebnisse hier eintragen]. Die Regeln aus firebase/firestore.rules sind in der Firebase-Konsole [neu veröffentlicht / noch nicht].
 
 Auftrag jetzt: PHASE 6 – Dateiablage und Belege gemäß Plan (Dateien gestückelt in Firestore, Option F). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 

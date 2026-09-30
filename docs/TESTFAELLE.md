@@ -22,7 +22,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | UI-Überarbeitung (Version 07) | ✅ Bau, Lint | ⏳ 0 von 10 (GU-01 bis GU-10), Ergebnisse noch nicht gemeldet |
 | Alle weiteren Bereiche (ab Phase 6) | ⬜ | ⬜ |
 
-**Automatische Prüfung insgesamt (GitHub, Commit `@@SHA@@`, Lauf @@RUN@@):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (63 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 58/58 (siehe 2.5). Vorheriger Stand (Phase 4, Commit `d870760`): 49 Unit-Tests, 45 Regel-Tests.
+**Automatische Prüfung insgesamt (GitHub, Commit `d20c658`, Lauf 36743799578):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (63 Tests) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ 58/58 (siehe 2.5). Vorheriger Stand (Phase 4, Commit `d870760`): 49 Unit-Tests, 45 Regel-Tests.
 
 ---
 
@@ -146,7 +146,7 @@ Bau und Lint grün (Commit `833599b`, Lauf 36739044165). Das Aussehen kann ich n
 
 ### 2.4c Gerätetest Phase 5 – Geplante Ausgaben (⏳ offen, Version 08)
 
-Bau, Lint, Unit- und Regel-Tests grün (Commit `@@SHA@@`). Das Verhalten auf dem Gerät und gegen dein echtes Firebase-Projekt kann ich nicht prüfen. **Voraussetzungen:** (1) die geänderten Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht (Firestore → Regeln), (2) alte App deinstallieren, neue Debug-APK aus dem obersten Lauf installieren, (3) in den Einstellungen unten steht „Version 08“. Vor den Kauftests den Kontostand notieren (zuletzt 107,17 €); Testbuchungen danach wieder löschen (G5-08).
+Bau, Lint, Unit- und Regel-Tests grün (Commit `d20c658`). Das Verhalten auf dem Gerät und gegen dein echtes Firebase-Projekt kann ich nicht prüfen. **Voraussetzungen:** (1) die geänderten Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlicht (Firestore → Regeln), (2) alte App deinstallieren, neue Debug-APK aus dem obersten Lauf installieren, (3) in den Einstellungen unten steht „Version 08“. Vor den Kauftests den Kontostand notieren (zuletzt 107,17 €); Testbuchungen danach wieder löschen (G5-08).
 
 | ID | Schritte | Erwartet | Status |
 |---|---|---|---|
@@ -165,7 +165,7 @@ Bau, Lint, Unit- und Regel-Tests grün (Commit `@@SHA@@`). Das Verhalten auf dem
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
-Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `@@SHA@@`: **58 von 58 bestanden** (Phase 3: 30, Phase 4: 15, Phase 5: 13).
+Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `d20c658`: **58 von 58 bestanden** (Phase 3: 30, Phase 4: 15, Phase 5: 13).
 
 | ID | Prüft | Fälle |
 |---|---|---|
@@ -228,4 +228,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | Benutzer meldet G4-01 bis G4-16 als bestanden. **Phase 4 abgenommen.** Zwischenfall beim Import: eine ältere Importdatei (Zahler Tobias/Robert, Zeile 170 als gesponserte Einnahme) wurde von der App zu Recht abgelehnt; mit der richtigen Datei lief der Import |
 | 30.09.2026 | UI-Überarbeitung: App-Icon, Login-Hintergrund, Menü nur mit Symbolen. Bau, Lint, 49 Unit-Tests, 45 Regel-Tests grün (Commit `833599b`). Gerätefälle GU-01 bis GU-06 offen |
 | 30.09.2026 | Version 07: Hell-/Dunkelmodus-Umschalter, Versionsanzeige, Kategorien nur für ADMIN. Bau, Lint, Tests grün (Commit `5543941`). Gerätefälle GU-07 bis GU-10 offen |
-| 30.09.2026 | **Phase 5 umgesetzt** (Geplante Ausgaben, Version 08): Sammlung `plannedExpenses`, Kauf in einer Transaktion (tatsächlicher Betrag), Liste/Formular/Dialog, Regeln. Automatisch grün: Bau, Lint, 63 Unit-Tests (14 neu), 58 Regel-Tests (13 neu, R-08) (Commit `@@SHA@@`, Lauf @@RUN@@; Zwischenstand `29eea16`, Lauf 36743091193: gleiche Ergebnisse, R-08d danach um einen Fall erweitert). Gerätefälle G5-01 bis G5-12 offen; Regeln müssen neu veröffentlicht werden. Gerätetest GU (Version 07): Ergebnisse dem Entwickler noch nicht gemeldet, bleibt offen |
+| 30.09.2026 | **Phase 5 umgesetzt** (Geplante Ausgaben, Version 08): Sammlung `plannedExpenses`, Kauf in einer Transaktion (tatsächlicher Betrag), Liste/Formular/Dialog, Regeln. Automatisch grün: Bau, Lint, 63 Unit-Tests (14 neu), 58 Regel-Tests (13 neu, R-08) (Commit `d20c658`, Lauf 36743799578; Zwischenstand `29eea16`, Lauf 36743091193: gleiche Ergebnisse, R-08d danach um einen Fall erweitert). Gerätefälle G5-01 bis G5-12 offen; Regeln müssen neu veröffentlicht werden. Gerätetest GU (Version 07): Ergebnisse dem Entwickler noch nicht gemeldet, bleibt offen |
