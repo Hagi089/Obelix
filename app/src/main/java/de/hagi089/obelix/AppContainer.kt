@@ -10,6 +10,9 @@ import de.hagi089.obelix.core.network.ConnectivityNetworkMonitor
 import de.hagi089.obelix.core.network.NetworkMonitor
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
+import de.hagi089.obelix.data.auth.RegistrationHandoff
+import de.hagi089.obelix.data.household.FirestoreHouseholdRepository
+import de.hagi089.obelix.data.household.HouseholdRepository
 
 /**
  * Einfache manuelle Dependency Injection (bewusst ohne Hilt, siehe docs/PROJEKTPLAN.md).
@@ -26,6 +29,11 @@ class AppContainer(context: Context) {
     val auth: FirebaseAuth by lazy { FirebaseAuth.getInstance() }
 
     val authRepository: AuthRepository by lazy { FirebaseAuthRepository(auth) }
+
+    val householdRepository: HouseholdRepository by lazy { FirestoreHouseholdRepository(firestore) }
+
+    /** Übergabe von Code und Name zwischen Registrierungsformular und Haushalts-Einrichtung. */
+    val registrationHandoff = RegistrationHandoff()
 
     val firestore: FirebaseFirestore by lazy {
         FirebaseFirestore.getInstance().apply {

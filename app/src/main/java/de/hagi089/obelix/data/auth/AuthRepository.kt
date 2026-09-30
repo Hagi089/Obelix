@@ -20,9 +20,15 @@ interface AuthRepository {
     /** Emittiert sofort den aktuellen Zustand und danach jede Änderung (null = abgemeldet). */
     val authState: Flow<AuthUser?>
 
+    /** Aktueller Stand direkt aus Firebase Auth (der Anzeigename ist nach der Registrierung sofort gesetzt). */
+    val currentUser: AuthUser?
+
     suspend fun signIn(email: String, password: String): Result<Unit>
     suspend fun register(name: String, email: String, password: String): Result<Unit>
     suspend fun sendPasswordReset(email: String): Result<Unit>
+    /** Löscht das angemeldete Konto (z. B. wenn bei der Registrierung der Zugangscode ungültig war). */
+    suspend fun deleteAccount(): Result<Unit>
+
     fun signOut()
 }
 
@@ -35,6 +41,9 @@ class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
         auth.addAuthStateListener(listener)
         awaitClose { auth.removeAuthStateListener(listener) }
     }
+
+    override val currentUser: AuthUser?
+        get() = auth.currentUser?.let { AuthUser(it.uid, it.email, it.displayName) }
 
     override suspend fun signIn(email: String, password: String): Result<Unit> = call {
         try {
@@ -61,6 +70,10 @@ class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
 
     override suspend fun sendPasswordReset(email: String): Result<Unit> = call {
         auth.sendPasswordResetEmail(email.trim()).await()
+    }
+
+    override suspend fun deleteAccount(): Result<Unit> = call {
+        auth.currentUser?.delete()?.await()
     }
 
     override fun signOut() = auth.signOut()

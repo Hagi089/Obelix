@@ -46,6 +46,8 @@ import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.SettingsRoute
 import de.hagi089.obelix.ui.navigation.TopLevelDestination
 import de.hagi089.obelix.ui.navigation.navigateToTopLevel
+import de.hagi089.obelix.ui.onboarding.OnboardingScreen
+import de.hagi089.obelix.ui.onboarding.OnboardingViewModel
 
 @Composable
 fun ObelixApp(container: AppContainer) {
@@ -55,7 +57,7 @@ fun ObelixApp(container: AppContainer) {
     }
     val isOnline by container.networkMonitor.isOnline.collectAsStateWithLifecycle(initialValue = true)
     val sessionViewModel: SessionViewModel = viewModel(
-        factory = viewModelFactory { initializer { SessionViewModel(container.authRepository) } },
+        factory = viewModelFactory { initializer { SessionViewModel(container.authRepository, container.householdRepository) } },
     )
     val session by sessionViewModel.session.collectAsStateWithLifecycle()
 
@@ -63,15 +65,46 @@ fun ObelixApp(container: AppContainer) {
         SessionState.Loading -> LoadingScreen()
         SessionState.SignedOut -> {
             val authViewModel: AuthViewModel = viewModel(
-                factory = viewModelFactory { initializer { AuthViewModel(container.authRepository) } },
+                factory = viewModelFactory { initializer { AuthViewModel(container.authRepository, container.registrationHandoff) } },
             )
             AuthScreens(viewModel = authViewModel, isOnline = isOnline)
         }
-        is SessionState.SignedIn -> ObelixMainScaffold(
-            user = current.user,
-            isOnline = isOnline,
-            onSignOut = sessionViewModel::signOut,
-        )
+        is SessionState.SignedIn -> when (val household = current.household) {
+            HouseholdState.Loading -> LoadingScreen()
+            HouseholdState.None -> {
+                val onboardingViewModel: OnboardingViewModel = viewModel(
+                    key = "onboarding-${current.user.uid}",
+                    factory = viewModelFactory {
+                        initializer {
+                            OnboardingViewModel(
+                                container.householdRepository,
+                                container.authRepository,
+                                container.registrationHandoff,
+                                current.user.uid,
+                            )
+                        }
+                    },
+                )
+                OnboardingScreen(
+                    viewModel = onboardingViewModel,
+                    isOnline = isOnline,
+                    onFinished = sessionViewModel::reloadHousehold,
+                    onSignOut = sessionViewModel::signOut,
+                )
+            }
+            is HouseholdState.Failed -> HouseholdErrorScreen(
+                error = household.error,
+                isOnline = isOnline,
+                onRetry = sessionViewModel::reloadHousehold,
+                onSignOut = sessionViewModel::signOut,
+            )
+            is HouseholdState.Ready -> ObelixMainScaffold(
+                user = current.user,
+                container = container,
+                isOnline = isOnline,
+                onSignOut = sessionViewModel::signOut,
+            )
+        }
     }
 }
 
@@ -84,7 +117,7 @@ private fun LoadingScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ObelixMainScaffold(user: AuthUser, isOnline: Boolean, onSignOut: () -> Unit) {
+private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline: Boolean, onSignOut: () -> Unit) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -147,6 +180,7 @@ private fun ObelixMainScaffold(user: AuthUser, isOnline: Boolean, onSignOut: () 
                 ObelixNavHost(
                     navController = navController,
                     user = user,
+                    container = container,
                     onSignOut = onSignOut,
                     modifier = Modifier.fillMaxSize(),
                 )

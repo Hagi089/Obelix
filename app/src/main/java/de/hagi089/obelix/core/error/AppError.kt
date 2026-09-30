@@ -26,6 +26,7 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     EMAIL_IN_USE(R.string.error_email_in_use),
     WEAK_PASSWORD(R.string.error_weak_password),
     TOO_MANY_REQUESTS(R.string.error_too_many_requests),
+    INVALID_ACCESS_CODE(R.string.error_access_code_invalid),
     UNKNOWN(R.string.error_unknown),
 }
 

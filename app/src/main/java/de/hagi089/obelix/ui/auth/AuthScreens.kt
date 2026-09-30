@@ -40,6 +40,7 @@ import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.VisualTransformation
@@ -136,13 +137,14 @@ private fun LoginForm(
 @Composable
 private fun RegisterForm(
     state: AuthUiState,
-    onSubmit: (name: String, email: String, password: String) -> Unit,
+    onSubmit: (name: String, email: String, password: String, accessCode: String) -> Unit,
     onBack: () -> Unit,
 ) {
     var name by rememberSaveable { mutableStateOf("") }
     var email by rememberSaveable { mutableStateOf("") }
+    var accessCode by rememberSaveable { mutableStateOf("") }
     var password by rememberSaveable { mutableStateOf("") }
-    val submit = { onSubmit(name, email, password) }
+    val submit = { onSubmit(name, email, password, accessCode) }
     val focusManager = LocalFocusManager.current
 
     FormTitle(R.string.auth_register_title)
@@ -159,6 +161,19 @@ private fun RegisterForm(
         modifier = Modifier.fillMaxWidth(),
     )
     EmailField(email, { email = it }, state.emailError, ImeAction.Next)
+    OutlinedTextField(
+        value = accessCode,
+        onValueChange = { accessCode = it },
+        label = { Text(stringResource(R.string.auth_access_code)) },
+        singleLine = true,
+        isError = state.codeError != null,
+        supportingText = {
+            Text(stringResource(state.codeError ?: R.string.auth_access_code_hint))
+        },
+        keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, imeAction = ImeAction.Next),
+        keyboardActions = KeyboardActions(onNext = { focusManager.moveFocus(FocusDirection.Down) }),
+        modifier = Modifier.fillMaxWidth(),
+    )
     PasswordField(
         value = password,
         onValueChange = { password = it },
