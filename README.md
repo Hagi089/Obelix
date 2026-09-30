@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils: Kalender, Einnahmen und Ausgaben, Auffälligkeiten, geplante Anschaffungen, Stellplätze und Dokumente.
 
-Status: **Phase 2 (Authentifizierung) umgesetzt**, Haushalt und Rollen folgen in Phase 3. Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Phase 3 (Haushalt, Rollen, Sicherheitsregeln) umgesetzt**, Geräteabnahme offen; danach Finanzen (Phase 4). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Technologien
 - Kotlin, Jetpack Compose, Material 3 (adaptive Navigation: Leiste auf Smartphones, Rail auf Tablets)
@@ -22,7 +22,11 @@ app/src/main/java/de/hagi089/obelix/
   AppContainer.kt, ObelixApplication.kt, MainActivity.kt
   core/error      Fehler → verständliche deutsche Meldungen
   core/network    Erkennung der Internetverbindung
-  ui/             App-Gerüst, Navigation, Theme, Bildschirme
+  core/validation Eingabeprüfung (Anmeldung, Zugangscode, Haushalt)
+  data/auth       Anmeldung (Firebase Auth)
+  data/household  Haushalt, Mitglieder, Zugangscodes (Firestore)
+  ui/             App-Gerüst, Navigation, Theme, Bildschirme (auth, onboarding, settings)
+firebase/         Firestore-Sicherheitsregeln und ihre Tests (rules-tests/)
 ```
 
 ## Einrichtung
@@ -43,7 +47,15 @@ Testfälle und Ergebnisse: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md).
 ./gradlew testDebugUnitTest    # Unit-Tests
 ./gradlew lintDebug            # Android Lint
 ```
-Jeder Push auf `main` baut die App in GitHub Actions (`.github/workflows/build.yml`).
+Jeder Push auf `main` baut die App in GitHub Actions (`.github/workflows/build.yml`) und führt in einem zweiten Job die Tests der Sicherheitsregeln im Firebase-Emulator aus.
+
+Regel-Tests lokal (Node 22 und Java 21 nötig):
+```bash
+npm install -g firebase-tools
+npm install --prefix firebase/rules-tests
+cd firebase && firebase emulators:exec --only firestore --project demo-obelix "npm --prefix rules-tests test"
+```
+Die Regeln selbst werden in der Firebase-Konsole veröffentlicht, siehe [`docs/FIREBASE-EINRICHTUNG.md`](docs/FIREBASE-EINRICHTUNG.md), Abschnitte 7 und 8.
 
 ## Daten und Datenschutz
 - Private Daten (Excel-Datei, Analysen mit Namen und Beträgen) liegen im Ordner `private/` und werden nie committet.

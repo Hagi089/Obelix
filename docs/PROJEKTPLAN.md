@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 6: Phase 1 und 2 auf dem Gerät abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 3 als Nächstes).
+Stand: 30.09.2026 (Rev. 7: Phase 3 umgesetzt, Regeln automatisch getestet, Gerätetest offen) · Status: **freigegeben, in Umsetzung** (Phase 3 wartet auf die Geräteabnahme, danach Phase 4).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -22,7 +22,7 @@ Grundlage: Projektwissen „Anforderungen" (verbindlich) und der Ist-Zustand des
 | 14 | Reihenfolge | **Finanzen werden vorgezogen** (direkt nach Haushalt/Rollen), geplante Ausgaben direkt danach. |
 | 1 | Dateispeicher | **Option F:** Dateien gestückelt in Firestore (Spark, ohne Kreditkarte). Bestätigt am 30.09.2026. |
 | 2 | Firebase-Projekt | Legt der Benutzer selbst an, Region **Deutschland (`europe-west3`, Frankfurt)**. Anleitung: `docs/FIREBASE-EINRICHTUNG.md`. |
-| 2b | Haushaltsbeitritt und Registrierung | **Zugangscode (Einladungscode) ist Pflicht für die Registrierung.** Ohne gültigen Code kann sich niemand registrieren bzw. erhält keinen Datenzugriff. Der Code wird manuell an Personen verteilt. Durchsetzung serverseitig über Firestore-Regeln (Phase 3). Modell (Einmalcode mit Ablauf vs. ein gemeinsamer Code) wartet auf Bestätigung des Benutzers. |
+| 2b | Haushaltsbeitritt und Registrierung | **Zugangscode ist Pflicht bei der Erstregistrierung** (Name, E-Mail, Zugangscode, Passwort). Danach genügt E-Mail und Passwort. **Ein gemeinsamer Code je Haushalt** (entschieden 30.09.2026, kein Einmalcode): ohne Ablauf, mehrfach verwendbar, vom ADMIN jederzeit erneuerbar (der alte Code ist dann sofort ungültig). **Start-Code für den ersten Haushalt:** einmalig, von Hand in der Firebase-Konsole angelegt, damit nicht jeder Haushalte anlegen kann. Durchsetzung serverseitig über Firestore-Regeln (Abschnitt 7), ohne Cloud Functions. |
 | 4 | Löschen | **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog). Entsprechend werden die Rules gebaut. |
 | 5 | Kalender-Überschneidung | Speichern bleibt **erlaubt**, aber die Überschneidung muss **vor dem Speichern** geprüft und **eindeutig angezeigt** werden (welcher Eintrag, welche Person, welcher Zeitraum); Speichern nur nach ausdrücklicher Bestätigung. |
 | 7 | Navigation | **Sechs Bereiche** (Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente), Einstellungen über Zahnrad. |
@@ -185,8 +185,9 @@ Konventionen für alle fachlichen Dokumente: `createdAt` (Server-Timestamp), `cr
 
 ```
 users/{uid}                                   → Zuordnung Benutzer → Haushalt
+invites/{code}                                → Zugangscodes (gemeinsamer Haushalts-Code, Start-Code)
 households/{householdId}                      → Stammdaten
-  members/{uid}                               → Rolle, Anzeigename
+  members/{uid}                               → Rolle, Partei, Anzeigename
   calendarEntries/{id}
   transactions/{id}
   plannedExpenses/{id}
@@ -203,25 +204,37 @@ Abweichung von der Beispielstruktur der Anforderungen: Ein Top-Level-Dokument `u
 **User** – `users/{uid}` (Pflicht: alle Felder außer `updatedAt`)
 | Feld | Typ | Bemerkung |
 |---|---|---|
-| householdId | String | Pflicht |
-| email | String | Pflicht |
-| displayName | String | Pflicht, dient als „Name" in Kalender/Finanzen |
+| householdId | String | Pflicht, danach unveränderlich; nur ein Zeiger, der Zugriff hängt am Mitglieds-Dokument |
+| displayName | String | Pflicht, 1–50 Zeichen |
 | createdAt | Timestamp | Server |
+
+Die E-Mail-Adresse steht nicht in Firestore (Datensparsamkeit, sie liegt in Firebase Auth); Abweichung vom ursprünglichen Plan, Rev. 7.
 
 **Household** – `households/{hid}`
 | Feld | Typ | Bemerkung |
 |---|---|---|
-| name | String | Pflicht |
-| parties | Liste {id, name} | Die zwei Parteien des Wohnmobils (aus der Excel: zwei Paare). Bezahlt-von verweist hierauf. **Entscheidung 11** |
+| name | String | Pflicht, 1–60 Zeichen; ADMIN darf ändern |
+| parties | Liste {id, name} | Genau zwei Parteien mit festen IDs `A` und `B` (aus der Excel: zwei Paare). Bezahlt-von verweist hierauf. Namen 1–40 Zeichen, nach dem Anlegen **unveränderlich** (Phase 3; ein Umbenennen wäre später eine kleine Regel-Erweiterung). **Entscheidung 11** |
+| inviteCode | String \| null | Aktiver gemeinsamer Zugangscode; `null`, solange keiner erzeugt wurde. Lesbar für alle Mitglieder. Maßgeblich für die Gültigkeit beim Beitritt |
 | createdAt/By | | Audit |
 
 **Member** – `households/{hid}/members/{uid}`
 | Feld | Typ | Bemerkung |
 |---|---|---|
 | role | String | `ADMIN` \| `MEMBER`, Pflicht |
-| partyId | String | Zugehörige Partei (Pflicht, falls Parteien-Modell bestätigt) |
-| displayName | String | Pflicht |
-| createdAt | Timestamp | |
+| partyId | String | `A` oder `B`, Pflicht |
+| displayName | String | Pflicht, 1–50 Zeichen |
+| inviteCode | String | Code, mit dem beigetreten wurde (Nachweis für die Regeln) |
+| createdAt | Timestamp | Server |
+
+**Invite** – `invites/{code}` (Code: 16 Zeichen, siehe Abschnitt 7)
+| Feld | Typ | Bemerkung |
+|---|---|---|
+| type | String | `JOIN` (gemeinsamer Haushalts-Code) \| `CREATE_HOUSEHOLD` (Start-Code) |
+| householdId | String | bei `JOIN` Pflicht; bei `CREATE_HOUSEHOLD` erst nach dem Einlösen |
+| parties | Liste | bei `JOIN`: Kopie der Parteien, damit ein Beitretender vor dem Beitritt die Namen sieht |
+| createdBy, createdAt | | bei `JOIN` |
+| usedBy, usedAt | | nur `CREATE_HOUSEHOLD`: gesetzt beim Einlösen; `expiresAt` optional |
 
 **CalendarEntry**
 | Feld | Typ | Pflicht |
@@ -385,12 +398,21 @@ Alle Regeln liegen versioniert in `firebase/`. Sie werden **zusammen mit dem jew
 - Ohne Login: alles verboten.
 - Hilfsfunktion `isMember(hid)`: `exists(/households/$(hid)/members/$(request.auth.uid))`.
 - Hilfsfunktion `isAdmin(hid)`: dieses Member-Dokument hat `role == 'ADMIN'`.
-- Fachliche Sammlungen: Lesen/Anlegen/Ändern für Mitglieder; **Löschen**: ADMIN (Entscheidung 4, ob MEMBER eigene Einträge löschen darf).
+- Fachliche Sammlungen (ab Phase 4): Lesen/Anlegen/Ändern/**Löschen** für Mitglieder (Entscheidung 4: jedes Mitglied darf löschen).
 - `createdBy`/`updatedBy` müssen `request.auth.uid` entsprechen; `createdAt` nicht änderbar.
 - Validierung in den Regeln: Pflichtfelder, Typen, `amountCents > 0`, `endDate ≥ startDate`, `photos.size() ≤ 3`, Enum-Werte.
-- `members`: Rolle nur durch ADMIN änderbar; niemand kann sich selbst zum ADMIN machen; der letzte ADMIN darf nicht entfernt werden (im Client abgesichert, Grenze der Rules dokumentieren).
-- `users/{uid}`: nur der Benutzer selbst.
-- Haushalt anlegen bzw. beitreten und Registrierung nur mit Zugangscode: siehe Entscheidung 2b – **ohne Cloud Functions** (die brauchen Blaze) muss der Beitritt allein über Rules abgesichert werden: Code-Dokument `invites/{code}`, das nur per Direktzugriff (get, kein list) lesbar ist; die Mitgliedschaft (`members/{uid}`) darf nur angelegt werden, wenn der Code existiert, unbenutzt und nicht abgelaufen ist. Die App legt das Auth-Konto an, löst den Code ein und löscht das Konto wieder, falls der Code ungültig ist. Der erste ADMIN wird über ein manuell in der Firebase-Konsole angelegtes Code-Dokument gestartet. Ein reines Auth-Konto ohne Mitgliedschaft hat keinerlei Datenzugriff. Das ist die technisch heikelste Stelle der Security und wird in Phase 3 zuerst entworfen und getestet.
+- `members`: Rolle und Partei nur durch ADMIN änderbar; ein Mitglied darf nur den eigenen Anzeigenamen ändern. **Ein ADMIN kann seine eigene Rolle nicht ändern und sich nicht entfernen.** Dadurch bleibt immer mindestens ein ADMIN übrig, ohne in den Regeln zählen zu müssen (Regeln werden beim Schreiben nacheinander gegen den aktuellen Stand geprüft, zwei ADMINs können sich also nicht gleichzeitig ausschalten).
+- `users/{uid}`: nur der Benutzer selbst, nur einmal anlegbar, `householdId` unveränderlich; ein ADMIN darf den Zeiger eines entfernten Mitglieds löschen.
+
+**Zugangscodes und Beitritt (umgesetzt in Phase 3, ohne Cloud Functions):**
+- Code: 16 Zeichen aus einem Alphabet ohne I, L, O, 0, 1 (31 Zeichen, rund 79 Bit, `SecureRandom`), Anzeige `XXXX-XXXX-XXXX-XXXX`. Der Code ist der Dokumentname in `invites/{code}`.
+- `invites/{code}` ist per `get` für jeden Angemeldeten lesbar (der Client braucht daraus die Haushalts-ID und die Parteinamen), **nicht auflistbar** außer für ADMINs ihres eigenen Haushalts. Im Dokument steht nur die zufällige Haushalts-ID, kein Name.
+- **Beitritt** = eine Transaktion aus `members/{uid}` (Rolle zwingend `MEMBER`) und `users/{uid}`. Die Regeln prüfen mit `get()`/`getAfter()`: das `invites`-Dokument ist vom Typ `JOIN`, gehört zu diesem Haushalt, und `households/{hid}.inviteCode` ist genau dieser Code. Wird der Code erneuert, ist der alte damit sofort ungültig, auch wenn sein Dokument noch existiert.
+- **Code erneuern** (nur ADMIN): eine Transaktion legt `invites/{neu}` an, setzt `households/{hid}.inviteCode` und löscht das alte Dokument.
+- **Haushalt anlegen** = eine Transaktion aus `households/{hid}` (mit zwei Parteien), `members/{uid}` (Rolle `ADMIN`, nur wenn der Haushalt neu entsteht), `users/{uid}` und dem Einlösen des **Start-Codes** (`type = CREATE_HOUSEHOLD`, `usedBy` leer, nicht abgelaufen). Der Start-Code wird einmal von Hand in der Firebase-Konsole angelegt (Anleitung: `FIREBASE-EINRICHTUNG.md`). Ohne ihn könnte jeder mit der App eigene Haushalte anlegen und das kostenlose Speicherkontingent belasten.
+- **Registrierung in der App:** Formular mit Name, E-Mail, Zugangscode, Passwort → Konto in Firebase Auth anlegen → Code prüfen → Beitritt bzw. Haushalt einrichten. Bei ungültigem Code löscht die App das Konto sofort wieder. Ein angemeldetes Konto ohne Haushalt sieht nur „Zugangscode einlösen" oder „Abmelden".
+- **Grenzen (ehrlich):** Firebase Auth kann das bloße Anlegen eines Kontos ohne Blaze nicht sperren. Ein Fremder kann kurz ein leeres Konto anlegen, hat aber keinerlei Datenzugriff; die App löscht es bei falschem Code wieder. Bleibt ein solches Konto übrig (z. B. App während der Registrierung beendet), ist es nur ein Eintrag in der Benutzerliste. Ein **weitergegebener gemeinsamer Code** gilt, bis der ADMIN ihn erneuert; die Regeln können weder zählen noch erkennen, wer ihn benutzt hat. Gegenmaßnahme: ADMIN sieht alle Mitglieder, kann Unbekannte entfernen und danach den Code erneuern. Die Partei wählt der Beitretende selbst; ein ADMIN kann sie korrigieren.
+- Die fachlichen Sammlungen (Finanzen, Kalender, …) sind bis zu ihrer jeweiligen Phase komplett gesperrt (auch für Mitglieder und ADMINs), damit nichts versehentlich offen ist.
 
 **Storage-Regeln (falls Storage):** Zugriff nur, wenn `request.auth != null` und Mitglied des Haushalts im Pfad (Storage-Regeln können Firestore per `firestore.exists()` abfragen); Größen- und `contentType`-Limits.
 
@@ -450,12 +472,17 @@ Abschlusskriterium: Freigabe durch dich.
 - **Gerätetest:** Alle 12 Fälle (G1-01 bis G1-03, G2-01 bis G2-09) hat der Benutzer am 30.09.2026 erfolgreich getestet, siehe [`TESTFAELLE.md`](TESTFAELLE.md).
 - **Bekannt / offen:** (1) Die Rollen (ADMIN/MEMBER) und der Haushalt gibt es erst in Phase 3; bis dahin sieht jedes registrierte Konto denselben leeren Hauptbereich. (2) Firebase-Auth erlaubt derzeit die Registrierung für jeden, der die App hat. Der **Zugangscode für die Registrierung ist der Kern von Phase 3** (Zugriff nur mit Code, serverseitig über Firestore-Regeln). (3) Kein Test der ViewModels (Coroutine-Testbibliothek noch nicht eingebunden); Anmeldeablauf wird deshalb nur manuell geprüft.
 
-### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis)
+### Phase 3 – Haushalt, Rollen, Firestore-Rules (Basis) ✅ umgesetzt, ⏳ Geräteabnahme offen
 - **Ziel:** Haushalt anlegen/beitreten, Rollen, Rules mit Emulator-Tests.
-- **Dateien:** `HouseholdRepository`, Modelle `User/Household/Member`, `firestore.rules`, `rules-tests/*`, Einstellungen/Benutzerverwaltung.
-- **Umsetzung:** Registrierungsformular mit Pflichtfeld „Zugangscode“; Code-Prüfung serverseitig (Regeln, Entscheidung 2b); erster Benutzer legt mit Start-Code den Haushalt an und ist ADMIN; ADMIN erzeugt weitere Codes in der App und verwaltet Mitglieder/Rollen. Rest-Risiko: fremde Personen können ein leeres Auth-Konto anlegen (kein Datenzugriff); Gegenmaßnahme optional per API-Key-Einschränkung.
-- **Tests:** MEMBER vs. ADMIN, **zwei-Haushalte-Isolation**, Selbst-Beförderung verboten.
-- **Abschluss:** Rules-Tests grün; manuelle Prüfung gegen das echte Projekt mit zwei Testkonten.
+- **Umgesetzt (30.09.2026):**
+  - `firebase/firestore.rules` (Regeln für `users`, `households`, `members`, `invites`, alles andere gesperrt), `firebase/firebase.json`, `firebase/rules-tests/` (Node, `@firebase/rules-unit-testing`).
+  - CI-Job „rules" in `.github/workflows/build.yml`: startet den Firestore-Emulator und führt die Regel-Tests aus; die Testanzahl erscheint als Hinweis am Lauf.
+  - App: `data/household/` (Modelle, `AccessCode`, `HouseholdRepository`), `data/auth/RegistrationHandoff`, Registrierung mit Pflichtfeld „Zugangscode", Einrichtung (`ui/onboarding/`: Code prüfen, Partei wählen oder Haushalt anlegen), `SessionViewModel` mit Haushaltsstand, Einstellungen mit Haushalt, Zugangscode (kopieren, teilen, ADMIN: erneuern) und Mitgliederverwaltung (ADMIN: Rolle, Partei, entfernen; jeweils mit Bestätigungsdialog).
+  - Alle Schreibvorgänge laufen als **Transaktion** mit 20 s Zeitlimit: offline entsteht ein Fehler statt einer lokalen Scheinbestätigung (Anforderung 8). Lesen der Haushaltsdaten nur vom Server.
+- **Automatisch geprüft (GitHub Actions):** Android-Bau, Lint und Unit-Tests grün; Regel-Tests im Emulator, siehe [`TESTFAELLE.md`](TESTFAELLE.md) (R-01 bis R-08).
+- **Noch nicht geprüft (kein Gerät, kein Zugriff auf das echte Projekt):** Ablauf in der App auf dem Gerät und mit dem echten Firebase-Projekt (Tests G3-xx). Dafür muss der Benutzer die Regeln veröffentlichen und den Start-Code anlegen (`FIREBASE-EINRICHTUNG.md`). Die Regel-Tests laufen mit `demo-obelix` im Emulator, nicht gegen das echte Projekt.
+- **Bekannt / offen:** (1) Parteinamen sind nach dem Anlegen unveränderlich (bewusst klein gehalten). (2) Ein Mitglied, dessen Zeiger `users/{uid}` ohne Mitglieds-Dokument übrig bleibt (nur bei manuellen Eingriffen in der Konsole), sieht den Fehlerbildschirm mit „Abmelden". (3) Die Rollen eines eingeloggten Benutzers werden beim Start und beim Öffnen der Einstellungen neu geladen, nicht laufend. (4) Die Regel-Tests sind ohne Mutationsprüfung entstanden (kein bewusst kaputt gemachter Regelstand); die Positiv-Fälle (`assertSucceeds`) decken die Regelpfade ab.
+- **Versionsstand Regel-Tests:** Node 22, Java 21, `firebase-tools` (jeweils aktuell), `@firebase/rules-unit-testing` 3.0.4 mit `firebase` 10.14.x (Peer-Abhängigkeit).
 
 ### Phase 4 – Finanzen und Excel-Import
 - **Ziel:** Einnahmen, Ausgaben, Kategorien, Parteien, Abrechnungsstatus, Kontostand, Übersicht; historische Daten aus der Excel übernommen.
@@ -554,7 +581,7 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 *Frühere Empfehlung (durch F ersetzt):* **B für Stellplatzfotos und Belege (Bilder), und für PDFs eine Größenbegrenzung (~700 KB) oder Option A nur wenn du bewusst Blaze zulässt.** Option E ist die ernsthafte Alternative, wenn dir große PDFs wichtig sind und du kein Blaze willst – dann aber bitte bewusst, weil sie das Fundament ändert. Begründung: Damit bleibt die Regel „kostenlos, ein System, keine Drittanbieter" erfüllt. Die Einschränkung bei großen PDFs ist der Preis dafür. Wenn dir große Dokumente wichtig sind, ist A die technisch sauberere Lösung – aber das ist deine Entscheidung. Es wird nichts eingerichtet, bevor du entschieden hast.
 *Unsicherheit:* Die tatsächliche Kompressionsgröße der Fotos (Annahme 200–500 KB) und die tatsächliche Nutzung des Kontingents sind nicht gemessen – das prüfe ich in Phase 6, bevor Fotos und Dokumente folgen. (Die Spark-Kontingente selbst wurden am 30.09.2026 in der Firebase-Doku geprüft.)
 
-**2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei? **Entschieden:** nur mit manuell verteiltem Zugangscode (2b). Offen: Einmalcode pro Person mit Ablauf (empfohlen) oder ein gemeinsamer Code.
+**2. Firebase-Projekt** – Wer legt es an (ich kann keine Konsole bedienen)? Region Firestore (Vorschlag EU, z. B. `eur3`/`europe-west`)? **2b.** Wie treten Familienmitglieder dem Haushalt bei? **Entschieden:** nur mit manuell verteiltem Zugangscode; ein gemeinsamer Code je Haushalt, vom ADMIN erneuerbar; Start-Code für den ersten Haushalt (siehe Abschnitt 0, 2b, und Abschnitt 7).
 
 **3. Karte** – Vorschlag: OpenStreetMap-Kacheln mit einer Open-Source-Bibliothek (Kandidaten: osmdroid, MapLibre; Pflegezustand und Lizenz prüfe ich in Phase 9). Google Maps SDK **nicht** ohne Prüfung, da API-Schlüssel und Abrechnungskonto nötig sein können (nicht verifiziert). Die OSM-Nutzungsrichtlinien für Kacheln erlauben nur moderate Nutzung – für eine kleine Familien-App vermutlich unkritisch, das ist nicht geprüft.
 
@@ -602,6 +629,8 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 10 | **OSM-Kacheln** – Nutzungsrichtlinien | Sperrung bei Missbrauch | Nur moderate Nutzung, User-Agent setzen, Alternative prüfen |
 | 11 | **Versionsstände** (Kotlin, AGP, Compose, Firebase) | Inkompatibilitäten | Aktuelle stabile Versionen zu Beginn von Phase 1 recherchieren, nicht aus dem Gedächtnis setzen |
 | 12 | **6 Ziele in der Bottom Bar** | Schlechte Bedienbarkeit | Entscheidung 7 |
+| 13 | **Gemeinsamer Zugangscode** kann weitergegeben werden und gilt bis zur Erneuerung | Fremde könnten als MEMBER beitreten | ADMIN sieht die Mitglieder, kann entfernen und den Code erneuern; Code ist nicht erratbar (79 Bit) |
+| 14 | **Regeln wirken erst nach Veröffentlichung** in der Firebase-Konsole | Bis dahin bleibt die Datenbank im Produktionsmodus komplett gesperrt (App zeigt Fehler beim Laden des Haushalts) | Anleitung in `FIREBASE-EINRICHTUNG.md`, Gerätetest G3-01 |
 
 ---
 
@@ -620,5 +649,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 0 Analyse | abgeschlossen, **freigegeben** | 30.09.2026 | 15b, 15c gelten als Vorschlag (siehe Abschnitt 0) |
 | 1 Projektbasis | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
 | 2 Authentifizierung | abgeschlossen, auf dem Gerät abgenommen | 30.09.2026 | – |
-| 3 Haushalt, Rollen, Regeln, Zugangscode-Registrierung | nächste Phase | | Zugangscode-Modell wartet auf Bestätigung |
+| 3 Haushalt, Rollen, Regeln, Zugangscode-Registrierung | umgesetzt, Bau und Regel-Tests grün, **Geräteabnahme offen** | 30.09.2026 | Regeln veröffentlichen, Start-Code anlegen, Tests G3-01 ff. |
 | 4–12 | nicht begonnen | | |

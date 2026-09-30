@@ -17,7 +17,7 @@ Dauer: ca. 15 Minuten. Du brauchst ein Google-Konto. **Es wird kein Abrechnungsk
 1. Menü **Build → Firestore Database → Datenbank erstellen**.
 2. Edition: **Standard**, Datenbank-ID `(default)` lassen.
 3. Standort: **`europe-west3` (Frankfurt)**. ⚠ Der Standort kann später **nicht mehr geändert** werden.
-4. Modus: **Produktionsmodus** (alles gesperrt). Die richtigen Sicherheitsregeln liefere ich in Phase 3.
+4. Modus: **Produktionsmodus** (alles gesperrt). Die Sicherheitsregeln veröffentlichst du in Abschnitt 7.
 
 **Nicht** einrichten: Storage, Functions, Hosting, Analytics, Crashlytics.
 
@@ -36,8 +36,30 @@ Dauer: ca. 15 Minuten. Du brauchst ein Google-Konto. **Es wird kein Abrechnungsk
 - Solange das Projekt im **Spark**-Tarif ist, kann nichts berechnet werden. Bei Überschreitung der Gratis-Kontingente wird der Dienst bis zum nächsten Tag bzw. Monat begrenzt, nicht berechnet.
 - Falls die Konsole irgendwo ein Upgrade vorschlägt: ablehnen und mich fragen.
 
+## 7. Sicherheitsregeln veröffentlichen (Phase 3, nach jeder Änderung an `firebase/firestore.rules` erneut)
+Ohne veröffentlichte Regeln bleibt die Datenbank komplett gesperrt, die App zeigt dann beim Laden des Haushalts einen Fehler.
+1. Auf GitHub die Datei `firebase/firestore.rules` öffnen und den **kompletten** Inhalt kopieren (Knopf „Copy raw file").
+2. Firebase-Konsole → **Firestore Database → Regeln**. Den gesamten Editorinhalt ersetzen (alles markieren, einfügen).
+3. **Veröffentlichen**. Die Konsole prüft die Syntax und meldet Fehler in Rot; ohne Fehler ist es aktiv.
+4. Optional per Kommandozeile statt Konsole: `firebase deploy --only firestore:rules` im Ordner `firebase/` (braucht die Firebase-CLI und `firebase login`; kein Blaze nötig).
+
+Die Regeln sind im Emulator automatisch getestet (GitHub Actions, Job „rules"). Ob sie in deinem echten Projekt greifen, zeigen die Gerätetests G3-01 bis G3-13.
+
+## 8. Start-Code für den ersten Haushalt anlegen (einmalig)
+Ohne gültigen Zugangscode kann sich niemand registrieren. Für den allerersten Haushalt legst du **von Hand** einen einmaligen Start-Code an (in der Konsole gelten die Regeln nicht, deshalb geht das nur dort):
+1. **Firestore Database → Daten → Sammlung starten** → Sammlungs-ID: `invites` → Weiter.
+2. **Dokument-ID:** ein Code aus genau **16 Zeichen**: Großbuchstaben A–Z **ohne I, L, O** und Ziffern **2–9** (keine 0 und keine 1). Zufällig wählen, nicht erratbar, z. B. von Claude im Chat erzeugen lassen. **Nie ins Repository schreiben.**
+3. Felder anlegen:
+   - `type` · Typ **string** · Wert `CREATE_HOUSEHOLD`
+   - `usedBy` · Typ **null**
+   - optional `expiresAt` · Typ **timestamp** · Datum, bis zu dem der Code gelten soll
+4. Speichern. In der App registrierst du dich jetzt mit diesem Code und richtest den Haushalt ein; danach ist der Start-Code verbraucht. Weitere Personen bekommen den gemeinsamen Code aus den Einstellungen der App.
+5. Für den Haushaltstrennungs-Test G3-13 kannst du auf dieselbe Weise einen zweiten Start-Code anlegen.
+
 ## Checkliste für die Rückmeldung
 - [ ] Tarif Spark
 - [ ] E-Mail/Passwort aktiv, Vorlagen auf Deutsch
 - [ ] Firestore in `europe-west3`, Produktionsmodus
 - [ ] Android-App `de.hagi089.obelix` registriert, `google-services.json` vorhanden
+- [ ] Regeln veröffentlicht (Abschnitt 7)
+- [ ] Start-Code angelegt (Abschnitt 8)

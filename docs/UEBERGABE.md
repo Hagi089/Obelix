@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 30.09.2026 · Übergabe nach Abschluss von Phase 2 · nächste Phase: **Phase 3 – Haushalt, Rollen, Sicherheitsregeln**
+Stand: 30.09.2026 · Phase 3 (Haushalt, Rollen, Sicherheitsregeln) umgesetzt, **Geräteabnahme offen** · danach: **Phase 4 – Finanzen und Excel-Import**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -13,17 +13,18 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 0 | Analyse, Architektur, Plan | ✅ freigegeben |
 | 1 | Projektbasis (Compose, Material 3, Navigation, Firebase, CI) | ✅ auf dem Gerät abgenommen |
 | 2 | Authentifizierung (Registrieren, Anmelden, Abmelden, Passwort-Reset) | ✅ auf dem Gerät abgenommen (G1-01 bis G2-09) |
-| **3** | **Haushalt, Rollen, Firestore-Sicherheitsregeln** | **⬜ nächste Phase** |
-| 4–12 | Finanzen + Import, Geplante Ausgaben, Dateiablage/Belege, Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
+| 3 | Haushalt, Rollen, Firestore-Sicherheitsregeln, Zugangscode-Registrierung | ✅ umgesetzt, Bau und Regel-Tests grün · ⏳ Gerätetest G3-01 bis G3-13 offen |
+| **4** | **Finanzen und Excel-Import** (nach Abnahme von Phase 3) | **⬜ nächste Phase** |
+| 5–12 | Geplante Ausgaben, Dateiablage/Belege, Kalender, Auffälligkeiten, Stellplätze, Dokumente, Dashboard, Qualitätssicherung | ⬜ |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
-- 13 automatische Unit-Tests, Build und Lint laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
-- Bisher gibt es **keine** Firestore-Daten und **keine** Sicherheitsregeln im Repository. Jedes registrierte Konto sieht denselben leeren Hauptbereich.
+- 24 automatische Unit-Tests, Build und Lint sowie 56 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
+- **Die Regeln wirken erst, wenn du sie in der Firebase-Konsole veröffentlichst**, und der erste Haushalt braucht einen von Hand angelegten Start-Code: `docs/FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8. Bis dahin ist die Datenbank komplett gesperrt.
 
 ## 2. Wichtigste Entscheidungen (Kurzfassung, Details im Plan)
 - **Kosten:** alles kostenlos, Firebase Spark, keine Kreditkarte, kein Blaze. Firebase Storage entfällt; **Dateien liegen in Stücken (~900 KB) in Firestore**, höchstens 8 MB je Datei.
-- **Haushalt und Registrierung:** Registrierung nur mit **Zugangscode**, den der Benutzer manuell verteilt (serverseitig per Firestore-Regeln, kein Cloud Function). Modell offen: Einmalcode mit Ablauf (empfohlen) oder ein gemeinsamer Code. Rollen `ADMIN` und `MEMBER`. **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog).
+- **Haushalt und Registrierung:** Registrierung nur mit **Zugangscode** (Name, E-Mail, Code, Passwort; danach nie wieder ein Code). **Ein gemeinsamer Code je Haushalt** (entschieden), vom ADMIN in den Einstellungen erzeugt und erneuerbar; **Start-Code** für den ersten Haushalt, einmalig von Hand in der Konsole angelegt. Serverseitig per Firestore-Regeln, kein Cloud Function. Rollen `ADMIN` und `MEMBER`. **Jedes Mitglied darf löschen** (immer mit Bestätigungsdialog).
 - **Zahler:** „Bezahlt von" = **Partei** (zwei Parteien im Haushalt). Abrechnungsstatus je Ausgabe: `OPEN`, `SETTLED`, `SPONSORED`.
 - **Beträge:** Cent, genau 2 Nachkommastellen. Excel-Import (325 Buchungen) einmalig, Fehler der Excel werden unverändert übernommen und vom Benutzer korrigiert.
 - **Kalender:** Überschneidungen sind speicherbar, müssen aber **vor dem Speichern** eindeutig angezeigt werden.
@@ -31,22 +32,20 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Architektur:** UI → ViewModel → Repository → Firebase; manuelle Dependency Injection (`AppContainer`), Firestore ohne dauerhaften Offline-Cache, damit nichts als „gespeichert" gilt, was der Server nicht bestätigt hat.
 - **Reihenfolge:** Finanzen wurden vorgezogen (direkt nach Haushalt).
 
-## 3. Was Phase 3 leisten soll (Ziel laut Plan)
-1. Erster Benutzer legt einen Haushalt an und ist ADMIN.
-2. Weitere Personen können sich nur mit einem gültigen Zugangscode registrieren und treten so bei (MEMBER).
-3. Zwei Parteien im Haushalt; jedes Mitglied gehört zu einer Partei.
-4. ADMIN verwaltet Mitglieder und Rollen (Einstellungen).
-5. **Firestore-Sicherheitsregeln** (`firebase/firestore.rules`) mit Tests im Firebase-Emulator: kein Zugriff ohne Anmeldung; nur Mitglieder sehen Daten ihres Haushalts; Selbst-Beförderung zum ADMIN verboten; **Haushalt A sieht nie Daten von Haushalt B**.
-6. Modelle `User`, `Household`, `Member`; Sammlungen `users/{uid}`, `households/{hid}`, `households/{hid}/members/{uid}` (siehe Plan, Abschnitt 5).
-7. Tests in `TESTFAELLE.md` von „geplant" in konkrete Fälle überführen, danach Plan und Tests aktualisieren.
+## 3. Phase 3 – was umgesetzt ist (Details: Plan, Abschnitte 5, 7 und 9)
+- `firebase/firestore.rules`, `firebase/firebase.json`, `firebase/rules-tests/` (Node, `@firebase/rules-unit-testing`); CI-Job „rules".
+- Daten: `users/{uid}` (Zeiger), `households/{hid}` (Name, zwei Parteien `A`/`B`, `inviteCode`), `households/{hid}/members/{uid}` (Rolle, Partei), `invites/{code}` (gemeinsamer Code `JOIN`, Start-Code `CREATE_HOUSEHOLD`). Alle anderen Sammlungen sind bis zu ihrer Phase gesperrt.
+- App: Registrierung mit Codefeld → Konto anlegen → Code prüfen → Beitritt (Partei wählen) oder Haushalt einrichten; ungültiger Code löscht das Konto wieder. Einstellungen: Haushalt, Code kopieren/teilen/erneuern (ADMIN), Mitglieder (ADMIN: Rolle, Partei, entfernen). Schreiben nur per Transaktion (offline Fehler statt Schein-Erfolg).
+- **Offen:** Gerätetest G3-01 bis G3-13 ([`TESTFAELLE.md`](TESTFAELLE.md), Abschnitt 2.4). Ohne diese Abnahme gilt Phase 3 nicht als abgeschlossen.
+- Bekannte Grenzen: Parteinamen nach dem Anlegen unveränderlich; ein weitergegebener gemeinsamer Code gilt bis zur Erneuerung; Firebase Auth kann das Anlegen leerer Konten nicht sperren (kein Datenzugriff, App löscht sie bei falschem Code).
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
   `curl https://api.github.com/repos/Hagi089/Obelix/check-runs/<JOB-ID>/annotations` (Job-ID über `/actions/runs/<RUN-ID>/jobs`). Die Rohlogs sind nicht erreichbar.
-- **Firebase-Emulator:** Ob er in der Cloud-Sitzung läuft (er lädt Dateien von Google), ist ungeprüft. Sicher ist: In GitHub Actions ist Netzzugang vorhanden. Regel-Tests deshalb voraussichtlich als eigener Schritt im Workflow (`setup-node`, `firebase-tools`, `firebase emulators:exec`).
+- **Firebase-Emulator und npm:** In der Cloud-Sitzung sind die npm-Registry und der Emulator-Download gesperrt (403). Die Regel-Tests laufen deshalb nur in GitHub Actions (Job „rules": Node 22, Java 21, `firebase-tools`, `@firebase/rules-unit-testing` 3.0.4 mit `firebase` 10.14.x). Das Ergebnis liest man am Lauf ab; die Testanzahl steht als Hinweis („Regel-Tests") in den Annotationen.
 - **Direkte Aufrufe an dein Firebase-Projekt** sind aus der Sitzung blockiert. Alles, was echtes Firebase braucht (Anmeldung, Datenbank, Regeln „live"), muss auf dem Gerät oder in der Konsole geprüft werden. Regeln veröffentlicht der Benutzer in der Firebase-Konsole (Firestore → Regeln) oder per `firebase deploy` (ohne Blaze möglich).
 - **Git:** Der Benutzer lädt manchmal Dateien über die GitHub-Weboberfläche hoch (z. B. `google-services.json`). Vor jedem Push `git pull --rebase origin main`. Ein Stop-Hook fordert Commit und Push bei ungetrackten Dateien.
-- **Commit-Zusatzzeilen** am Ende jeder Commit-Nachricht: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` und `Claude-Session: https://claude.ai/code/session_0128iXrTn5tXsy9UonZZs9qE` (bei neuem Chat die dort genannte aktuelle Zeile verwenden).
+- **Commit-Zusatzzeilen** am Ende jeder Commit-Nachricht: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` und `Claude-Session: <URL aus der Sitzungsvorgabe>` (bei neuem Chat die dort genannte aktuelle Zeile verwenden).
 - **Nicht im Repository (bewusst):** Ordner `private/` (Excel-Datei `Einkausliste_WoMo_v2_1.xlsx` und die Analyse mit Namen und Beträgen). Ein neuer Chat hat diese Dateien **nicht**. Die Analyse steht im Claude-Projekt als Dokument `Excel-Analyse`. Für Phase 4 (Finanzen, Import) muss der Benutzer die Excel-Datei erneut anhängen.
 - **`google-services.json`** liegt (vom Benutzer hochgeladen) im öffentlichen Repository unter `app/`. Kein Geheimnis im Firebase-Sinn, aber jeder kann damit Konten anlegen; die Daten schützen die Regeln (Phase 3).
 - Versionen (geprüft 30.09.2026): AGP 9.3.3, Gradle 9.5.1, Kotlin 2.4.10, Compose BOM 2026.09.00, Navigation 2.10.2, Lifecycle 2.11.0, Firebase BoM 34.19.0, `compileSdk 37`, `targetSdk 36`, `minSdk 26`. Bei AGP 9 wird das Kotlin-Plugin **nicht** mehr separat angewendet.
@@ -61,7 +60,9 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 15c | Nullbeträge der Excel (Inventarliste, 25 Zeilen) | nicht importieren, nur protokollieren |
 | – | API-Schlüssel in der Google Cloud Console auf die App beschränken | braucht festen Debug-Schlüssel (SHA-1); CI erzeugt bei jedem Bau einen neuen. Vorschlag: festen Debug-Schlüssel für CI anlegen (nur zum Testen, keine Geheimnisse) |
 | – | `targetSdk` von 36 auf 37 | später |
-| – | ViewModel-Tests (Coroutine-Testbibliothek einbinden) | bei Gelegenheit |
+| – | ViewModel-Tests (Coroutine-Testbibliothek einbinden), jetzt auch für Einrichtung und Einstellungen | bei Gelegenheit |
+| – | Parteinamen nach dem Anlegen änderbar machen | kleine Regel-Erweiterung, nur bei Bedarf |
+| – | Mutationsprüfung der Regel-Tests (Regel bewusst schwächen, Test muss rot werden) | bei Gelegenheit |
 
 Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
@@ -74,9 +75,9 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den neuen Chat (Phase 3)
+## 7. Prompt für den neuen Chat (Abnahme Phase 3, dann Phase 4)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App").
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Für Phase 4 die Excel-Datei `Einkausliste_WoMo_v2_1.xlsx` im Chat anhängen.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -85,22 +86,9 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 (Projektbasis) und Phase 2 (Authentifizierung) sind umgesetzt und von mir auf dem Gerät erfolgreich getestet (G1-01 bis G2-09). Der Bau in GitHub Actions ist grün. Das Firebase-Projekt (obelix-daf7c, Spark-Tarif, Firestore in europe-west3, Produktionsmodus, E-Mail/Passwort aktiv) steht und ist in der App verbunden.
+Stand: Phase 1 bis 3 sind umgesetzt (Bau, Unit-Tests und Regel-Tests in GitHub Actions grün). Phase 1 und 2 sind auf dem Gerät abgenommen. Für Phase 3 habe ich [ALLES / folgende Fälle: …] aus docs/TESTFAELLE.md (G3-01 bis G3-13) getestet: [Ergebnisse hier eintragen, bei Fehlern mit Meldung oder Screenshot].
 
-Auftrag jetzt: PHASE 3 – Haushalt, Rollen und Firestore-Sicherheitsregeln. Setze sie gemäß Plan um:
-- Erster Benutzer legt einen Haushalt an und ist ADMIN. Registrierung ist nur mit Zugangscode möglich (Pflichtfeld im Registrierungsformular, serverseitig durch Regeln erzwungen); der erste ADMIN startet über ein manuell in der Firebase-Konsole angelegtes Code-Dokument, weitere Codes erzeugt der ADMIN in der App. Beitretende sind MEMBER. Zu klären: Einmalcode mit Ablauf (empfohlen) oder ein gemeinsamer Code.
-- Haushalt hat zwei Parteien; jedes Mitglied gehört zu einer Partei.
-- ADMIN verwaltet Mitglieder und Rollen in den Einstellungen.
-- Sicherheitsregeln (firebase/firestore.rules) mit automatisierten Tests: ohne Anmeldung kein Zugriff, nur Mitglieder sehen Daten ihres Haushalts, keine Selbst-Beförderung zum ADMIN, Haushalt A sieht nie Daten von Haushalt B. Bitte ohne Cloud Functions und ohne Blaze-Tarif.
-- Danach Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle) aktualisieren.
+Auftrag jetzt: [Fehler aus dem Gerätetest beheben, danach] PHASE 4 – Finanzen und Excel-Import gemäß Plan. Die Excel-Datei hänge ich an; die Analyse steht im Projekt-Dokument "Excel-Analyse". Erst analysieren und einen kurzen Plan für Phase 4 zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen.
 
-Wichtige Rahmenbedingungen:
-- Arbeite als Senior Softwareentwickler und Senior QA Engineer. Erst analysieren, dann ändern, nur das Nötige, keine unnötigen Refactorings, nach Änderungen auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien und Funktionen.
-- Alles kostenlos (Firebase Spark). Keine ungefragten Erweiterungen, keine erfundenen Daten. Google-Richtlinien für Design und Architektur (Material 3).
-- Die Cloud-Umgebung hat kein Android-SDK; gebaut und getestet wird in GitHub Actions. Fehler stehen als Annotation am Lauf. Was du nicht selbst testen kannst, kennzeichne als "von mir zu prüfen". Nichts als fertig melden, was nicht getestet ist.
-- Vor jedem Push git pull --rebase origin main (ich lade manchmal Dateien über die GitHub-Weboberfläche hoch).
-- Die Excel-Datei ist nicht im Repository (privat). Für die Finanzphase (Phase 4) hänge ich sie dann erneut an. Die Analyse steht im Projekt-Dokument "Excel-Analyse".
-- Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage.
-
-Fange bitte mit einem kurzen Plan für Phase 3 an (Datenmodell, Regeln, Zugangscode-Registrierung ohne Cloud Functions, Testansatz) und stelle mir nur Fragen, die wirklich meine Entscheidung brauchen. Der Zugangscode-Ablauf (Registrierung nur mit Code) ist die sicherheitskritischste Stelle: entwirf ihn zuerst und zeige mir das Ergebnis, bevor du ihn umsetzt.
+Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage.
 ```
