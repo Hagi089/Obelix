@@ -7,6 +7,9 @@ private/
 # Firebase / Secrets (app/google-services.json liegt bewusst im Repository, siehe README)
 *.jks
 *.keystore
+*.p12
+*.pfx
+obelix-signing*
 local.properties
 .env
 .env.*

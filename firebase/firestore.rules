@@ -29,6 +29,15 @@ service cloud.firestore {
     function isUser() {
       return signedIn() && exists(userPath(request.auth.uid));
     }
+    // Eigenes Benutzerdokument: nur der Name ändert sich, und der Zugangscode der Registrierung darf nur
+    // entfernt werden (nicht geändert oder neu gesetzt).
+    function ownProfileUpdateOk(userId) {
+      let changed = request.resource.data.diff(resource.data).affectedKeys();
+      return signedIn() && userId == request.auth.uid
+        && changed.hasOnly(['displayName', 'accessCode'])
+        && (!changed.hasAny(['accessCode']) || !('accessCode' in request.resource.data))
+        && validText(request.resource.data.displayName, 50);
+    }
     function isAdmin() {
       return isUser() && get(userPath(request.auth.uid)).data.role == 'ADMIN';
     }
@@ -254,11 +263,11 @@ service cloud.firestore {
         && request.resource.data.createdAt == request.time;
 
       // Eigener Name; ADMIN ändert die Rolle anderer (nie die eigene, damit immer ein ADMIN bleibt).
-      allow update: if (
-          signedIn() && userId == request.auth.uid
-          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['displayName'])
-          && validText(request.resource.data.displayName, 50)
-        ) || (
+      // Der bei der Registrierung mitgeschickte Zugangscode (accessCode) darf vom Besitzer nur entfernt werden
+      // (nie geändert oder neu gesetzt): Benutzerdokumente sind für alle Benutzer lesbar, der aktuelle Code soll
+      // aber nur für den ADMIN sichtbar sein. Die App entfernt das Feld direkt nach der Registrierung.
+      allow update: if ownProfileUpdateOk(userId)
+        || (
           isAdmin() && userId != request.auth.uid
           && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['role'])
           && request.resource.data.role in ['ADMIN', 'MEMBER']

@@ -214,6 +214,25 @@ describe('R-04 Rollen ADMIN / MEMBER', () => {
     await assertFails(updateDoc(doc(db, 'users/member'), { accessCode: CODE_NEW }));
   });
 
+  it('R-04i Zugangscode im eigenen Benutzerdokument: nur der Besitzer darf ihn entfernen, nie ändern oder setzen', async () => {
+    const db = as('member');
+    // andere dürfen ihn nicht entfernen (auch der ADMIN nicht: der ändert nur Rollen)
+    await assertFails(updateDoc(doc(as('admin'), 'users/member'), { accessCode: deleteField() }));
+    // ändern verboten
+    await assertFails(updateDoc(doc(db, 'users/member'), { accessCode: CODE_NEW }));
+    // entfernen erlaubt (so macht es die App), auch zusammen mit einer Namensänderung
+    await assertSucceeds(updateDoc(doc(db, 'users/member'), { accessCode: deleteField() }));
+    // danach nicht wieder setzbar; der Name bleibt änderbar
+    await assertFails(updateDoc(doc(db, 'users/member'), { accessCode: CODE }));
+    await assertSucceeds(updateDoc(doc(db, 'users/member'), { displayName: 'Mitglied 2' }));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'users/admin'), { displayName: 'Admin 2', accessCode: deleteField() }));
+    // ohne Code bleibt der Zugriff bestehen
+    await assertSucceeds(getDocs(collection(db, 'transactions')));
+    // Selbst-Beförderung bleibt verboten, auch zusammen mit dem Entfernen des Codes
+    await assertFails(updateDoc(doc(as('admin'), 'users/admin'), { role: 'MEMBER', accessCode: deleteField() }));
+    await assertFails(updateDoc(doc(db, 'users/member'), { role: 'ADMIN' }));
+  });
+
   it('R-04e ADMIN befördert und degradiert andere', async () => {
     const db = as('admin');
     await assertSucceeds(updateDoc(doc(db, 'users/member'), { role: 'ADMIN' }));

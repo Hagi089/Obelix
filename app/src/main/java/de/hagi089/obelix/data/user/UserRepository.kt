@@ -1,5 +1,6 @@
 package de.hagi089.obelix.data.user
 
+import android.util.Log
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
@@ -46,7 +47,22 @@ class FirestoreUserRepository(private val db: FirebaseFirestore) : UserRepositor
     private val accessDoc get() = db.collection(CONFIG).document(ACCESS)
 
     override suspend fun loadProfile(uid: String): Result<UserProfile?> = call {
-        users.document(uid).get(Source.SERVER).await().toProfile()
+        val snapshot = users.document(uid).get(Source.SERVER).await()
+        removeStoredAccessCode(snapshot)
+        snapshot.toProfile()
+    }
+
+    /**
+     * Die Registrierung muss den Zugangscode mitschicken (die Regeln vergleichen ihn). Weil alle Benutzer die
+     * Benutzerdokumente lesen dürfen, der aktuelle Code aber nur für den ADMIN sichtbar sein soll, entfernt die App
+     * das Feld gleich beim nächsten Laden des eigenen Profils (direkt nach der Registrierung und bei älteren Konten
+     * beim ersten Start dieser Version). Nebenbei, ohne zu warten: Scheitert es, wird es beim nächsten Laden erneut
+     * versucht; die Anmeldung hängt nie davon ab.
+     */
+    private fun removeStoredAccessCode(snapshot: DocumentSnapshot) {
+        if (!snapshot.exists() || !snapshot.contains(ACCESS_CODE_FIELD)) return
+        snapshot.reference.update(ACCESS_CODE_FIELD, FieldValue.delete())
+            .addOnFailureListener { Log.w(TAG, "Zugangscode im Benutzerdokument konnte nicht entfernt werden", it) }
     }
 
     override suspend fun register(uid: String, displayName: String, accessCode: String): Result<Unit> = call {
@@ -57,7 +73,7 @@ class FirestoreUserRepository(private val db: FirebaseFirestore) : UserRepositor
                     mapOf(
                         "displayName" to displayName,
                         "role" to Role.MEMBER.name,
-                        "accessCode" to accessCode,
+                        ACCESS_CODE_FIELD to accessCode,
                         "createdAt" to FieldValue.serverTimestamp(),
                     ),
                 )
@@ -132,5 +148,7 @@ class FirestoreUserRepository(private val db: FirebaseFirestore) : UserRepositor
         const val CONFIG = "config"
         const val ACCESS = "access"
         const val TIMEOUT_MS = 20_000L
+        const val ACCESS_CODE_FIELD = "accessCode"
+        const val TAG = "Obelix"
     }
 }

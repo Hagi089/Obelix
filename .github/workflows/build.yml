@@ -22,11 +22,30 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
-      # google-services.json liegt im Repository, die Debug-APK ist daher mit dem echten Firebase-Projekt verbunden.
+      # Fester Signaturschlüssel aus den GitHub-Secrets (nur bei Push auf main, nie bei Pull Requests): Damit lassen
+      # sich neue Versionen als Update installieren, ohne die App vorher zu deinstallieren. Der Schlüssel liegt nur
+      # während des Laufs im temporären Ordner des Runners.
+      - name: Signaturschlüssel bereitstellen
+        if: github.event_name == 'push'
+        env:
+          KEYSTORE_BASE64: ${{ secrets.OBELIX_KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.OBELIX_KEYSTORE_PASSWORD }}
+        run: |
+          if [ -n "$KEYSTORE_BASE64" ] && [ -n "$KEYSTORE_PASSWORD" ]; then
+            printf '%s' "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/obelix-signing.p12"
+            echo "OBELIX_KEYSTORE_FILE=$RUNNER_TEMP/obelix-signing.p12" >> "$GITHUB_ENV"
+            echo "OBELIX_KEYSTORE_PASSWORD=$KEYSTORE_PASSWORD" >> "$GITHUB_ENV"
+            echo "OBELIX_SIGNED=true" >> "$GITHUB_ENV"
+          else
+            echo "::warning title=Kein fester Signaturschlüssel::Die Secrets OBELIX_KEYSTORE_BASE64 und OBELIX_KEYSTORE_PASSWORD fehlen. Es entsteht nur eine Debug-APK mit zufälligem Schlüssel (nicht zum Verteilen, kein Update ohne Deinstallieren)."
+          fi
+
+      # google-services.json liegt im Repository, die APK ist daher mit dem echten Firebase-Projekt verbunden.
+      # Die Release-APK wird immer gebaut (prüft den Release-Bau); verteilbar ist sie nur mit festem Schlüssel.
       - name: Build, Unit-Tests, Lint
         run: |
           set -o pipefail
-          ./gradlew --stacktrace assembleDebug testDebugUnitTest lintDebug 2>&1 | tee build.log
+          ./gradlew --stacktrace assembleDebug testDebugUnitTest lintDebug assembleRelease 2>&1 | tee build.log
 
       # Fehlerzusammenfassung als Annotation, damit sie auch ohne Log-Download lesbar ist.
       - name: Fehler zusammenfassen
@@ -46,8 +65,24 @@ jobs:
           echo "Manifest: $f"
           grep -o 'uses-permission[^>]*android:name="[^"]*"' "$f" | grep -o 'android:name="[^"]*"' | sort -u
 
-      - name: Debug-APK hochladen
-        if: success()
+      # Kontrolle: Mit welchem Zertifikat ist die Release-APK signiert? (SHA-256 muss bei jeder Version gleich sein.)
+      - name: Signatur der APK anzeigen
+        if: success() && env.OBELIX_SIGNED == 'true'
+        run: |
+          signer=$(ls -d "$ANDROID_HOME"/build-tools/*/ | sort -V | tail -1)apksigner
+          cert=$("$signer" verify --print-certs app/build/outputs/apk/release/app-release.apk | grep -m1 "SHA-256" || true)
+          echo "::notice title=Signatur der APK::${cert:-nicht ermittelt}"
+
+      - name: APK zum Verteilen hochladen (fest signiert)
+        if: success() && env.OBELIX_SIGNED == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: obelix-apk
+          path: app/build/outputs/apk/release/app-release.apk
+          retention-days: 90
+
+      - name: Debug-APK hochladen (ohne festen Schlüssel, nur zum Testen)
+        if: success() && env.OBELIX_SIGNED != 'true'
         uses: actions/upload-artifact@v6
         with:
           name: obelix-debug-apk

@@ -55,7 +55,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - Kontostand wird clientseitig aus allen Buchungen berechnet (ein Laden, keine Dauer-Listener).
 - Bekannte Auffälligkeit in den Daten: Zeilen 104/105 haben das Datum 15.01.2016 (unverändert importiert, vom Benutzer zu prüfen). Rundung halb auf: Zeilen 13/20/181/182/188 ⇒ 6,30 / 29,73 / 1.361,47 / 1.361,47 / 0,16 €; Kontostand bleibt 107,17 €.
 - **Abgenommen:** G4-01 bis G4-16 bestanden, Import in das echte Projekt ausgeführt. Der Import-Code bleibt vorerst (Entfernen in Phase 12 möglich).
-- **Lehre:** Der Benutzer hatte zuerst eine ältere `obelix-import.json` gewählt (Zahler Tobias/Robert, keine Kommentare); die App lehnte sie mit der Meldung zu Zeile 170 (Einnahmen müssen beglichen sein) ab. Verbesserungsvorschlag, nicht umgesetzt: Fehlermeldung nennt den gefundenen Wert.
+- **Lehre:** Der Benutzer hatte zuerst eine ältere `obelix-import.json` gewählt (Einzelpersonen statt der zwei Excel-Parteien als Zahler, keine Kommentare); die App lehnte sie mit der Meldung zu Zeile 170 (Einnahmen müssen beglichen sein) ab. Verbesserungsvorschlag, nicht umgesetzt: Fehlermeldung nennt den gefundenen Wert.
 
 ## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
 - Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
