@@ -21,7 +21,8 @@ import de.hagi089.obelix.ui.calendar.CalendarFormScreen
 import de.hagi089.obelix.ui.calendar.CalendarFormViewModel
 import de.hagi089.obelix.ui.calendar.CalendarScreen
 import de.hagi089.obelix.ui.calendar.CalendarViewModel
-import de.hagi089.obelix.ui.screens.SectionNotAvailableScreen
+import de.hagi089.obelix.ui.dashboard.DashboardScreen
+import de.hagi089.obelix.ui.dashboard.DashboardViewModel
 import de.hagi089.obelix.ui.screens.SettingsScreen
 import de.hagi089.obelix.ui.finance.BookingFormScreen
 import de.hagi089.obelix.ui.finance.BookingFormViewModel
@@ -64,8 +65,29 @@ fun ObelixNavHost(
         startDestination = DashboardRoute,
         modifier = modifier,
     ) {
-        // Die Bereiche werden in den jeweiligen Phasen umgesetzt (docs/PROJEKTPLAN.md).
-        composable<DashboardRoute> { SectionNotAvailableScreen() }
+        composable<DashboardRoute> {
+            val dashboardViewModel: DashboardViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        DashboardViewModel(
+                            finance = container.financeRepository,
+                            calendar = container.calendarRepository,
+                            repairs = container.repairRepository,
+                            planned = container.plannedExpenseRepository,
+                            campsites = container.campsiteRepository,
+                        )
+                    }
+                },
+            )
+            DashboardScreen(
+                viewModel = dashboardViewModel,
+                onOpenCalendar = { navController.navigateToTopLevel(TopLevelDestination.CALENDAR) },
+                onOpenFinance = { navController.navigateToTopLevel(TopLevelDestination.FINANCE) },
+                onOpenPlanned = { navController.navigate(PlannedListRoute) },
+                onOpenRepairs = { navController.navigateToTopLevel(TopLevelDestination.TASKS) },
+                onOpenCampsites = { navController.navigateToTopLevel(TopLevelDestination.CAMPSITES) },
+            )
+        }
         composable<CalendarRoute> {
             val calendarViewModel: CalendarViewModel = viewModel(
                 factory = viewModelFactory { initializer { CalendarViewModel(container.calendarRepository, container.userRepository) } },

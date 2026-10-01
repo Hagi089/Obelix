@@ -421,4 +421,12 @@
     <string name="error_document_name_too_long">Der Name darf höchstens 100 Zeichen lang sein.</string>
     <string name="error_document_category_required">Bitte eine Kategorie wählen.</string>
     <string name="error_document_file_required">Bitte eine Datei auswählen.</string>
+
+    <!-- Dashboard (Phase 11) -->
+    <string name="dashboard_next_entry">Nächster Termin</string>
+    <string name="dashboard_calendar_none">Kein Termin geplant.</string>
+    <string name="dashboard_expenses_year">Ausgaben %1$d</string>
+    <string name="dashboard_campsites">Gespeicherte Stellplätze</string>
+    <string name="dashboard_loading">Wird geladen …</string>
+    <string name="dashboard_not_loaded">Nicht geladen</string>
 </resources>
