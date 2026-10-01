@@ -176,7 +176,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 10 abgenommen, Phase 10 (Dokumente, Version 18) abgenommen (Commit 4fdf6b5; Bau, Lint, 269 Unit-Tests, 114 Regel-Tests grün). Gerätetest G10-01 bis G10-14: alle bestanden. Die Regeln aus firebase/firestore.rules (inklusive documents) sind in der Firebase-Konsole veröffentlicht: ja.
+Stand: Phase 1 bis 10 abgenommen. Phase 10 (Dokumente) ist Version 18 (Commit 4fdf6b5; Bau, Lint, 269 Unit-Tests, 114 Regel-Tests grün). Gerätetest G10-01 bis G10-14: alle bestanden. Die Regeln aus firebase/firestore.rules (inklusive documents) sind in der Firebase-Konsole veröffentlicht: ja.
 
 Auftrag jetzt: PHASE 11 – Dashboard gemäß Plan (Kennzahlen aus echten Daten, Leerzustand ohne Fake-Zahlen, Offline). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte die Fallstricke aus UEBERGABE.md Abschnitt 3g/3h und 4 (Regelbudget, Lint, Android-Views in Compose).
 
