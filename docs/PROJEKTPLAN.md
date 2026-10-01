@@ -637,7 +637,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Nicht Teil von Phase 9:** Fotos im Vollbild/Zoom, Foto zu Auffälligkeiten, Standort ändern, Karte offline, Dashboard-Anzeige (Phase 11), Stellplatz-Suche/Filter.
 - **Abschluss:** Alle Fälle auf echtem Gerät geprüft: G9-01 bis G9-18 vom Benutzer am 01.10.2026 als bestanden gemeldet (damit auch G9-09: drei große Fotos gegen die echte Datenbank, das Regelbudget hält; die Regeln für `campsites` sind veröffentlicht).
 
-### Phase 10 – Dokumente ✅ umgesetzt (01.10.2026, Version 18), Bau, Lint, Unit- und Regel-Tests grün; Gerätetest G10-01 bis G10-14 offen
+### Phase 10 – Dokumente ✅ abgenommen (01.10.2026, Version 18), Gerätetest G10-01 bis G10-14 bestanden
 - **Voraussetzung:** Phase 6 (Dateiablage), Entscheidungen 40 bis 43.
 - **Ziel:** Hochladen, Kategorie, öffnen, löschen, Zugriffsschutz.
 - **Stand:** Commit `4fdf6b5`, Lauf 36816327854: Bau (`assembleDebug`), Lint, **269 Unit-Tests** (31 neu, aus den Quellen gezählt) und **114 Regel-Tests** (10 neu, R-13) grün, beim ersten Lauf.
@@ -648,7 +648,7 @@ Abschlusskriterium: Freigabe durch dich.
   - `DocumentFormRoute`, `DocumentViewRoute` (Anzeige über `ReceiptScreen` mit neutralen Texten: neue optionale Parameter `loadingRes`, `imageDescriptionRes`, `pdfInfoRes`, Standard = Belegtexte, damit der Beleg unverändert bleibt), `AppContainer.documentRepository`, Titel in `ObelixApp`, Texte in `strings.xml`.
 - **Grenzen / Hinweise:** 8 MiB, nur Bild oder PDF, Bilder auf 1800 px verkleinert; Datei nach dem Hochladen nicht austauschbar; hat eine Datei keinen Anzeigenamen, setzt der Leser die Ersatznamen „Beleg“/„Beleg.pdf“ (kleine Schwäche aus Phase 6, nicht geändert); kein automatischer Test von Dateiauswahl, PDF-Öffnen, Darstellung und der Transaktion gegen echtes Firestore.
 - **Nicht Teil von Phase 10:** Suche, eigene Kategorien, Datei austauschen, Umbenennen der Datei, Vorschau-Bilder in der Liste, Teilen/Herunterladen, Dashboard-Anzeige (Phase 11).
-- **Abschluss offen:** Gerätetest G10-01 bis G10-14 durch den Auftraggeber; die geänderten Regeln müssen in der Firebase-Konsole veröffentlicht werden (sonst ist `documents` dort noch gesperrt).
+- **Abschluss:** Gerätetest G10-01 bis G10-14 vom Auftraggeber am 01.10.2026 als bestanden gemeldet (Regeln für `documents` veröffentlicht, große Datei und zwei Konten eingeschlossen).
 
 ### Phase 11 – Dashboard
 - **Ziel:** Kennzahlen aus echten Daten.
@@ -769,5 +769,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 7 Kalender | ✅ abgenommen (Version 11): Bau, Lint, 141 Unit-Tests und 84 Regel-Tests grün (Commit `00e7e5b`); **Gerätetest G7-01 bis G7-14 bestanden**. Erweiterung Personenfarben (Version 12): 155 Unit-Tests grün, **G7-15 offen** | 30.09.2026 | Gerätetest G7-15 |
 | 8 Auffälligkeiten | ✅ abgenommen (Version 13): Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295); **Gerätetest G8-01 bis G8-12 bestanden** | 30.09.2026 | – |
 | 9 Stellplätze | ✅ abgenommen (Version 14, Kartenkorrekturen bis Version 17): Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; **Gerätetest G9-01 bis G9-18 bestanden** | 01.10.2026 | – |
-| 10 Dokumente | umgesetzt (Version 18): Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün (Commit `4fdf6b5`); **Gerätetest G10-01 bis G10-14 offen**, Regeln in der Konsole zu veröffentlichen | 01.10.2026 | Gerätetest |
+| 10 Dokumente | ✅ abgenommen (Version 18): Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün (Commit `4fdf6b5`); **Gerätetest G10-01 bis G10-14 bestanden** | 01.10.2026 | – |
 | 11–12 | nicht begonnen | | |

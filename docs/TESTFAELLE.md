@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 01.10.2026 · **Phase 10 (Dokumente, Version 18) umgesetzt: Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün, Gerätetest G10-01 bis G10-14 offen** · Phase 9 (Stellplätze, Version 14, Kartenkorrekturen bis Version 17) abgenommen: Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün, Gerätetest G9-01 bis G9-18 bestanden** · Phase 8 (Auffälligkeiten) abgenommen (G8-01 bis G8-12 bestanden) · Phase 7 (Kalender) samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden) · Phase 6 (Dateiablage und Belege) abgenommen (G6 bestanden) · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung abgenommen (GU bestanden) · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 01.10.2026 · **Phase 10 (Dokumente, Version 18) abgenommen: Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün, Gerätetest G10-01 bis G10-14 bestanden** · Phase 9 (Stellplätze, Version 14, Kartenkorrekturen bis Version 17) abgenommen: Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün, Gerätetest G9-01 bis G9-18 bestanden** · Phase 8 (Auffälligkeiten) abgenommen (G8-01 bis G8-12 bestanden) · Phase 7 (Kalender) samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden) · Phase 6 (Dateiablage und Belege) abgenommen (G6 bestanden) · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung abgenommen (GU bestanden) · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -24,7 +24,7 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Kalender (Phase 7, Version 11; Personenfarben Version 12) | ✅ 45 + 14 neue Unit-Tests (155 gesamt, aus den Quellen gezählt), ✅ 8 neue Regel-Tests (R-10) | ✅ 15 von 15 (G7-01 bis G7-15 bestanden) |
 | Auffälligkeiten (Phase 8, Version 13) | ✅ 29 neue Unit-Tests (184 gesamt, aus den Quellen gezählt), ✅ 8 neue Regel-Tests (R-11) | ✅ 12 von 12 (G8-01 bis G8-12 bestanden) |
 | Stellplätze (Phase 9, Version 14) | ✅ 54 neue Unit-Tests (238 gesamt, aus den Quellen gezählt), ✅ 12 neue Regel-Tests (R-12; 104 gesamt) | ✅ 18 von 18 (G9-01 bis G9-18 bestanden) |
-| Dokumente (Phase 10, Version 18) | ✅ 31 neue Unit-Tests (269 gesamt, aus den Quellen gezählt), ✅ 10 neue Regel-Tests (R-13; 114 gesamt) | ⏳ 14 offen (G10-01 bis G10-14) |
+| Dokumente (Phase 10, Version 18) | ✅ 31 neue Unit-Tests (269 gesamt, aus den Quellen gezählt), ✅ 10 neue Regel-Tests (R-13; 114 gesamt) | ✅ 14 von 14 (G10-01 bis G10-14 bestanden, vom Auftraggeber am 01.10.2026 gemeldet) |
 | Alle weiteren Bereiche (ab Phase 11) | ⬜ | ⬜ |
 
 **Automatische Prüfung insgesamt (GitHub, Commit `00e7e5b`, Lauf 36757814407):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (141 Tests, aus den Quelltexten gezählt: 96 + 45 neu; die Anzahl ist in CI von hier aus nicht lesbar) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ **84/84** (siehe 2.5). Vorheriger Stand (Phase 6, Commit `5956f25`): 96 Unit-Tests, 76 Regel-Tests.
@@ -278,26 +278,26 @@ Bau, Lint, Unit- und Regel-Tests grün (Commit `961f686`). **Standort, Kamera, K
 | G9-17 | **Datenschutz:** Android-Einstellungen → Apps → OBELIX → Berechtigungen; Statusleiste beim Ermitteln; Schritt „Berechtigungen der App anzeigen“ im GitHub-Lauf | Nur **Standort** (keine Kamera, kein Speicher, keine Kontakte); der Standort wird nur nach dem Tippen auf den Knopf abgefragt, nie im Hintergrund; der CI-Schritt listet nur INTERNET, ACCESS_NETWORK_STATE, ACCESS_FINE_LOCATION, ACCESS_COARSE_LOCATION (und ggf. technische Berechtigungen der Bibliotheken) | ✅ |
 | G9-18 | **Regression und Darstellung:** Kalender, Finanzen (Buchung mit Beleg), Aufgaben, Einstellungen (Version 14), Dokumente und Dashboard (weiter „noch nicht verfügbar“); Hell- und Dunkelmodus; große Schrift; kleines Telefon/Querformat; TalkBack (Sterne, Fotos, Knöpfe); Drehen des Geräts beim Foto aufnehmen | Verhalten wie zuvor; Formular und Liste lesbar, nichts abgeschnitten; Sterne tragen „n von 5 Sternen“; nach dem Drehen während der Kamera geht die Aufnahme nicht verloren | ✅ |
 
-### 2.4h Gerätetest Phase 10 – Dokumente (⏳ offen, Version 18)
+### 2.4h Gerätetest Phase 10 – Dokumente (✅ G10-01 bis G10-14 bestanden, Version 18)
 
 Bau, Lint, Unit- und Regel-Tests grün (Commit `4fdf6b5`). **Dateiauswahl, PDF-Öffnen, Darstellung und das echte Firebase-Projekt kann ich nicht prüfen (von mir zu prüfen).** **Voraussetzungen:** (1) die geänderten Regeln aus `firebase/firestore.rules` in der Firebase-Konsole veröffentlichen (Firestore → Regeln → einfügen → Veröffentlichen); (2) die alte App vorher deinstallieren, dann die Version 18 installieren (Einstellungen unten zeigt „18“). Ohne Schritt 1 meldet die App „fehlende Berechtigung“.
 
 | Nr. | Schritte | Erwartet | Ergebnis |
 |---|---|---|---|
-| G10-01 | Bereich „Dokumente“ öffnen (noch leer) | Hinweis „Noch keine Dokumente …“, Knopf zum Hinzufügen; keine „noch nicht verfügbar“-Seite mehr | ⏳ |
-| G10-02 | Hinzufügen → **PDF** wählen | Datei wird vorbereitet, danach Name (aus dem Dateinamen ohne Endung) und Größe sichtbar | ⏳ |
-| G10-03 | Ohne Kategorie, mit leerem Namen und ohne Datei jeweils „Hochladen“ | Meldungen: Name, Kategorie, Datei fehlen; nichts gespeichert; Name mit 101 Zeichen → Längenmeldung | ⏳ |
-| G10-04 | Name ändern, Kategorie „Versicherung“, hochladen | Zurück in der Liste: Zeile mit Name, Kategorie, Datum, „von <dein Name>“ | ⏳ |
-| G10-05 | Eintrag öffnen → „Öffnen“ | PDF startet in einer anderen PDF-App; ohne App die Meldung „keine App zum Anzeigen von PDF-Dateien“ | ⏳ |
-| G10-06 | Ein **Foto** (Kamera- oder Galerie-Bild) als Dokument hochladen und öffnen | Bild erscheint in der App (nicht riesig, verkleinert); Titel „Dokument“ | ⏳ |
-| G10-07 | Eine **andere Datei** wählen (z. B. Word, Text, PNG, falls die Auswahl es anbietet) | Meldung zum Dateityp, nichts übernommen | ⏳ |
-| G10-08 | **Große Datei:** PDF knapp unter 8 MB (z. B. 7 bis 8 MB) hochladen, dann öffnen | Hochladen gelingt (Regelbudget gegen die echte Datenbank), Öffnen zeigt sie; bei mehr als 8 MB Meldung „zu groß“ | ⏳ |
-| G10-09 | Filter oben: einzelne Kategorien und „Alle“ | Nur Dokumente der Kategorie; Leermeldung „In dieser Kategorie gibt es noch keine Dokumente“ | ⏳ |
-| G10-10 | Eintrag öffnen: Name und Kategorie ändern, speichern; es gibt keinen Knopf zum Austauschen der Datei | Änderung in der Liste sichtbar, Datei und Datum unverändert (beim Neuanlegen steht im Hinweis, dass die Datei später nicht austauschbar ist) | ⏳ |
-| G10-11 | Eintrag → „Löschen“ → zuerst **Abbrechen**, dann **Löschen** (alle Testdokumente so entfernen) | Abbrechen löscht nichts; danach weg aus der Liste; am Ende wieder leere Liste | ⏳ |
-| G10-12 | **Flugmodus:** (a) Dokumente öffnen; (b) Hochladen versuchen; Flugmodus aus → erneut | (a) Fehlermeldung mit „Erneut versuchen“, keine leere Liste; (b) Fehlermeldung, Formular bleibt offen, nichts halb gespeichert | ⏳ |
-| G10-13 | **Zwei Konten:** Konto A lädt ein Dokument hoch; zweites Konto sieht „von <A>“, öffnet es, ändert Name, löscht | Alles erlaubt (Entscheidung 4); ein nicht freigeschaltetes Konto sieht keine Dokumente | ⏳ |
-| G10-14 | **Regression und Darstellung:** Finanzen (Buchung mit Beleg ansehen, Texte weiter „Beleg“), Stellplätze (Foto), Kalender, Aufgaben, Einstellungen (Version 18); Hell- und Dunkelmodus; große Schrift; kleines Telefon/Querformat | Alles wie bisher; Dokumente gut lesbar, Knöpfe mindestens 48 dp | ⏳ |
+| G10-01 | Bereich „Dokumente“ öffnen (noch leer) | Hinweis „Noch keine Dokumente …“, Knopf zum Hinzufügen; keine „noch nicht verfügbar“-Seite mehr | ✅ |
+| G10-02 | Hinzufügen → **PDF** wählen | Datei wird vorbereitet, danach Name (aus dem Dateinamen ohne Endung) und Größe sichtbar | ✅ |
+| G10-03 | Ohne Kategorie, mit leerem Namen und ohne Datei jeweils „Hochladen“ | Meldungen: Name, Kategorie, Datei fehlen; nichts gespeichert; Name mit 101 Zeichen → Längenmeldung | ✅ |
+| G10-04 | Name ändern, Kategorie „Versicherung“, hochladen | Zurück in der Liste: Zeile mit Name, Kategorie, Datum, „von <dein Name>“ | ✅ |
+| G10-05 | Eintrag öffnen → „Öffnen“ | PDF startet in einer anderen PDF-App; ohne App die Meldung „keine App zum Anzeigen von PDF-Dateien“ | ✅ |
+| G10-06 | Ein **Foto** (Kamera- oder Galerie-Bild) als Dokument hochladen und öffnen | Bild erscheint in der App (nicht riesig, verkleinert); Titel „Dokument“ | ✅ |
+| G10-07 | Eine **andere Datei** wählen (z. B. Word, Text, PNG, falls die Auswahl es anbietet) | Meldung zum Dateityp, nichts übernommen | ✅ |
+| G10-08 | **Große Datei:** PDF knapp unter 8 MB (z. B. 7 bis 8 MB) hochladen, dann öffnen | Hochladen gelingt (Regelbudget gegen die echte Datenbank), Öffnen zeigt sie; bei mehr als 8 MB Meldung „zu groß“ | ✅ |
+| G10-09 | Filter oben: einzelne Kategorien und „Alle“ | Nur Dokumente der Kategorie; Leermeldung „In dieser Kategorie gibt es noch keine Dokumente“ | ✅ |
+| G10-10 | Eintrag öffnen: Name und Kategorie ändern, speichern; es gibt keinen Knopf zum Austauschen der Datei | Änderung in der Liste sichtbar, Datei und Datum unverändert (beim Neuanlegen steht im Hinweis, dass die Datei später nicht austauschbar ist) | ✅ |
+| G10-11 | Eintrag → „Löschen“ → zuerst **Abbrechen**, dann **Löschen** (alle Testdokumente so entfernen) | Abbrechen löscht nichts; danach weg aus der Liste; am Ende wieder leere Liste | ✅ |
+| G10-12 | **Flugmodus:** (a) Dokumente öffnen; (b) Hochladen versuchen; Flugmodus aus → erneut | (a) Fehlermeldung mit „Erneut versuchen“, keine leere Liste; (b) Fehlermeldung, Formular bleibt offen, nichts halb gespeichert | ✅ |
+| G10-13 | **Zwei Konten:** Konto A lädt ein Dokument hoch; zweites Konto sieht „von <A>“, öffnet es, ändert Name, löscht | Alles erlaubt (Entscheidung 4); ein nicht freigeschaltetes Konto sieht keine Dokumente | ✅ |
+| G10-14 | **Regression und Darstellung:** Finanzen (Buchung mit Beleg ansehen, Texte weiter „Beleg“), Stellplätze (Foto), Kalender, Aufgaben, Einstellungen (Version 18); Hell- und Dunkelmodus; große Schrift; kleines Telefon/Querformat | Alles wie bisher; Dokumente gut lesbar, Knöpfe mindestens 48 dp | ✅ |
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
@@ -350,7 +350,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 7 | Kalender | **Umgesetzt**: A-31 bis A-35 ✅, R-10 ✅; Gerätetests G7-01 bis G7-15 ✅ bestanden (siehe 2.4e). Geplant war: Termin anlegen, ändern, löschen · ungültiger Zeitraum (Ende vor Start) · **Überschneidung vor dem Speichern eindeutig angezeigt** (welcher Eintrag, wer, wann), Speichern nur nach Bestätigung · Randfälle: gleicher Tag, angrenzend, umschließend | Unit, Emulator, Gerät |
 | 8 | Auffälligkeiten | **Umgesetzt**: A-36 bis A-38 ✅, R-11 ✅; Gerätetests G8-01 bis G8-12 ✅ bestanden (siehe 2.4f). Geplant war: Erstellen, bearbeiten, erledigen, wieder öffnen · Filter Alle/Offen/Erledigt, Standard „Offen" · löschen mit Bestätigung | Unit, Emulator, Gerät |
 | 9 | Stellplätze | **Umgesetzt**: A-39 bis A-43 ✅, R-12 ✅; Gerätetests G9-01 bis G9-18 ✅ bestanden (siehe 2.4g). Geplant war: GPS/Berechtigung verweigert/erteilt · 3-Foto-Grenze (Oberfläche und Regeln) · Foto einzeln löschen · Stellplatz löschen entfernt auch die Fotos · Karte · Navigation · Offline | Unit, Emulator, Gerät |
-| 10 | Dokumente | **Umgesetzt**: A-44 bis A-47 ✅, R-13 ✅; Gerätetests G10-01 bis G10-14 ⏳ offen (siehe 2.4h). Geplant war: Hochladen, Kategorie, öffnen, löschen · Dateityp-/Größenlimit · Zugriffsschutz | Unit, Emulator, Gerät |
+| 10 | Dokumente | **Umgesetzt**: A-44 bis A-47 ✅, R-13 ✅; Gerätetests G10-01 bis G10-14 ✅ bestanden (siehe 2.4h). Geplant war: Hochladen, Kategorie, öffnen, löschen · Dateityp-/Größenlimit · Zugriffsschutz | Unit, Emulator, Gerät |
 | 11 | Dashboard | Zahlen stimmen mit den Detailbereichen überein · Leerzustand ohne Fake-Zahlen · Offline | Unit, Gerät |
 | 12 | Gesamtqualität | Auth, Sicherheitsregeln, Firestore, alle Bereiche, Offline (kein falscher Erfolg, keine scheinbar gespeicherten Änderungen), Fehlerfälle, verschiedene Bildschirmgrößen, Bedienung mit TalkBack und großer Schrift | Gerät, Emulator |
 
@@ -385,3 +385,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 30.09.2026 | **Phase 9 umgesetzt** (Stellplätze, Version 14): Sammlung `campsites` mit bis zu 3 Fotos (JPEG, je ein Stück), Standort einmalig per Knopf, Karte mit osmdroid/OpenStreetMap, Kamera ohne Berechtigung, Navigation extern; Regeln `validCampsite`, R-03c/R-11h auf `documents` umgestellt. Lauf 36766298513 (Commit `45a4130`): Regel-Tests grün, Bau scheiterte nur an **einem Lint-Fehler** (`LocalContext` in der Karte). Lauf 36767013859 (Commit `961f686`): Bau, Lint, **238 Unit-Tests** (54 neu, aus den Quellen gezählt) und **104 von 104 Regel-Tests** (12 neu, R-12) grün. Gerätefälle G9-01 bis G9-18 offen; vorher die Regeln in der Firebase-Konsole veröffentlichen |
 | 01.10.2026 | **Phase 9 abgenommen:** Gerätetest G9-01 bis G9-18 vom Benutzer als bestanden gemeldet (Version 17, Commit `e85babf`, Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün). Zwischenfunde am Gerät, behoben: Karte überdeckte den Umschalter Liste/Karte (Version 15), zu weit hineingezoomt mit leerem Raster bei nahen Stellplätzen (Version 16), maximaler Zoom auf 19 angehoben (Version 17) |
 | 01.10.2026 | **Phase 10 umgesetzt** (Dokumente, Version 18): Bau, Lint, 269 Unit-Tests (31 neu) und 114 Regel-Tests (10 neu, R-13) grün im ersten Lauf (Commit `4fdf6b5`, Lauf 36816327854). R-03c, R-11h und R-12l zeigen jetzt auf die nicht freigegebene Sammlung `unbekannt`. Gerätetest G10-01 bis G10-14 offen |
+| 01.10.2026 | Benutzer meldet G10-01 bis G10-14 als bestanden. **Phase 10 vollständig abgenommen** (damit auch: Regeln für `documents` veröffentlicht, große Datei gegen die echte Datenbank, Zwei-Konten-Test) |

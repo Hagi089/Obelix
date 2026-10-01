@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 01.10.2026 · **Phase 10 – Dokumente umgesetzt (Version 18), Gerätetest G10-01 bis G10-14 offen** · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 01.10.2026 · **Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden)** · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -21,8 +21,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **7** | **Kalender (Version 11; Personenfarben Version 12)** | **✅ abgenommen** (G7-01 bis G7-15 bestanden) |
 | **8** | **Auffälligkeiten (Version 13)** | **✅ abgenommen**: Bau, Lint, 184 Unit-Tests (aus den Quellen gezählt) und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295) · Gerätetest G8-01 bis G8-12 bestanden |
 | **9** | **Stellplätze (Version 14, Kartenkorrekturen 15 bis 17)** | **✅ abgenommen**: Bau, Lint, 238 Unit-Tests (aus den Quellen gezählt) und 104 Regel-Tests grün (Commit `e85babf`) · Gerätetest G9-01 bis G9-18 bestanden |
-| **10** | **Dokumente (Version 18)** | **✅ umgesetzt**: Bau, Lint, 269 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `4fdf6b5`) · ⏳ Gerätetest G10-01 bis G10-14 offen; Regeln in der Firebase-Konsole veröffentlichen |
-| 11–12 | Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 11, nach Abnahme von Phase 10) |
+| **10** | **Dokumente (Version 18)** | **✅ abgenommen**: Bau, Lint, 269 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `4fdf6b5`) · Gerätetest G10-01 bis G10-14 bestanden |
+| 11–12 | Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 11) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
@@ -112,14 +112,14 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Vorschläge (nicht umgesetzt):** Fotos im Vollbild mit Zoom; Stellplatz-Bewertung/Filter in der Liste; Kartenbibliothek später durch MapLibre ersetzen; Dashboard-Hinweis „letzter Stellplatz“ in Phase 11.
 
 ## 3h. Phase 10 – Dokumente (01.10.2026, Details: Plan, Phase 10 und Entscheidungen 40 bis 43)
-- **Umgesetzt (Commit `4fdf6b5`, Version 18; Gerätetest G10-01 bis G10-14 offen):** Sammlung `documents` (`name` 1–100, `category` eine von sechs festen Werten, `file` = Dateiverweis wie beim Beleg, `date` = Tag des Hochladens, Audit). Genau eine Datei (Bild oder PDF, höchstens 8 MiB) in der Dateiablage aus Phase 6; die Datei ist nach dem Hochladen unveränderlich (Regeln `newReceiptOk`/`validReceiptRef` unverändert wiederverwendet). Liste mit Kategorie-Filter, Formular (Hochladen, Name und Kategorie ändern, Öffnen, Löschen mit Bestätigung; jeder Benutzer darf löschen, Entscheidung 4).
+- **Umgesetzt (Commit `4fdf6b5`, Version 18; Gerätetest G10-01 bis G10-14 bestanden, abgenommen 01.10.2026):** Sammlung `documents` (`name` 1–100, `category` eine von sechs festen Werten, `file` = Dateiverweis wie beim Beleg, `date` = Tag des Hochladens, Audit). Genau eine Datei (Bild oder PDF, höchstens 8 MiB) in der Dateiablage aus Phase 6; die Datei ist nach dem Hochladen unveränderlich (Regeln `newReceiptOk`/`validReceiptRef` unverändert wiederverwendet). Liste mit Kategorie-Filter, Formular (Hochladen, Name und Kategorie ändern, Öffnen, Löschen mit Bestätigung; jeder Benutzer darf löschen, Entscheidung 4).
 - **Neu im Code:** `data/documents/*`, `ui/documents/*`, `DocumentFormRoute`/`DocumentViewRoute`, `AppContainer.documentRepository`, `ReceiptScreen` (optionale Textparameter, Standard = Belegtexte), Regeln `validDocument`, Regel-Tests R-13, Unit-Tests A-44 bis A-47.
 - **Fallstricke / Erkenntnisse:**
   - **R-03c, R-11h und R-12l** (drei Stellen, nicht zwei) zeigten auf `documents`; alle drei nutzen jetzt `unbekannt`. Beim Freigeben der nächsten Sammlung wieder prüfen, ob ein Test auf sie zeigt.
   - Regelbudget: 10 Stücke + Datei + Dokument ≈ 15–16 von 20, wie beim Beleg (R-13b testet den Grenzfall im Emulator; die echte Datenbank prüft G10-08).
   - Hat eine Datei keinen Anzeigenamen, setzt `LocalFileReader` „Beleg“/„Beleg.pdf“ (kleine Schwäche aus Phase 6, unverändert).
   - Der erste Lauf war grün (kein Lint-Fehler), weil die Lehren aus Phase 9 (Texte vorher mit `stringResource` holen) von Anfang an beachtet wurden.
-- **Von mir zu prüfen (nicht automatisch testbar):** Dateiauswahl, PDF-Öffnen in einer externen App, Darstellung, große Datei gegen die echte Datenbank, Offline; **Regeln in der Firebase-Konsole veröffentlichen**.
+- **Auf dem Gerät bestätigt (G10):** Dateiauswahl, PDF-Öffnen in einer externen App, Darstellung, große Datei gegen die echte Datenbank, Offline, zwei Konten; die Regeln für `documents` sind veröffentlicht.
 - **Vorschläge (nicht umgesetzt):** Suche nach Namen; Vorschau-Bild in der Liste; Datei austauschen (bräuchte eine Regeländerung); Teilen/Herunterladen; Dashboard-Hinweis „zuletzt hochgeladenes Dokument“ in Phase 11.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
@@ -167,7 +167,7 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ## 7. Prompt für den neuen Chat (Phase 11)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Ergebnisse des Gerätetests G10 und der Regel-Veröffentlichung trägst du vorher in die eckigen Klammern ein.
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Testergebnisse sind bereits eingetragen.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -176,7 +176,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 9 abgenommen, Phase 10 (Dokumente, Version 18) umgesetzt (Commit 4fdf6b5; Bau, Lint, 269 Unit-Tests, 114 Regel-Tests grün). Gerätetest G10-01 bis G10-14: [HIER EINTRAGEN: bestanden / Fehler]. Die Regeln aus firebase/firestore.rules (inklusive documents) sind in der Firebase-Konsole veröffentlicht: [ja/nein].
+Stand: Phase 1 bis 10 abgenommen, Phase 10 (Dokumente, Version 18) abgenommen (Commit 4fdf6b5; Bau, Lint, 269 Unit-Tests, 114 Regel-Tests grün). Gerätetest G10-01 bis G10-14: alle bestanden. Die Regeln aus firebase/firestore.rules (inklusive documents) sind in der Firebase-Konsole veröffentlicht: ja.
 
 Auftrag jetzt: PHASE 11 – Dashboard gemäß Plan (Kennzahlen aus echten Daten, Leerzustand ohne Fake-Zahlen, Offline). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte die Fallstricke aus UEBERGABE.md Abschnitt 3g/3h und 4 (Regelbudget, Lint, Android-Views in Compose).
 
