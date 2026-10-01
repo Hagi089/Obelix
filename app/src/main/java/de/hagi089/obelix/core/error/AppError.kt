@@ -31,6 +31,8 @@ enum class AppError(@param:StringRes val messageRes: Int) {
     CONFLICT(R.string.error_conflict),
     /** Eine gespeicherte Datei ist unvollständig (Stücke fehlen oder passen nicht zu den Metadaten). */
     FILE_CORRUPT(R.string.error_file_corrupt),
+    /** Eine Datei auf dem Gerät oder im gewählten Speicherort ließ sich nicht schreiben (Backup). */
+    STORAGE(R.string.error_storage),
     UNKNOWN(R.string.error_unknown),
 }
 

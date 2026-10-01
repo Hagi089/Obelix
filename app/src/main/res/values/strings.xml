@@ -183,6 +183,20 @@
     <string name="settings_import_intro">Einmaliger Import der bisherigen Buchungen aus der Excel-Datei.</string>
     <string name="settings_import_open">Import öffnen</string>
 
+    <!-- Einstellungen: Backup (nur Admin) -->
+    <string name="settings_backup">Backup</string>
+    <string name="settings_backup_intro">Sichert alle Daten (Benutzer, Buchungen, Kategorien, geplante Ausgaben, Kalender, Aufgaben, Stellplätze, Dokumente) und alle Belege, Fotos und Dokumente in einer ZIP-Datei. Der Zugangscode ist nicht enthalten.</string>
+    <string name="settings_backup_hint">Die Datei enthält Namen und Beträge. Bewahre sie sicher auf, zum Beispiel in deinem privaten Google Drive.</string>
+    <string name="settings_backup_create">Backup erstellen</string>
+    <string name="settings_backup_starting">Backup wird vorbereitet …</string>
+    <string name="settings_backup_running_data">Daten werden gelesen (%1$d von %2$d) …</string>
+    <string name="settings_backup_running_files">Dateien werden gesichert (%1$d von %2$d) …</string>
+    <string name="settings_backup_done">Backup gespeichert: %1$d Einträge und %2$d Dateien.</string>
+    <string name="settings_backup_incomplete">Backup unvollständig: %1$d von %2$d Dateien konnten nicht gesichert werden. Bitte wiederhole das Backup.</string>
+    <string name="settings_backup_failed_file">Nicht gesichert: %1$s</string>
+    <string name="settings_backup_failed">Das Backup ist fehlgeschlagen. Die gespeicherte Datei ist unvollständig: lösche sie und versuche es erneut.</string>
+    <string name="error_storage">Die Backup-Datei konnte nicht geschrieben werden. Bitte prüfe den Speicherort und den freien Speicherplatz.</string>
+
     <!-- Excel-Import -->
     <string name="import_title">Excel-Import</string>
     <string name="import_intro">Wähle die Importdatei (obelix-import.json). Vor dem Schreiben werden die Kennzahlen aus der Datei mit den erwarteten Kontrollwerten verglichen. Es wird nichts geschrieben, bevor du bestätigst.</string>

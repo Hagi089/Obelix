@@ -50,6 +50,7 @@ import de.hagi089.obelix.ui.repairs.RepairFormViewModel
 import de.hagi089.obelix.ui.repairs.RepairListScreen
 import de.hagi089.obelix.ui.repairs.RepairListViewModel
 import de.hagi089.obelix.ui.settings.CategoriesViewModel
+import de.hagi089.obelix.ui.settings.BackupViewModel
 import de.hagi089.obelix.ui.settings.SettingsViewModel
 
 @Composable
@@ -318,11 +319,15 @@ fun ObelixNavHost(
             val categoriesViewModel: CategoriesViewModel = viewModel(
                 factory = viewModelFactory { initializer { CategoriesViewModel(container.categoryRepository, user.uid) } },
             )
+            val backupViewModel: BackupViewModel = viewModel(
+                factory = viewModelFactory { initializer { BackupViewModel(container.backupRepository) } },
+            )
             val chosenDark by container.themePreference.darkMode.collectAsStateWithLifecycle()
             val isDark = chosenDark ?: isSystemInDarkTheme()
             SettingsScreen(
                 viewModel = settingsViewModel,
                 categoriesViewModel = categoriesViewModel,
+                backupViewModel = backupViewModel,
                 user = user,
                 onSignOut = onSignOut,
                 onOpenImport = { navController.navigate(ImportRoute) },

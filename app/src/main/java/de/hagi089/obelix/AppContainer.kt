@@ -11,6 +11,8 @@ import de.hagi089.obelix.core.network.NetworkMonitor
 import de.hagi089.obelix.data.auth.AuthRepository
 import de.hagi089.obelix.data.auth.FirebaseAuthRepository
 import de.hagi089.obelix.data.auth.RegistrationHandoff
+import de.hagi089.obelix.data.backup.BackupRepository
+import de.hagi089.obelix.data.backup.FirestoreBackupRepository
 import de.hagi089.obelix.data.calendar.CalendarRepository
 import de.hagi089.obelix.data.campsites.CampsiteRepository
 import de.hagi089.obelix.data.campsites.FirestoreCampsiteRepository
@@ -71,6 +73,9 @@ class AppContainer(context: Context) {
     val financeRepository: FinanceRepository by lazy { FirestoreFinanceRepository(firestore, fileStore) }
 
     val categoryRepository: CategoryRepository by lazy { FirestoreCategoryRepository(firestore) }
+
+    /** Backup des gesamten Datenbestands als ZIP (nur ADMIN in den Einstellungen). */
+    val backupRepository: BackupRepository by lazy { FirestoreBackupRepository(firestore, fileStore) }
 
     val plannedExpenseRepository: PlannedExpenseRepository by lazy { FirestorePlannedExpenseRepository(firestore) }
 

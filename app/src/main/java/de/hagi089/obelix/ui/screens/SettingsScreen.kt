@@ -53,6 +53,7 @@ import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.data.user.AccessCode
 import de.hagi089.obelix.data.user.Role
 import de.hagi089.obelix.data.user.UserProfile
+import de.hagi089.obelix.ui.settings.BackupViewModel
 import de.hagi089.obelix.ui.settings.CategoriesViewModel
 import de.hagi089.obelix.ui.settings.SettingsUiState
 import de.hagi089.obelix.ui.settings.SettingsViewModel
@@ -67,6 +68,7 @@ private sealed interface Confirm {
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     categoriesViewModel: CategoriesViewModel,
+    backupViewModel: BackupViewModel,
     user: AuthUser,
     onSignOut: () -> Unit,
     onOpenImport: () -> Unit,
@@ -135,6 +137,8 @@ fun SettingsScreen(
             OutlinedButton(onClick = onOpenImport, modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
                 Text(stringResource(R.string.settings_import_open))
             }
+            HorizontalDivider()
+            BackupSection(viewModel = backupViewModel)
             HorizontalDivider()
             CodeSection(state, onRenew = { confirm = Confirm.RenewCode })
             HorizontalDivider()
