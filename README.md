@@ -12,7 +12,7 @@ Status: **Phase 1 bis 11 abgenommen, Phase 12 (Qualitätssicherung) in Arbeit.**
 | Finanzen | Einnahmen und Ausgaben mit Kategorie, „Bezahlt von“, Abrechnungsstatus (offen, erstattet, gesponsert) und optionalem Beleg (Foto oder PDF). Kontostand und Forderungen werden aus den Buchungen berechnet. |
 | Geplante Ausgaben | Anschaffungen mit geschätztem Betrag. „Gekauft“ erzeugt in einer Transaktion eine echte Ausgabe mit dem tatsächlichen Betrag. Planungen verändern den Kontostand nie. |
 | Aufgaben | Auffälligkeiten und Reparaturen: erstellen, bearbeiten, erledigen, wieder öffnen, Filter Offen/Erledigt/Alle. |
-| Stellplätze | Standort einmalig auf Knopfdruck, Kommentar, bis zu drei Fotos, Liste und Karte (OpenStreetMap), „Navigation starten“ über eine externe App. |
+| Stellplätze | Standort einmalig auf Knopfdruck, Kommentar, bis zu drei Fotos, Liste und Karte (OpenStreetMap). Im Formular zeigt eine Karte mit verschiebbarem Marker die Position; ein ungenauer Standort lässt sich durch Ziehen des Markers korrigieren. „Navigation starten“ nutzt immer die gespeicherte (korrigierte) Position und öffnet eine externe App. |
 | Dokumente | Wichtige Unterlagen (Bild oder PDF) mit Name und Kategorie, öffnen und löschen. |
 | Einstellungen | Hell-/Dunkelmodus, Benutzerverwaltung und Zugangscode (nur ADMIN), Kategorien (nur ADMIN), Excel-Import (einmalig, nur ADMIN), Version. |
 
