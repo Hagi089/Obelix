@@ -15,7 +15,6 @@
 
     <!-- Zustände -->
     <string name="offline_banner">Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell.</string>
-    <string name="section_not_available">Dieser Bereich ist noch nicht verfügbar.</string>
     <string name="firebase_missing_title">Backend nicht eingerichtet</string>
     <string name="firebase_missing_text">Die Verbindung zu Firebase ist nicht konfiguriert. Die App kann ohne Backend keine Daten laden oder speichern.</string>
 

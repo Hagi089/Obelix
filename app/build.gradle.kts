@@ -4,8 +4,9 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// google-services.json wird nicht committet (siehe README). Ohne die Datei baut das Projekt
-// trotzdem (z. B. in der CI); die App zeigt dann einen klaren Hinweis statt abzustürzen.
+// google-services.json liegt bewusst im Repository (kein Geheimnis im Firebase-Sinn, siehe README und Plan,
+// Risiko 2c). Fehlt die Datei (z. B. bei einem eigenen Firebase-Projekt), baut das Projekt trotzdem; die App
+// zeigt dann einen klaren Hinweis statt abzustürzen.
 if (file("google-services.json").exists()) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
@@ -18,8 +19,8 @@ android {
         applicationId = "de.hagi089.obelix"
         minSdk = 26
         targetSdk = 36
-        versionCode = 19
-        versionName = "19" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
+        versionCode = 20
+        versionName = "20" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
     }
 
     buildTypes {

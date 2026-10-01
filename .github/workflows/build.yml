@@ -22,7 +22,7 @@ jobs:
 
       - uses: gradle/actions/setup-gradle@v5
 
-      # Ohne google-services.json: Build und Tests laufen, Firebase ist in dieser APK nicht konfiguriert.
+      # google-services.json liegt im Repository, die Debug-APK ist daher mit dem echten Firebase-Projekt verbunden.
       - name: Build, Unit-Tests, Lint
         run: |
           set -o pipefail

@@ -4,8 +4,7 @@ private/
 *.xls
 *.xlsm
 
-# Firebase / Secrets
-google-services.json
+# Firebase / Secrets (app/google-services.json liegt bewusst im Repository, siehe README)
 *.jks
 *.keystore
 local.properties

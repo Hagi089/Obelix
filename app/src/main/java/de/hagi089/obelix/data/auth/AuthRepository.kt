@@ -56,7 +56,7 @@ class FirebaseAuthRepository(private val auth: FirebaseAuth) : AuthRepository {
 
     override suspend fun register(name: String, email: String, password: String): Result<Unit> = call {
         val result = auth.createUserWithEmailAndPassword(email.trim(), password).await()
-        // Der Anzeigename wird später (Phase 3) zusätzlich im Haushalt gespeichert. Scheitert das
+        // Der Anzeigename steht zusätzlich im Benutzerdokument (users/{uid}, Registrierung). Scheitert das
         // Setzen hier, ist das Konto trotzdem angelegt und der Benutzer angemeldet.
         try {
             val request = UserProfileChangeRequest.Builder().setDisplayName(name.trim()).build()
