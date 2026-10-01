@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 30.09.2026 (Rev. 16: **Phase 9 – Stellplätze umgesetzt (Version 14)**, Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün (Commit `961f686`, Lauf 36767013859), Gerätetest G9-01 bis G9-18 offen; Rev. 15: **Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 8 abgenommen, Phase 9 umgesetzt und zur Geräteprüfung bereit).
+Stand: 01.10.2026 (Rev. 17: **Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)**, Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; Rev. 16: Phase 9 umgesetzt (Version 14, Commit `961f686`); Rev. 15: **Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 9 abgenommen, Phase 10 folgt).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -611,7 +611,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test der Oberfläche (Compose) und der Transaktion gegen echtes Firestore.
 - **Nicht Teil von Phase 8:** Dashboard-Zähler der offenen Auffälligkeiten (Phase 11), Fotos zu Auffälligkeiten, Zuweisung an Personen, Erinnerungen.
 
-### Phase 9 – Stellplätze ✅ umgesetzt (30.09.2026, Version 14; Korrekturen der Karte Version 15 bis 17), Gerätetest G9-01 bis G9-18 offen
+### Phase 9 – Stellplätze ✅ abgenommen (01.10.2026, Version 14; Korrekturen der Karte Version 15 bis 17), Gerätetest G9-01 bis G9-18 bestanden
 - **Voraussetzung:** Phase 6, Entscheidung 3 (Karte → Entscheidung 36).
 - **Ziel:** Standort speichern, bis zu 3 Fotos, Karte, externe Navigation (Entscheidungen 36 bis 39).
 - **Stand:** Commit `961f686`, Lauf 36767013859: Bau, Lint, **238 Unit-Tests** (54 neu, aus den Quellen gezählt) und **104 von 104 Regel-Tests** (12 neu, R-12) grün. Der erste Lauf (`45a4130`) scheiterte nur an **einem Lint-Fehler** (Text in der Karte über `LocalContext` statt `stringResource`), sofort behoben.
@@ -628,7 +628,7 @@ Abschlusskriterium: Freigabe durch dich.
   - Kein automatischer Test von Oberfläche, Standort, Kamera, Karte und der Transaktion gegen echtes Firestore.
 - **Korrekturen nach dem ersten Gerätetest (Version 15 bis 17, Commits `585dc87`, `1fa06c6`, `e85babf`):** (1) Die Karte (Android-View) zeichnete über den Umschalter Liste/Karte → `clipToBounds` am Kartenbereich. (2) Zwei Stellplätze dicht beieinander ließen die Karte so weit hineinzoomen, dass es dort keine Kacheln gab (leeres Raster, langes Laden) → bei Plätzen näher als etwa 0,004° feste Nahansicht (Zoom 16), sonst Ausschnitt um alle Markierungen; Zoom begrenzt auf 3 bis 19 (Kachelgrenze von OSM Standard). Keine Funktionsänderung sonst.
 - **Nicht Teil von Phase 9:** Fotos im Vollbild/Zoom, Foto zu Auffälligkeiten, Standort ändern, Karte offline, Dashboard-Anzeige (Phase 11), Stellplatz-Suche/Filter.
-- **Abschluss:** Alle Fälle auf echtem Gerät geprüft – **offen** (G9-01 bis G9-18, `TESTFAELLE.md` 2.4g; vorher die Regeln in der Firebase-Konsole veröffentlichen).
+- **Abschluss:** Alle Fälle auf echtem Gerät geprüft: G9-01 bis G9-18 vom Benutzer am 01.10.2026 als bestanden gemeldet (damit auch G9-09: drei große Fotos gegen die echte Datenbank, das Regelbudget hält; die Regeln für `campsites` sind veröffentlicht).
 
 ### Phase 10 – Dokumente
 - **Ziel:** Hochladen, Kategorie, öffnen, löschen, Zugriffsschutz.
@@ -754,5 +754,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 6 Dateiablage und Belege | abgenommen (Version 10): Bau, Lint und Unit-Tests grün (96 aus den Quellen gezählt), **76 Regel-Tests grün** (Commit `5956f25`, Lauf 36748194004); **Gerätetest G6-01 bis G6-14 bestanden** | 30.09.2026 | Fotogröße (G6-02) nicht gemeldet, nicht nachgetragen |
 | 7 Kalender | ✅ abgenommen (Version 11): Bau, Lint, 141 Unit-Tests und 84 Regel-Tests grün (Commit `00e7e5b`); **Gerätetest G7-01 bis G7-14 bestanden**. Erweiterung Personenfarben (Version 12): 155 Unit-Tests grün, **G7-15 offen** | 30.09.2026 | Gerätetest G7-15 |
 | 8 Auffälligkeiten | ✅ abgenommen (Version 13): Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295); **Gerätetest G8-01 bis G8-12 bestanden** | 30.09.2026 | – |
-| 9 Stellplätze | umgesetzt (Version 14): Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün (Commit `961f686`, Lauf 36767013859); **Gerätetest G9-01 bis G9-18 offen** | 30.09.2026 | Gerätetest G9, Regeln veröffentlichen |
+| 9 Stellplätze | ✅ abgenommen (Version 14, Kartenkorrekturen bis Version 17): Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; **Gerätetest G9-01 bis G9-18 bestanden** | 01.10.2026 | – |
 | 10–12 | nicht begonnen | | |
