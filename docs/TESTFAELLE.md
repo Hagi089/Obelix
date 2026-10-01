@@ -1,6 +1,6 @@
 # OBELIX – Testfälle
 
-Stand: 01.10.2026 · **Phase 11 (Dashboard, Version 19) abgenommen: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`), Gerätetest G11-01 bis G11-12 bestanden** · Phase 10 (Dokumente, Version 18) abgenommen: Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün, Gerätetest G10-01 bis G10-14 bestanden** · Phase 9 (Stellplätze, Version 14, Kartenkorrekturen bis Version 17) abgenommen: Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün, Gerätetest G9-01 bis G9-18 bestanden** · Phase 8 (Auffälligkeiten) abgenommen (G8-01 bis G8-12 bestanden) · Phase 7 (Kalender) samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden) · Phase 6 (Dateiablage und Belege) abgenommen (G6 bestanden) · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung abgenommen (GU bestanden) · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
+Stand: 01.10.2026 · **Phase 12 (Qualitätssicherung, Version 20) umgesetzt: Bau, Lint, 293 Unit-Tests und 114 Regel-Tests grün (Commit `6ddfef5`, Lauf 36822992931), Nachweis der 25 Abschlusskriterien in 2.7, Gerätetest G12-01 bis G12-07 offen** · Phase 11 (Dashboard, Version 19) abgenommen: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`), Gerätetest G11-01 bis G11-12 bestanden** · Phase 10 (Dokumente, Version 18) abgenommen: Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün, Gerätetest G10-01 bis G10-14 bestanden** · Phase 9 (Stellplätze, Version 14, Kartenkorrekturen bis Version 17) abgenommen: Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün, Gerätetest G9-01 bis G9-18 bestanden** · Phase 8 (Auffälligkeiten) abgenommen (G8-01 bis G8-12 bestanden) · Phase 7 (Kalender) samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden) · Phase 6 (Dateiablage und Belege) abgenommen (G6 bestanden) · Phase 5 (Geplante Ausgaben) abgenommen (G5 bestanden) · Phase 4 abgenommen (G4 bestanden), UI-Überarbeitung abgenommen (GU bestanden) · zuletzt geprüfter Commit: siehe Änderungsprotokoll (GitHub-Bau und Regel-Tests grün) · gehört zu [`PROJEKTPLAN.md`](PROJEKTPLAN.md)
 
 Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der Plan verweist nur hierher.
 
@@ -26,9 +26,9 @@ Diese Datei wird **nach jeder Phase und nach jedem Testlauf aktualisiert**. Der 
 | Stellplätze (Phase 9, Version 14) | ✅ 54 neue Unit-Tests (238 gesamt, aus den Quellen gezählt), ✅ 12 neue Regel-Tests (R-12; 104 gesamt) | ✅ 18 von 18 (G9-01 bis G9-18 bestanden) |
 | Dokumente (Phase 10, Version 18) | ✅ 31 neue Unit-Tests (269 gesamt, aus den Quellen gezählt), ✅ 10 neue Regel-Tests (R-13; 114 gesamt) | ✅ 14 von 14 (G10-01 bis G10-14 bestanden, vom Auftraggeber am 01.10.2026 gemeldet) |
 | Dashboard (Phase 11, Version 19) | ✅ 24 neue Unit-Tests (293 gesamt, aus den Quellen gezählt), keine Regeländerung (114 Regel-Tests unverändert grün) | ✅ 12 von 12 (G11-01 bis G11-12 bestanden) |
-| Alle weiteren Bereiche (ab Phase 12) | ⬜ | ⬜ |
+| Qualitätssicherung (Phase 12, Version 20) | ✅ Bau, Lint, 293 Unit-Tests, 114 Regel-Tests unverändert grün; Nachweis der Abschlusskriterien (2.7) | ⏳ 0 von 7 (G12-01 bis G12-07) |
 
-**Automatische Prüfung insgesamt (GitHub, Commit `5d205b3`, Lauf 36820452860):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (293 Tests, aus den Quelltexten gezählt: 269 + 24 neu; die Anzahl ist in CI von hier aus nicht lesbar) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ **114/114** (Annotation „Regel-Tests“, unverändert, siehe 2.5). Vorheriger Stand (Phase 10, Commit `4fdf6b5`): 269 Unit-Tests, 114 Regel-Tests.
+**Automatische Prüfung insgesamt (GitHub, Commit `6ddfef5`, Lauf 36822992931, Version 20):** `assembleDebug` ✅ · `testDebugUnitTest` ✅ (293 Tests, unverändert) · `lintDebug` ✅ · Regel-Tests ✅ **114/114** (Annotation „# tests 114 # pass 114 # fail 0“). Vorheriger Stand (Phase 11, Commit `5d205b3`, Lauf 36820452860): `assembleDebug` ✅ · `testDebugUnitTest` ✅ (293 Tests, aus den Quelltexten gezählt: 269 + 24 neu; die Anzahl ist in CI von hier aus nicht lesbar) · `lintDebug` ✅ · Regel-Tests im Emulator ✅ **114/114** (Annotation „Regel-Tests“, unverändert, siehe 2.5). Vorheriger Stand (Phase 10, Commit `4fdf6b5`): 269 Unit-Tests, 114 Regel-Tests.
 
 ---
 
@@ -321,6 +321,20 @@ Bau, Lint, Unit- und Regel-Tests grün (Commit `5d205b3`). **Darstellung, Zahlen
 | G11-11 | **Darstellung:** Hell- und Dunkelmodus, große Schrift, kleines Telefon, Querformat; TalkBack | Alles lesbar und scrollbar, nichts abgeschnitten; Kacheln mindestens 48 dp hoch; TalkBack liest Titel und Wert je Kachel | ✅ |
 | G11-12 | **Regression:** alle anderen Bereiche kurz bedienen (Finanzen mit Beleg, Kalender, Aufgaben, Stellplätze mit Karte, Dokumente), Einstellungen (Version 19), Zurück aus Formularen ins Dashboard | Alles wie bisher | ✅ |
 
+### 2.4j Gerätetest Phase 12 – Gesamttest (⏳ offen, Version 20)
+
+Version 20 enthält nur die Code-Bereinigung (Platzhalter `SectionNotAvailableScreen` und sein Text entfernt, Kommentare korrigiert); **keine Regeländerung, die Regeln müssen nicht neu veröffentlicht werden.** Die Einzelfunktionen sind durch G1 bis G11 belegt (siehe 2.7). Diese Fälle schließen die Lücken des Gesamttests (Anforderungen 54) und sichern die Version 20 ab. **Alles hier kann ich nicht selbst prüfen (von mir zu prüfen).** Vorher die alte App deinstallieren, dann die Debug-APK des neuesten grünen Laufs (Artefakt `obelix-debug-apk`) installieren.
+
+| Nr. | Schritte | Erwartet | Ergebnis |
+|---|---|---|---|
+| G12-01 | App installieren und starten, anmelden; Einstellungen ganz nach unten | App startet ohne Absturz, Dashboard erscheint; unten steht „Version 20“ | ⏳ |
+| G12-02 | **Rundgang als ADMIN:** alle sechs Bereiche und die Einstellungen öffnen (Dashboard, Kalender, Finanzen, Aufgaben, Stellplätze, Dokumente), in jedem Bereich einen Eintrag ansehen; Zurück-Navigation aus jedem Formular | Alles wie in G1 bis G11; **nirgends** der Text „Dieser Bereich ist noch nicht verfügbar“; keine leere Seite, kein Absturz | ⏳ |
+| G12-03 | **Rundgang als MEMBER** (zweites Konto): dieselben Bereiche; in den Einstellungen sind Kategorien, Zugangscode, Benutzerverwaltung und Excel-Import nicht sichtbar | Normale Daten lassen sich anlegen, ändern, löschen; Verwaltungsfunktionen fehlen | ⏳ |
+| G12-04 | **Konto ohne Freischaltung** (neues Konto ohne Code, falls die Registrierung nicht ohnehin abbricht, oder entfernter Benutzer): App öffnen | Nur „Zugangscode eingeben“, in keinem Bereich werden Daten angezeigt | ⏳ |
+| G12-05 | **Offline-Gesamtrundgang:** Flugmodus an, App neu öffnen; nacheinander jeden Bereich öffnen und in jedem einen Eintrag speichern bzw. löschen versuchen (Kalender, Finanzen, Geplante Ausgaben, Aufgaben, Stellplätze, Dokumente); Flugmodus aus, jeweils „Erneut versuchen“ | Banner „Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell.“; jeder Bereich zeigt einen Fehler mit „Erneut versuchen“ **statt einer leeren Liste oder einer 0**; jedes Speichern und Löschen schlägt mit Meldung fehl, **keine** Erfolgsmeldung, nach Flugmodus aus ist nichts „scheinbar gespeichert“ | ⏳ |
+| G12-06 | **Bildschirmgrößen:** kleines Telefon bzw. Anzeigegröße „Groß“, **Querformat**, Schriftgröße auf Maximum, Hell und Dunkel; falls vorhanden ein **Tablet** oder ein Fenster in Tablet-Breite (dort Navigation als Leiste links) | Alle Bereiche lesbar und bedienbar, nichts abgeschnitten oder überdeckt; auf dem Tablet die seitliche Navigationsleiste | ⏳ |
+| G12-07 | **TalkBack-Stichprobe:** Dashboard, Navigation, ein Formular (z. B. Auffälligkeit) | Kacheln, Symbole und Felder werden mit Namen vorgelesen | ⏳ |
+
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
 Datei `firebase/rules-tests/rules.test.mjs`, Regeln `firebase/firestore.rules`. Lauf: Job „rules" in GitHub Actions (Firestore-Emulator, Projekt `demo-obelix`, keine echten Daten). Ergebnis Commit `6227ef9` (Lauf 36762739295): **92 von 92 bestanden** (Phase 3: 30, Phase 4: 15, Phase 5: 13, Phase 6: 18, Phase 7: 8, Phase 8: 8). Vorheriger Stand (Commit `00e7e5b`): 84 von 84.
@@ -358,6 +372,42 @@ Anforderung 43 (Haushalt A sieht nie Daten von Haushalt B) entfällt, weil es ke
 - Phase 7: Darstellung des Monatsrasters, Datumsauswahl, Dialog, Offline und die Abfrage/Transaktion gegen echtes Firestore sind nicht automatisch testbar (nur Rechenteile, Regeln und der Speicherablauf des Formulars mit Fakes); das prüfen G7-02 bis G7-14. Der Fall „zwei Nutzer speichern im selben Augenblick“ ist nicht testbar (akzeptiertes Risiko 8); G7-12 prüft den prüfbaren Teil (Prüfung beim Speichern, nicht beim Öffnen).
 - Kein automatischer Bedienungstest der Oberfläche (Compose-UI-Test). Der Bau in der Cloud kann keinen Emulator starten.
 
+### 2.7 Nachweis der Abschlusskriterien (Anforderungen, Abschnitt 60) – Stand 01.10.2026, Phase 12
+
+Zeigt für jedes der 25 Kriterien, womit es belegt ist. **Automatisch** = Lauf in GitHub Actions (Unit-Tests A-xx, Regel-Tests R-xx im Emulator), **Gerät** = vom Benutzer auf dem Smartphone bestanden (G-Fälle), **Code-Prüfung** = von mir am Quelltext geprüft (01.10.2026). Ehrlicher Status: ✅ belegt · ⏳ wartet auf G12 (Gerätetest Version 20) · ➖ entfällt durch Entscheidung.
+
+| Nr. | Abschlusskriterium | Beleg | Status |
+|---|---|---|---|
+| 1 | App kompiliert | Automatisch: `assembleDebug` bei jedem Push, Version 20 siehe Änderungsprotokoll | ✅ |
+| 2 | App startet | Gerät: G1-01 (Version 1 bis 19); Version 20: G12-01 | ✅ / ⏳ für Version 20 |
+| 3 | Login funktioniert | Automatisch: A-01 bis A-13 (Eingabeprüfung, Fehlerabbildung); Gerät: G2-01 bis G2-09 (Registrieren, Anmelden, Abmelden, falsches Passwort, Passwort zurücksetzen) | ✅ |
+| 4 | Benutzerverwaltung funktioniert | Automatisch: A-15/A-16, R-04, R-05; Gerät: G3-02 bis G3-09 (Rollen, Code erneuern, Benutzer entfernen); MEMBER/ADMIN: G3-03, G3-07, GU-10, G4-03; Version 20: G12-03 | ✅ |
+| 5 | Haushalte funktionieren | ➖ Entscheidung vom 30.09.2026: kein Haushaltskonzept, alle Benutzer teilen einen Datenbestand (Anforderung 43 entfällt). Ersatzschutz: ohne gültigen Zugangscode kein Zugriff: R-01 bis R-03, G3-01, G3-04, G3-09; Version 20: G12-04 | ➖ |
+| 6 | Security Rules funktionieren | Automatisch: **114 Regel-Tests** (R-01 bis R-13) im Emulator; Gerät gegen die echte Datenbank: G3-01, G3-04, G3-06, G3-09, G6-06, G9-09, G10-08, G10-13. Grenze: keine Mutationsprüfung der Regel-Tests (siehe 2.6) | ✅ |
+| 7 | Daten werden gespeichert | Gerät: G4-10, G5-02, G7-02, G8-02, G9-06, G10-04 (je Bereich anlegen und nach Neustart wiederfinden) | ✅ |
+| 8 | Daten werden geladen | Gerät: G4-07, G11-02, G11-10 (zweites Konto sieht dieselben Daten) | ✅ |
+| 9 | Finanzberechnung korrekt | Automatisch: A-17 bis A-20 (Kontostand, Forderungen, Rundung auf Cent); Gerät: Kontrollwerte aus der Excel G4-04, G4-07, G4-11, G4-13, G4-16, Dashboard-Abgleich G11-02, G11-03 | ✅ |
+| 10 | Kalender funktioniert | Automatisch: A-31 bis A-35, R-10; Gerät: G7-01 bis G7-15 | ✅ |
+| 11 | Überschneidungen werden erkannt | Automatisch: `CalendarOverlapTest` (gleicher Tag, angrenzend, umschließend), Formular-Ablauf mit Fakes; Gerät: G7-04 bis G7-07, G7-12 (zwei Konten) | ✅ |
+| 12 | Auffälligkeiten funktionieren | Automatisch: A-36 bis A-38, R-11; Gerät: G8-01 bis G8-12 (erstellen, bearbeiten, erledigen, wieder öffnen, Filter, löschen) | ✅ |
+| 13 | Geplante Ausgaben funktionieren | Automatisch: A-21 bis A-24, R-08; Gerät: G5-01 bis G5-12 | ✅ |
+| 14 | Tatsächliche Ausgaben entstehen korrekt | Automatisch: `PurchasePlannerTest`, R-08 (Kauf nur zusammen mit passender Buchung, 472 € statt 500 €); Gerät: G5-05 (tatsächlicher Betrag), G5-06, G5-08, G11-05 | ✅ |
+| 15 | Stellplätze funktionieren | Automatisch: A-39 bis A-43, R-12; Gerät: G9-01 bis G9-18 (Liste, Karte, Speichern, Löschen) | ✅ |
+| 16 | GPS funktioniert | Gerät: G9-02 (Berechtigung, Position), G9-03 (abgelehnt), G9-04 (Standortdienst aus); nur auf Knopfdruck, G9-17 (nur Standort-Berechtigung) | ✅ |
+| 17 | Fotos funktionieren | Automatisch: `PhotoCompressionTest`, `ImageScalingTest`; Gerät: G9-07 (Kamera), G9-08 (Galerie), G9-09 (drei große Fotos gegen die echte Datenbank), G9-10 (einzeln löschen), G9-11 | ✅ |
+| 18 | Höchstens drei Fotos je Stellplatz | Oberfläche: G9-08 (Knöpfe bei 3 gesperrt); Validierung: `CampsiteValidatorTest`; **serverseitig:** R-12 (vier Fotos verboten, drei mit voller Stückgröße erlaubt) | ✅ |
+| 19 | Dokumente funktionieren | Automatisch: A-44 bis A-47, R-13 (inkl. Zugriffsschutz: ohne Anmeldung/Freischaltung kein Zugriff); Gerät: G10-01 bis G10-14 (Hochladen, Anzeigen, Öffnen, Löschen) | ✅ |
+| 20 | Dashboard verwendet echte Daten | Automatisch: A-48, A-49 (Logik und ViewModel mit Fakes); Gerät: G11-02 bis G11-10 (Zahlen stimmen mit den Bereichen überein, Leerzustand ohne Zahl) | ✅ |
+| 21 | Offline-Zustände korrekt behandelt | Entwurf: Firestore nur mit Arbeitsspeicher-Cache, Schreiben nur per Transaktion, kein Dauer-Listener (Code-Prüfung); Gerät je Bereich: G2-08, G3-10, G4-14, G5-10, G6-11, G7-11, G8-10, G9-15, G10-12, G11-09; Gesamtrundgang mit Version 20: G12-05 | ✅ / ⏳ Gesamtrundgang |
+| 22 | Keine Fake-Daten vorhanden | Code-Prüfung 01.10.2026: keine Namen, Beträge oder Beispieldatensätze im App-Code (nur in Tests unter `src/test`); Leerzustände je Bereich (G4-01, G5-01, G7-01, G8-01, G9-01, G10-01, G11-08) zeigen Hinweise statt Zahlen | ✅ |
+| 23 | Fehlerfälle getestet | Automatisch: `ErrorMapperTest` (deutsche Meldungen statt technischer Fehler), alle Validator-Tests (leere Pflichtfelder, ungültige Beträge/Daten/Dateien), Regel-Tests mit ungültigen Schreibvorgängen; Gerät: G2-02/G2-03/G2-06, G3-04/G3-05, G5-03, G7-03, G8-03, G9-05, G9-11, G10-03/G10-07, je Bereich Flugmodus | ✅ |
+| 24 | README vorhanden | `README.md` mit Projektbeschreibung, Funktionen, Rollen, Technologien, Architektur, Einrichtung, Firebase-Konfiguration, Build, Tests, Datenschutz, Grenzen (Phase 12) | ✅ |
+| 25 | GitHub sauber eingerichtet | `.gitignore` (private Daten, Schlüssel, Excel, Importdateien), CI mit Bau, Lint, Unit- und Regel-Tests bei jedem Push, keine Passwörter und privaten Schlüssel im Repository (Code-Prüfung). Bewusst im Repository: `google-services.json` (Plan, Risiko 2c). **Offen als Vorschlag:** Vornamen mit Beträgen in den Docs (siehe Änderungsprotokoll 01.10.2026) | ✅, ein Vorschlag offen |
+
+**Zu den Prüfpunkten aus Abschnitt 54:** Auth, Security Rules, Firestore, Kalender, Finanzen, Reparaturen, Anschaffungen, Stellplätze, Dokumente, Offline und Fehlerfälle siehe Tabelle. **Storage** entfällt (Dateien liegen in Firestore, geprüft durch R-09, R-12, R-13 und G6, G9, G10). **Bildschirmgrößen:** kleines Telefon, große Schrift und Querformat in G7-14, G8-12, G11-11; **Tablet** ist noch nicht belegt (G12-06).
+
+**Was die Nachweise nicht abdecken:** Mutationsprüfung der Regel-Tests, automatische Bedienungstests der Oberfläche (kein Emulator in CI), Release-Variante mit R8 (wird in CI nicht gebaut), gleichzeitiges Speichern zweier Benutzer im Kalender (akzeptiertes Risiko 8).
+
 ---
 
 ## 3. Zu erledigende Testfälle (geplant, je Phase)
@@ -375,7 +425,7 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 9 | Stellplätze | **Umgesetzt**: A-39 bis A-43 ✅, R-12 ✅; Gerätetests G9-01 bis G9-18 ✅ bestanden (siehe 2.4g). Geplant war: GPS/Berechtigung verweigert/erteilt · 3-Foto-Grenze (Oberfläche und Regeln) · Foto einzeln löschen · Stellplatz löschen entfernt auch die Fotos · Karte · Navigation · Offline | Unit, Emulator, Gerät |
 | 10 | Dokumente | **Umgesetzt**: A-44 bis A-47 ✅, R-13 ✅; Gerätetests G10-01 bis G10-14 ✅ bestanden (siehe 2.4h). Geplant war: Hochladen, Kategorie, öffnen, löschen · Dateityp-/Größenlimit · Zugriffsschutz | Unit, Emulator, Gerät |
 | 11 | Dashboard | **Umgesetzt**: A-48, A-49 ✅; Gerätetests G11-01 bis G11-12 ✅ bestanden (siehe 2.4i). Geplant war: Zahlen stimmen mit den Detailbereichen überein · Leerzustand ohne Fake-Zahlen · Offline | Unit, Gerät |
-| 12 | Gesamtqualität | Auth, Sicherheitsregeln, Firestore, alle Bereiche, Offline (kein falscher Erfolg, keine scheinbar gespeicherten Änderungen), Fehlerfälle, verschiedene Bildschirmgrößen, Bedienung mit TalkBack und großer Schrift | Gerät, Emulator |
+| 12 | Gesamtqualität | **Umgesetzt**: Nachweis der 25 Abschlusskriterien (2.7) ✅; Gerätetests G12-01 bis G12-07 ⏳ offen (siehe 2.4j): Rundgang ADMIN und MEMBER, Konto ohne Freischaltung, Offline-Gesamtrundgang, Bildschirmgrößen inklusive Tablet, TalkBack | Gerät, Emulator |
 
 **Querschnitt in jeder Phase:** Zustände Laden / Leer / Fehler / Offline · Fehlermeldungen auf Deutsch · Bestätigungsdialog beim Löschen · keine Fake-Daten · keine Geheimnisse im Repository.
 
@@ -411,3 +461,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 01.10.2026 | Benutzer meldet G10-01 bis G10-14 als bestanden. **Phase 10 vollständig abgenommen** (damit auch: Regeln für `documents` veröffentlicht, große Datei gegen die echte Datenbank, Zwei-Konten-Test) |
 | 01.10.2026 | **Phase 11 umgesetzt** (Dashboard, Version 19): Kacheln Kalender (aktuell / nächster Termin), Finanzen (Kontostand, Ausgaben des laufenden Jahres, offene Forderungen), offene Auffälligkeiten, offen geplante Anschaffungen (mit Schätzsumme) und Stellplätze, jede Quelle mit eigenem Zustand (kein „0“ statt Fehler), Laden einmal je Öffnen und bei der Rückkehr. **Keine Regeländerung.** Bau, Lint, **293 Unit-Tests** (24 neu, aus den Quellen gezählt) und **114 von 114 Regel-Tests** beim **ersten** Lauf grün (Commit `5d205b3`, Lauf 36820452860). Gerätefälle G11-01 bis G11-12 offen |
 | 01.10.2026 | Benutzer meldet G11-01 bis G11-12 als bestanden. **Phase 11 vollständig abgenommen** (Darstellung, Zahlen gegen das echte Firebase-Projekt, Bedienung, Flugmodus, leere Datenbank) |
+| 01.10.2026 | **Phase 12 umgesetzt** (Qualitätssicherung, Version 20): Platzhalter `SectionNotAvailableScreen` samt Text entfernt, veraltete Kommentare und die `.gitignore`-Zeile zu `google-services.json` korrigiert, README vollständig, Nachweis der 25 Abschlusskriterien (2.7), Gesamttest G12-01 bis G12-07 (2.4j). Bau, Lint, **293 Unit-Tests** (unverändert, aus den Quellen gezählt) und **114 von 114 Regel-Tests** beim **ersten** Lauf grün (Commit `6ddfef5`, Lauf 36822992931). **Keine Regeländerung.** Gerätetest G12 offen. Vorschlag (nicht umgesetzt, wartet auf Freigabe): Vornamen mit Beträgen in den Docs durch „Zahler 1/2“ ersetzen |

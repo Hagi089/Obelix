@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 01.10.2026 · **Phase 11 – Dashboard abgenommen (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 bestanden)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 01.10.2026 · **Phase 12 – Qualitätssicherung umgesetzt (Version 20; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G12-01 bis G12-07 offen)** · **Phase 11 – Dashboard abgenommen (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 bestanden)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -23,11 +23,11 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **9** | **Stellplätze (Version 14, Kartenkorrekturen 15 bis 17)** | **✅ abgenommen**: Bau, Lint, 238 Unit-Tests (aus den Quellen gezählt) und 104 Regel-Tests grün (Commit `e85babf`) · Gerätetest G9-01 bis G9-18 bestanden |
 | **10** | **Dokumente (Version 18)** | **✅ abgenommen**: Bau, Lint, 269 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `4fdf6b5`) · Gerätetest G10-01 bis G10-14 bestanden |
 | **11** | **Dashboard (Version 19)** | **✅ abgenommen**: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung · **Gerätetest G11-01 bis G11-12 bestanden** |
-| 12 | Qualitätssicherung | ⬜ (nächste Phase: 12) |
+| **12** | **Qualitätssicherung (Version 20)** | **✅ umgesetzt**: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `6ddfef5`, Lauf 36822992931), keine Regeländerung · **Gerätetest G12-01 bis G12-07 offen** (Abnahme durch den Benutzer) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
-- 293 automatische Unit-Tests (aus den Quelltexten gezählt), Build und Lint sowie 114 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
+- 293 automatische Unit-Tests (aus den Quelltexten gezählt, seit Phase 11 unverändert), Build und Lint sowie 114 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
 - **Die Regeln wirken erst, wenn du sie in der Firebase-Konsole veröffentlichst**, und der erste Zugangscode sowie deine Admin-Rolle werden einmalig von Hand angelegt: `docs/FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8. Bis dahin ist die Datenbank komplett gesperrt.
 
 ## 2. Wichtigste Entscheidungen (Kurzfassung, Details im Plan)
@@ -58,7 +58,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 
 ## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
 - Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
-- **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 09, 10, … in `app/build.gradle.kts`). Version 08 = Phase 5; 09/10 = Phase 6; 11 = Phase 7; 12 = Personenfarben im Kalender; 13 = Phase 8; nächstes Deployment ist Version 14.
+- **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 09, 10, … in `app/build.gradle.kts`). Version 08 = Phase 5; 09/10 = Phase 6; 11 = Phase 7; 12 = Personenfarben im Kalender; 13 = Phase 8; 14 bis 17 = Phase 9; 18 = Phase 10; 19 = Phase 11; 20 = Phase 12; nächstes Deployment ist Version 21.
 - **Abgenommen:** Gerätetest GU-01 bis GU-10 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 3c. Phase 5 – Geplante Ausgaben (30.09.2026, Details: Plan, Phase 5)
@@ -129,12 +129,21 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Technik:** `data/dashboard/DashboardLogic` (reine Logik), `ui/dashboard/DashboardViewModel` + `DashboardScreen`, Verdrahtung in `ObelixNavHost`. Je **Quelle** ein eigener Zustand (`Source`: Wert und Fehler): eine fehlgeschlagene Quelle zeigt „Nicht geladen“, **nie eine 0**; ein früherer Wert bleibt nach einem Fehler stehen und der Fehler wird zusätzlich gemeldet. Ein Laden je Öffnen und je Rückkehr in die App (`ON_RESUME`), keine Dauer-Listener; ein neues Laden ersetzt ein laufendes. **Keine Regeländerung**, daher kein Regelbudget-Thema und **keine neue Veröffentlichung der Regeln nötig**.
 - **Fallstricke / Erkenntnisse:**
   - Mein erster Plan versprach, die Jahreszahl müsse „genau mit dem Finanzbereich übereinstimmen“. Der Finanzbereich zeigt keine Jahressumme (nur „Ausgaben gesamt“); die Zahl entspricht der Summe der Zeilen bei Filter „Ausgabe“ + Jahr. Test A-48 prüft das gegen `FinanceFilter`, G11-03 von Hand.
-  - Der Platzhalter `SectionNotAvailableScreen` (Text `section_not_available`) ist jetzt **unbenutzt** und bleibt bis zur Code-Bereinigung in Phase 12 bestehen.
+  - Der Platzhalter `SectionNotAvailableScreen` (Text `section_not_available`) war nach Phase 11 unbenutzt und ist in Phase 12 entfernt worden.
   - Lint-Lehre aus Phase 9 (Text vorher mit `stringResource` holen, kein `LocalContext.current.getString` in Lambdas) von Anfang an beachtet; der erste Lauf war grün.
   - Das ViewModel nutzt wie in Phase 7 bis 10 `scopeOverride` + Fakes für JVM-Tests (24 neue Tests, 13 Logik + 11 ViewModel).
 - **Abgenommen:** Der Benutzer meldet G11-01 bis G11-12 als bestanden (01.10.2026).
 - **Von mir nicht prüfbar (G11, vom Benutzer bestätigt):** Darstellung (Hell/Dunkel, große Schrift, kleine Bildschirme, TalkBack), Zahlen gegen das echte Projekt, Bedienung, Flugmodus, Anzeige bei **völlig leerer** Datenbank (nur das ViewModel ist getestet).
 - **Vorschläge (nicht umgesetzt):** Kachel „zuletzt hochgeladenes Dokument“ und „letzter Stellplatz“; Aktualisierung per Wischgeste; Einnahmen des Jahres; Personenfarbe beim nächsten Termin.
+
+## 3j. Phase 12 – Qualitätssicherung (01.10.2026, Details: Plan, Phase 12 und Entscheidung 46)
+- **Umgesetzt (Commit `6ddfef5`, Version 20, Lauf 36822992931):** Bau, Lint, 293 Unit-Tests und 114 von 114 Regel-Tests beim ersten Lauf grün. **Keine Regeländerung, die Regeln müssen nicht neu veröffentlicht werden.**
+- **Code-Bereinigung (nur das Nötige):** `SectionNotAvailableScreen.kt` und `section_not_available` entfernt; Kommentare in `AuthRepository`, `app/build.gradle.kts` und `.github/workflows/build.yml` korrigiert; Zeile `google-services.json` aus der `.gitignore` entfernt (die Datei ist bewusst eingecheckt, Entscheidung 10). Weitere Prüfung ohne Befund: keine unbenutzte Datei oder Zeichenkette, keine TODO/FIXME, keine Namen oder Beträge im App-Code, keine Dauer-Listener, nur Arbeitsspeicher-Cache, keine Analytics, Manifest unverändert.
+- **README** vollständig nach Anforderung 38 (Funktionen, Rollen, Technologien, Architektur, Einrichtung samt Regeln veröffentlichen, Build, Tests, Datenschutz, bekannte Grenzen).
+- **Nachweis:** `docs/TESTFAELLE.md`, Abschnitt 2.7, alle **25** Abschlusskriterien (nicht 24) mit Belegen. „Haushalte“ (Kriterium 5) entfällt durch die Entscheidung vom 30.09.2026, Storage ebenso; Anforderung 43 ist durch R-01 bis R-03 ersetzt.
+- **Offen: Gerätetest G12-01 bis G12-07** (`docs/TESTFAELLE.md`, 2.4j): Version 20 starten, Rundgang als ADMIN und MEMBER, Konto ohne Freischaltung, Offline-Gesamtrundgang, Bildschirmgrößen inklusive Tablet (bisher nicht belegt), TalkBack. Erst danach gilt Phase 12 und damit OBELIX als abgenommen. Alte App vorher deinstallieren.
+- **Entscheidungen nach Vorschlag (Annahmen):** Excel-Import-Code bleibt; keine R8-Release-Prüfung in CI; Namen in den Docs nur nach Freigabe.
+- **Vorschläge (nicht umgesetzt):** Vornamen mit Beträgen in den Docs durch „Zahler 1/2“ ersetzen (Git-Historie behält sie); Release-Bau mit R8 einmal in CI prüfen, bevor je eine Release-APK verteilt wird; fester Debug-Schlüssel für CI (Abschnitt 5); `targetSdk` 37; ViewModel-Tests für Anmeldung, Einrichtung, Einstellungen; Mutationsprüfung der Regel-Tests.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
@@ -180,20 +189,16 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den neuen Chat (Phase 12)
+## 7. Prompt für den nächsten Chat (Abschluss von Phase 12)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Der Gerätetest G11 ist bestanden.
+Nur nötig, wenn Fehler aus dem Gerätetest G12 zu beheben sind oder zusätzliche Wünsche folgen. Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App“).
 
 ```text
-Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
-1. docs/UEBERGABE.md (Stand, Entscheidungen, Fallstricke)
-2. docs/PROJEKTPLAN.md (Plan, Datenmodell, Security-Konzept, Phasen)
-3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
-4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
+Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst docs/UEBERGABE.md, docs/PROJEKTPLAN.md, docs/TESTFAELLE.md (besonders 2.4j und 2.7) und im Claude-Projekt das Dokument "Anforderungen".
 
-Stand: Phase 1 bis 10 abgenommen. Phase 11 (Dashboard) ist Version 19 (Commit 5d205b3; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; keine Regeländerung, die Regeln müssen nicht neu veröffentlicht werden). Gerätetest G11-01 bis G11-12: alle bestanden.
+Stand: Phase 1 bis 11 abgenommen, Phase 12 (Qualitätssicherung) ist Version 20 (Commit 6ddfef5; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; keine Regeländerung). Gerätetest G12-01 bis G12-07: <Ergebnis eintragen>.
 
-Auftrag jetzt: PHASE 12 – Qualitätssicherung gemäß Plan und Anforderungen Abschnitt 42, 43, 54 und 60 (Abschlusskriterien): Gesamttest, Code-Bereinigung (u. a. der unbenutzte SectionNotAvailableScreen), README vollständig, Nachweis jedes Abschlusskriteriums. Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte die Fallstricke aus UEBERGABE.md Abschnitt 3g, 3h, 3i und 4 (Regelbudget, Lint, Android-Views in Compose).
+Auftrag jetzt: <Fehler aus G12 beheben bzw. Phase 12 abschließen / weiterer Wunsch>.
 
-Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 20, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
+Rahmenbedingungen wie bisher (siehe UEBERGABE.md, Abschnitt 6): Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen; alles kostenlos (Firebase Spark, ohne Cloud Functions); gebaut und getestet wird in GitHub Actions; was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente am Ende aktualisieren; Excel-Dateien, Analysen und Importdateien nie committen; bei jedem Deployment die Version erhöhen (nächste ist 21); beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl).
 ```
