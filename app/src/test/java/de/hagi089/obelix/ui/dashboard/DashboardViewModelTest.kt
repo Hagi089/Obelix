@@ -103,6 +103,7 @@ class DashboardViewModelTest {
             addedPhotos: List<NewFile>,
             uid: String,
         ) = Result.success(Unit)
+        override suspend fun updatePosition(id: String, position: GeoPosition, uid: String) = Result.success(Unit)
         override suspend fun delete(id: String) = Result.success(Unit)
         override suspend fun loadPhoto(ref: FileRef) = Result.success(ByteArray(0))
     }

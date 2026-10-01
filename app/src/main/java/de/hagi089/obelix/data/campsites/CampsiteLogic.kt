@@ -10,6 +10,20 @@ object CampsiteLogic {
     fun sorted(campsites: List<Campsite>): List<Campsite> =
         campsites.sortedWith(compareByDescending<Campsite> { it.date }.thenBy { it.id })
 
+    /**
+     * Macht aus dem Punkt, an dem der Marker losgelassen wurde, eine gültige Position: Die Länge wird in −180 bis 180
+     * zurückgerechnet (die Karte lässt sich über die Datumsgrenze hinaus verschieben), die Breite muss gültig sein.
+     * null bei NaN/Unendlich oder einer Breite außerhalb −90 bis 90. Die Genauigkeit des Geräts entfällt:
+     * Eine von Hand gesetzte Position hat keine Messgenauigkeit.
+     */
+    fun correctedPosition(latitude: Double, longitude: Double): GeoPosition? {
+        if (!latitude.isFinite() || !longitude.isFinite()) return null
+        // Gültige Längen bleiben unverändert (auch genau 180); nur Werte außerhalb werden zurückgerechnet.
+        val wrapped = if (longitude in -180.0..180.0) longitude else ((longitude + 180.0) % 360.0 + 360.0) % 360.0 - 180.0
+        if (!CampsiteValidator.isValidPosition(latitude, wrapped)) return null
+        return GeoPosition(latitude, wrapped)
+    }
+
     /** Leere oder nur aus Leerzeichen bestehende optionale Texte werden nicht gespeichert. */
     fun blankToNull(text: String): String? = text.trim().ifEmpty { null }
 }

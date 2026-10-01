@@ -1501,7 +1501,7 @@ describe('R-12 Stellplätze (campsites)', () => {
     await assertSucceeds(setDoc(doc(db, 'campsites/ohne'), campsite('member')));
   });
 
-  it('R-12h Bearbeiten: Audit Pflicht, Position/Datum/Herkunft unveränderlich, Validierung gilt weiter', async () => {
+  it('R-12h Bearbeiten: Audit Pflicht, Datum/Herkunft unveränderlich, Validierung gilt weiter (Position: siehe R-12m)', async () => {
     await seedCampsite('s1', [], 1000, { name: 'Alt', rating: 3 });
     const db = as('member');
     await assertSucceeds(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { name: 'Neu', rating: 4 })));
@@ -1509,14 +1509,39 @@ describe('R-12 Stellplätze (campsites)', () => {
     await assertFails(updateDoc(doc(db, 'campsites/s1'), { comment: 'Ohne Audit' }));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('admin')));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { updatedAt: Timestamp.now() })));
-    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { latitude: 49 })));
-    await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { longitude: 12 })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { date: '2026-11-01' })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { createdBy: 'admin' })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { createdAt: Timestamp.now() })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { comment: '' })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { rating: 9 })));
     await assertFails(updateDoc(doc(db, 'campsites/s1'), campsiteEdit('member', { extra: 1 })));
+  });
+
+  it('R-12m Position korrigieren (Marker verschieben): jeder Benutzer, nur mit Audit und gültigem Bereich; Datum und Herkunft bleiben', async () => {
+    await seedCampsite('s1', ['a', 'b', 'c'], 1000, { name: 'Alt', rating: 3 });
+    const edit = (uid, o = {}) => ({ updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+    // genau die Schreibform der App: nur Breite, Länge und Audit (übrige Felder, auch drei Fotos, bleiben unverändert)
+    await assertSucceeds(updateDoc(doc(as('member'), 'campsites/s1'), edit('member', { latitude: 48.5, longitude: 11.25 })));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'campsites/s1'), edit('admin', { latitude: -33.9, longitude: -70.6 })));
+    // Grenzwerte sind gültig
+    await assertSucceeds(updateDoc(doc(as('member'), 'campsites/s1'), edit('member', { latitude: 90, longitude: 180 })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'campsites/s1'), edit('member', { latitude: -90, longitude: -180 })));
+    // ungültig: außerhalb des Bereichs, keine Zahl, ohne Audit, falscher Bearbeiter, Datum/Herkunft ändern
+    const db = as('member');
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { latitude: 90.0001 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { longitude: 180.0001 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { latitude: -91 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { longitude: '11.5' })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), { latitude: 48.6, longitude: 11.3 }));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('admin', { latitude: 48.6 })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { latitude: 48.6, date: '2026-11-01' })));
+    await assertFails(updateDoc(doc(db, 'campsites/s1'), edit('member', { latitude: 48.6, createdBy: 'admin' })));
+    // ohne Anmeldung/Freischaltung nicht
+    await assertFails(updateDoc(doc(as('nobody'), 'campsites/s1'), edit('nobody', { latitude: 48.6 })));
+    // Position als Transaktion (wie in der App, mit drei Fotos im Stellplatz): Regelbudget reicht
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      tx.update(doc(db, 'campsites/s1'), edit('member', { latitude: 47.1, longitude: 8.2 }));
+    }));
   });
 
   it('R-12i Fotos ändern: hinzufügen, entfernen (mit Datei), ersetzen; Verweise ohne Änderung kosten keine Prüfung', async () => {

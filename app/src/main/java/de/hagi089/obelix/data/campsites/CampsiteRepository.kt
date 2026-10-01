@@ -39,6 +39,13 @@ interface CampsiteRepository {
      */
     suspend fun update(id: String, input: CampsiteInput, removedPhotoIds: Set<String>, addedPhotos: List<NewFile>, uid: String): Result<Unit>
 
+    /**
+     * Speichert eine von Hand korrigierte Position (Marker verschoben). Es ändern sich nur Breite, Länge und die
+     * Audit-Felder; Angaben und Fotos bleiben unberührt. Das ist die **einzige** Stelle, die die Position eines
+     * bestehenden Stellplatzes schreibt.
+     */
+    suspend fun updatePosition(id: String, position: GeoPosition, uid: String): Result<Unit>
+
     /** Löscht den Stellplatz und im selben Schritt alle seine Fotodateien. */
     suspend fun delete(id: String): Result<Unit>
 
@@ -123,6 +130,24 @@ class FirestoreCampsiteRepository(private val db: FirebaseFirestore, private val
         // Die alten Dateien werden erst gelöscht, wenn der Stellplatz sicher gespeichert ist (eigener Schritt, Fehler nur im Log).
         if (result.isSuccess) removedFiles.forEach { files.deleteQuietly(it) }
         return result
+    }
+
+    override suspend fun updatePosition(id: String, position: GeoPosition, uid: String): Result<Unit> = repositoryCall {
+        if (!CampsiteValidator.isValidPosition(position.latitude, position.longitude)) throw AppException(AppError.UNKNOWN)
+        val ref = col.document(id)
+        db.writeTransaction { tx ->
+            // Lesen vor Schreiben: gibt es den Stellplatz nicht mehr (ein anderer Benutzer hat ihn gelöscht), nichts anlegen.
+            if (!tx.get(ref).exists()) throw AppException(AppError.NOT_FOUND)
+            tx.update(
+                ref,
+                mapOf(
+                    "latitude" to position.latitude,
+                    "longitude" to position.longitude,
+                    "updatedAt" to FieldValue.serverTimestamp(),
+                    "updatedBy" to uid,
+                ),
+            )
+        }
     }
 
     override suspend fun delete(id: String): Result<Unit> = repositoryCall(FileLimits.TIMEOUT_MS) {

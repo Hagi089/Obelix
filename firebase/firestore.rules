@@ -417,8 +417,9 @@ service cloud.firestore {
 
     // =====================================================================
     // campsites/{id}: Stellplätze (Phase 9). Alle Benutzer dürfen lesen, anlegen, ändern und löschen
-    // (Entscheidung 4). Audit-Felder werden erzwungen. Die Position (latitude, longitude) und das Datum sind
-    // nach dem Anlegen unveränderlich. Neue Fotos entstehen im selben Schritt wie der Stellplatz (Dateien in
+    // (Entscheidung 4). Audit-Felder werden erzwungen. Das Datum ist nach dem Anlegen unveränderlich; die Position
+    // (latitude, longitude) darf der Benutzer korrigieren (Marker auf der Karte verschieben), sie wird dabei wie beim
+    // Anlegen auf den gültigen Bereich geprüft (validCampsite) und mit updatedAt/updatedBy festgehalten. Neue Fotos entstehen im selben Schritt wie der Stellplatz (Dateien in
     // files/), bereits gespeicherte Fotos bleiben unverändert oder werden aus der Liste entfernt.
     // =====================================================================
     match /campsites/{campsiteId} {
@@ -435,8 +436,6 @@ service cloud.firestore {
         && validCampsite(request.resource.data)
         && request.resource.data.createdBy == resource.data.createdBy
         && request.resource.data.createdAt == resource.data.createdAt
-        && request.resource.data.latitude == resource.data.latitude
-        && request.resource.data.longitude == resource.data.longitude
         && request.resource.data.date == resource.data.date
         && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
         && request.resource.data.updatedBy == request.auth.uid

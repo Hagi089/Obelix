@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -72,6 +73,8 @@ fun CampsiteFormScreen(
     val state by viewModel.state.collectAsStateWithLifecycle()
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
     var confirmDelete by remember { mutableStateOf(false) }
+    // Solange die Karte berührt wird, scrollt der Bildschirm nicht mit (sonst verschiebt eine Wischgeste die Seite statt der Karte).
+    var mapTouched by remember { mutableStateOf(false) }
 
     when {
         state.isLoading -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -88,11 +91,11 @@ fun CampsiteFormScreen(
             Button(onClick = viewModel::load, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.action_retry)) }
         }
         else -> Column(
-            modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState(), enabled = !mapTouched).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             val editable = !state.isSaving
-            state.position?.let { PositionBlock(position = it, label = state.name) }
+            state.position?.let { PositionBlock(state = state, position = it, onMoved = viewModel::movePosition, onTouching = { touched -> mapTouched = touched }) }
             Text(
                 text = stringResource(R.string.campsite_date, formatDay(state.date)),
                 style = MaterialTheme.typography.bodyMedium,
@@ -175,18 +178,56 @@ fun CampsiteFormScreen(
     }
 }
 
+/**
+ * Positionsdaten, darunter die Karte mit dem verschiebbaren Marker, darunter „Navigation starten“. Alles liest dieselbe
+ * [position] (die einzige Position des Stellplatzes); der Marker verändert sie über [onMoved].
+ */
 @Composable
-private fun PositionBlock(position: GeoPosition, label: String) {
+private fun PositionBlock(
+    state: CampsiteFormState,
+    position: GeoPosition,
+    onMoved: (Double, Double) -> Unit,
+    onTouching: (Boolean) -> Unit,
+) {
     val context = LocalContext.current
     var noApp by remember { mutableStateOf(false) }
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(stringResource(R.string.campsite_position), style = MaterialTheme.typography.labelMedium)
-        Text(GeoFormat.display(position.latitude, position.longitude), style = MaterialTheme.typography.titleMedium)
-        position.accuracyMeters?.let {
-            Text(stringResource(R.string.campsite_accuracy, Math.round(it)), style = MaterialTheme.typography.bodySmall)
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+            Text(stringResource(R.string.campsite_position), style = MaterialTheme.typography.labelMedium)
+            Text(GeoFormat.display(position.latitude, position.longitude), style = MaterialTheme.typography.titleMedium)
+            position.accuracyMeters?.let {
+                Text(stringResource(R.string.campsite_accuracy, Math.round(it)), style = MaterialTheme.typography.bodySmall)
+            }
+        }
+        CampsitePositionMap(
+            position = position,
+            markerDraggable = state.canMoveMarker,
+            onMarkerMoved = onMoved,
+            onTouching = onTouching,
+            modifier = Modifier.fillMaxWidth().height(320.dp),
+        )
+        Text(
+            text = stringResource(if (state.isEdit) R.string.campsite_map_hint_saved else R.string.campsite_map_hint_new),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        if (state.isMovingPosition) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                CircularProgressIndicator(modifier = Modifier.padding(4.dp))
+                Text(stringResource(R.string.campsite_position_saving))
+            }
+        }
+        state.positionError?.let {
+            Text(
+                text = stringResource(it.messageRes),
+                color = MaterialTheme.colorScheme.error,
+                style = MaterialTheme.typography.bodyMedium,
+                modifier = Modifier.semantics { liveRegion = LiveRegionMode.Assertive },
+            )
         }
         FilledTonalButton(
-            onClick = { noApp = !startNavigation(context, position, label) },
+            onClick = { noApp = !startNavigation(context, position, state.name) },
+            enabled = !state.isMovingPosition,
             modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp),
         ) { Text(stringResource(R.string.campsite_navigate)) }
         if (noApp) {

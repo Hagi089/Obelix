@@ -12,6 +12,7 @@ import de.hagi089.obelix.data.files.FileRef
 import de.hagi089.obelix.data.files.LocalFileReader
 import de.hagi089.obelix.data.files.NewFile
 import java.time.LocalDate
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import org.junit.Assert.assertEquals
@@ -49,6 +50,11 @@ class CampsiteFormViewModelTest {
         val created = mutableListOf<Created>()
         val updated = mutableListOf<Updated>()
         val deleted = mutableListOf<String>()
+        /** Gespeicherte Positionskorrekturen (Stellplatz, Position, Benutzer). */
+        val positions = mutableListOf<Triple<String, GeoPosition, String>>()
+        var positionResult: Result<Unit> = Result.success(Unit)
+        /** Wenn gesetzt, wartet [updatePosition], bis der Test sie freigibt (so lässt sich der Zustand „wird gespeichert“ prüfen). */
+        var positionGate: CompletableDeferred<Unit>? = null
         var photoResult: Result<ByteArray> = Result.success(ByteArray(3))
 
         override suspend fun loadAll() = Result.success(emptyList<Campsite>())
@@ -60,6 +66,11 @@ class CampsiteFormViewModelTest {
         override suspend fun update(id: String, input: CampsiteInput, removedPhotoIds: Set<String>, addedPhotos: List<NewFile>, uid: String): Result<Unit> {
             if (writeResult.isSuccess) updated += Updated(id, input, removedPhotoIds, addedPhotos)
             return writeResult
+        }
+        override suspend fun updatePosition(id: String, position: GeoPosition, uid: String): Result<Unit> {
+            positionGate?.await()
+            if (positionResult.isSuccess) positions += Triple(id, position, uid)
+            return positionResult
         }
         override suspend fun delete(id: String): Result<Unit> {
             if (writeResult.isSuccess) deleted += id
@@ -320,5 +331,118 @@ class CampsiteFormViewModelTest {
         assertEquals(3, vm.state.value.rating)
         vm.setRating(null)
         assertNull(vm.state.value.rating)
+    }
+
+    // ---- Marker verschieben: eine zentrale Position (Anzeige, Karte, Navigation lesen state.position) ----
+
+    @Test
+    fun moveMarker_onNewCampsite_changesThePosition_dropsAccuracy_andWritesNothingYet() {
+        val repo = FakeCampsites()
+        val vm = viewModel(repo)
+        vm.movePosition(48.2, 11.7)
+        val s = vm.state.value
+        assertEquals(GeoPosition(48.2, 11.7), s.position) // ohne Messgenauigkeit: von Hand gesetzt
+        assertNull(s.position?.accuracyMeters)
+        assertTrue(repo.positions.isEmpty()) // es gibt noch kein Dokument
+        assertFalse(s.isMovingPosition)
+        // „Speichern“ legt den Stellplatz mit der korrigierten Position an
+        vm.setComment("Kommentar")
+        vm.save()
+        assertEquals(GeoPosition(48.2, 11.7), repo.created.single().position)
+    }
+
+    @Test
+    fun moveMarker_onExistingCampsite_savesImmediately_andKeepsTheOtherInput() {
+        val repo = FakeCampsites(existing = campsite())
+        val vm = viewModel(repo, "s1", initial = null)
+        vm.setComment("Noch nicht gespeichert")
+        vm.movePosition(47.6, 10.6)
+        val s = vm.state.value
+        assertEquals(GeoPosition(47.6, 10.6), s.position)
+        assertEquals(GeoPosition(47.6, 10.6), s.existing?.position) // dieselbe Position im gespeicherten Stand
+        assertEquals(Triple("s1", GeoPosition(47.6, 10.6), "tobias"), repo.positions.single())
+        assertFalse(s.isMovingPosition)
+        assertNull(s.positionError)
+        assertEquals("Noch nicht gespeichert", s.comment) // Eingaben im Formular bleiben
+        assertFalse(s.finished) // das Formular bleibt offen
+        // Danach „Speichern“ schreibt die Position nicht noch einmal
+        vm.save()
+        assertEquals(1, repo.positions.size)
+        assertEquals("Noch nicht gespeichert", repo.updated.single().input.comment)
+    }
+
+    @Test
+    fun moveMarker_twice_savesTheLastPosition() {
+        val repo = FakeCampsites(existing = campsite())
+        val vm = viewModel(repo, "s1", initial = null)
+        vm.movePosition(47.6, 10.6)
+        vm.movePosition(47.7, 10.7)
+        assertEquals(listOf(GeoPosition(47.6, 10.6), GeoPosition(47.7, 10.7)), repo.positions.map { it.second })
+        assertEquals(GeoPosition(47.7, 10.7), vm.state.value.position)
+    }
+
+    @Test
+    fun moveMarker_saveFailure_jumpsBackToTheSavedPosition_andReportsTheError() {
+        val repo = FakeCampsites(existing = campsite())
+        repo.positionResult = Result.failure(AppException(AppError.NETWORK))
+        val vm = viewModel(repo, "s1", initial = null)
+        vm.movePosition(47.6, 10.6)
+        val s = vm.state.value
+        assertEquals(GeoPosition(47.5, 10.5), s.position) // zurück auf den gespeicherten Wert, keine falsche Erfolgsanzeige
+        assertEquals(GeoPosition(47.5, 10.5), s.existing?.position)
+        assertEquals(AppError.NETWORK, s.positionError)
+        assertFalse(s.isMovingPosition)
+        assertTrue(repo.positions.isEmpty())
+        // ein neuer Versuch ist möglich und löscht den Fehler
+        repo.positionResult = Result.success(Unit)
+        vm.movePosition(47.6, 10.6)
+        assertNull(vm.state.value.positionError)
+        assertEquals(GeoPosition(47.6, 10.6), vm.state.value.position)
+    }
+
+    @Test
+    fun moveMarker_whileSavingThePosition_blocksFurtherMovesSaveAndDelete() {
+        val repo = FakeCampsites(existing = campsite())
+        val gate = CompletableDeferred<Unit>()
+        repo.positionGate = gate
+        val vm = viewModel(repo, "s1", initial = null)
+        vm.movePosition(47.6, 10.6)
+        assertTrue(vm.state.value.isMovingPosition)
+        assertFalse(vm.state.value.canMoveMarker)
+        assertEquals(GeoPosition(47.6, 10.6), vm.state.value.position) // sofort sichtbar
+        vm.movePosition(40.0, 9.0) // ignoriert
+        vm.setComment("Kommentar")
+        vm.save() // ignoriert
+        vm.delete() // ignoriert
+        assertEquals(GeoPosition(47.6, 10.6), vm.state.value.position)
+        assertTrue(repo.updated.isEmpty())
+        assertTrue(repo.deleted.isEmpty())
+        gate.complete(Unit)
+        assertFalse(vm.state.value.isMovingPosition)
+        assertTrue(vm.state.value.canMoveMarker)
+        assertEquals(listOf(GeoPosition(47.6, 10.6)), repo.positions.map { it.second })
+    }
+
+    @Test
+    fun moveMarker_invalidOrWrappedPositions() {
+        val repo = FakeCampsites(existing = campsite())
+        val vm = viewModel(repo, "s1", initial = null)
+        vm.movePosition(Double.NaN, 10.0)
+        vm.movePosition(91.0, 10.0)
+        vm.movePosition(10.0, Double.POSITIVE_INFINITY)
+        assertEquals(GeoPosition(47.5, 10.5), vm.state.value.position)
+        assertTrue(repo.positions.isEmpty())
+        vm.movePosition(10.0, 190.0) // über die Datumsgrenze verschoben: wird auf −170 zurückgerechnet
+        assertEquals(-170.0, vm.state.value.position!!.longitude, 1e-9)
+    }
+
+    @Test
+    fun moveMarker_notPossible_whileLoadingOrWithoutPosition() {
+        val repo = FakeCampsites(existing = campsite(), getResult = Result.failure(AppException(AppError.NETWORK)))
+        val vm = viewModel(repo, "s1", initial = null)
+        assertFalse(vm.state.value.canMoveMarker)
+        vm.movePosition(47.6, 10.6)
+        assertNull(vm.state.value.position)
+        assertTrue(repo.positions.isEmpty())
     }
 }

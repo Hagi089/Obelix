@@ -83,4 +83,32 @@ class CampsiteLogicTest {
         assertEquals(set, set.withoutAdded(5)) // ungültiger Index ändert nichts
         assertEquals(set, set.withoutAdded(-1))
     }
+
+    @Test
+    fun correctedPosition_acceptsValidPositions_withoutAccuracy() {
+        assertEquals(GeoPosition(48.137154, 11.576124), CampsiteLogic.correctedPosition(48.137154, 11.576124))
+        assertNull(CampsiteLogic.correctedPosition(48.0, 11.0)?.accuracyMeters)
+        assertEquals(GeoPosition(90.0, 180.0), CampsiteLogic.correctedPosition(90.0, 180.0))
+        assertEquals(GeoPosition(-90.0, -180.0), CampsiteLogic.correctedPosition(-90.0, -180.0))
+    }
+
+    @Test
+    fun correctedPosition_wrapsLongitudeIntoRange() {
+        assertEquals(-170.0, CampsiteLogic.correctedPosition(10.0, 190.0)!!.longitude, 1e-9)
+        assertEquals(170.0, CampsiteLogic.correctedPosition(10.0, -190.0)!!.longitude, 1e-9)
+        assertEquals(0.0, CampsiteLogic.correctedPosition(10.0, 360.0)!!.longitude, 1e-9)
+        assertEquals(11.5, CampsiteLogic.correctedPosition(10.0, 371.5)!!.longitude, 1e-9)
+        val wrapped = CampsiteLogic.correctedPosition(10.0, 540.0)!! // genau auf der Datumsgrenze: in den gültigen Bereich
+        assertTrue(CampsiteValidator.isValidPosition(wrapped.latitude, wrapped.longitude))
+    }
+
+    @Test
+    fun correctedPosition_rejectsInvalidLatitudeAndNonNumbers() {
+        assertNull(CampsiteLogic.correctedPosition(90.0001, 10.0))
+        assertNull(CampsiteLogic.correctedPosition(-91.0, 10.0))
+        assertNull(CampsiteLogic.correctedPosition(Double.NaN, 10.0))
+        assertNull(CampsiteLogic.correctedPosition(10.0, Double.NaN))
+        assertNull(CampsiteLogic.correctedPosition(Double.POSITIVE_INFINITY, 10.0))
+        assertNull(CampsiteLogic.correctedPosition(10.0, Double.NEGATIVE_INFINITY))
+    }
 }

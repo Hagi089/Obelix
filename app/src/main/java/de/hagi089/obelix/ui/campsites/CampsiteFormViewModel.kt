@@ -35,6 +35,10 @@ data class CampsiteFormState(
     val existing: Campsite? = null,
     /** Neu: die beim Tippen auf „Aktuellen Standort speichern“ ermittelte Position; bearbeiten: die gespeicherte. */
     val position: GeoPosition? = null,
+    /** true, solange eine korrigierte Position eines bestehenden Stellplatzes gespeichert wird (der Marker ist dann gesperrt). */
+    val isMovingPosition: Boolean = false,
+    /** Fehler beim Speichern der korrigierten Position; die Position steht dann wieder auf dem gespeicherten Wert. */
+    val positionError: AppError? = null,
     val date: String = LocalDate.now().toString(),
     val comment: String = "",
     val name: String = "",
@@ -52,6 +56,8 @@ data class CampsiteFormState(
     val finished: Boolean = false,
 ) {
     val isEdit: Boolean get() = existing != null
+    /** Der Marker darf nur bewegt werden, wenn gerade nichts geladen, gespeichert oder verschoben wird. */
+    val canMoveMarker: Boolean get() = position != null && !isLoading && !isSaving && !isMovingPosition
     val canAddPhoto: Boolean get() = photos.canAdd && !isReadingPhoto && !isSaving
 }
 
@@ -111,6 +117,41 @@ class CampsiteFormViewModel(
         }
     }
 
+    /**
+     * Der Benutzer hat den Marker auf der Karte verschoben. Es gibt nur **eine** Position ([CampsiteFormState.position]):
+     * Koordinatenanzeige, Marker und „Navigation starten“ lesen alle sie.
+     * - Neuer Stellplatz: Die Position gilt sofort; sie wird mit „Speichern“ angelegt (es gibt noch kein Dokument).
+     * - Bestehender Stellplatz: Die Position gilt sofort und wird **sofort dauerhaft gespeichert**. Scheitert das
+     *   (z. B. ohne Verbindung), springt sie auf den gespeicherten Wert zurück und der Fehler wird gemeldet, damit
+     *   nichts angezeigt wird, was der Server nicht bestätigt hat.
+     */
+    fun movePosition(latitude: Double, longitude: Double) {
+        val s = _state.value
+        if (!s.canMoveMarker) return
+        val target = CampsiteLogic.correctedPosition(latitude, longitude) ?: return
+        val existing = s.existing
+        if (existing == null) {
+            _state.update { it.copy(position = target, positionError = null) }
+            return
+        }
+        val previous = s.position
+        _state.update { it.copy(position = target, isMovingPosition = true, positionError = null) }
+        scope.launch {
+            val result = campsites.updatePosition(existing.id, target, uid)
+            val error = result.exceptionOrNull()
+            _state.update {
+                if (error == null) {
+                    it.copy(
+                        isMovingPosition = false,
+                        existing = it.existing?.copy(latitude = target.latitude, longitude = target.longitude),
+                    )
+                } else {
+                    it.copy(isMovingPosition = false, position = previous, positionError = errorOf(error))
+                }
+            }
+        }
+    }
+
     fun setComment(text: String) = _state.update { it.copy(comment = text, commentError = null) }
     fun setName(text: String) = _state.update { it.copy(name = text, nameError = null) }
     fun setAddress(text: String) = _state.update { it.copy(address = text, addressError = null) }
@@ -165,7 +206,7 @@ class CampsiteFormViewModel(
 
     fun save() {
         val s = _state.value
-        if (s.isLoading || s.isSaving || s.isReadingPhoto) return
+        if (s.isLoading || s.isSaving || s.isReadingPhoto || s.isMovingPosition) return
         val position = s.position ?: return
         val errors = s.copy(
             commentError = CampsiteValidator.comment(s.comment),
@@ -202,7 +243,7 @@ class CampsiteFormViewModel(
     fun delete() {
         val s = _state.value
         val existing = s.existing ?: return
-        if (s.isLoading || s.isSaving) return
+        if (s.isLoading || s.isSaving || s.isMovingPosition) return
         _state.value = s.copy(isSaving = true, saveError = null)
         scope.launch { finish(campsites.delete(existing.id)) }
     }

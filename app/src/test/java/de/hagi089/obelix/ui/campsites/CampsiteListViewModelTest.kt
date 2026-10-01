@@ -33,6 +33,7 @@ class CampsiteListViewModelTest {
         override suspend fun get(id: String) = Result.success<Campsite?>(null)
         override suspend fun create(position: GeoPosition, date: String, input: CampsiteInput, photos: List<NewFile>, uid: String) = Result.success(Unit)
         override suspend fun update(id: String, input: CampsiteInput, removedPhotoIds: Set<String>, addedPhotos: List<NewFile>, uid: String) = Result.success(Unit)
+        override suspend fun updatePosition(id: String, position: GeoPosition, uid: String) = Result.success(Unit)
         override suspend fun delete(id: String) = Result.success(Unit)
         override suspend fun loadPhoto(ref: FileRef) = Result.success(ByteArray(0))
     }

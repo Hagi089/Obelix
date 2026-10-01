@@ -366,6 +366,10 @@
     <string name="campsite_photo_loading">Foto wird geladen …</string>
     <string name="campsite_photo_failed">Foto konnte nicht geladen werden.</string>
     <string name="campsite_photo_reading">Foto wird vorbereitet …</string>
+    <string name="campsite_map_description">Karte mit dem Stellplatz. Der Marker lässt sich verschieben, um die Position zu korrigieren.</string>
+    <string name="campsite_map_hint_new">Position ungenau? Den Marker gedrückt halten und an die richtige Stelle ziehen. Die Position wird mit „Speichern“ übernommen.</string>
+    <string name="campsite_map_hint_saved">Position ungenau? Den Marker gedrückt halten und an die richtige Stelle ziehen. Die neue Position wird sofort gespeichert.</string>
+    <string name="campsite_position_saving">Position wird gespeichert …</string>
     <string name="campsite_navigate">Navigation starten</string>
     <string name="campsite_navigate_none">Keine Navigations- oder Karten-App gefunden.</string>
     <string name="campsite_delete_title">Stellplatz löschen?</string>
