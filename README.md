@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils: Kalender, Einnahmen und Ausgaben, Auffälligkeiten, geplante Anschaffungen, Stellplätze und Dokumente.
 
-Status: **Phase 1 bis 9 abgenommen** (zuletzt Stellplätze). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Phase 1 bis 10 abgenommen** (zuletzt Dokumente); **Phase 11 (Dashboard) umgesetzt**, Gerätetest offen. Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Übergabe an einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Technologien
 - Kotlin, Jetpack Compose, Material 3 (adaptive Navigation: Leiste auf Smartphones, Rail auf Tablets)
@@ -26,8 +26,8 @@ app/src/main/java/de/hagi089/obelix/
   core/validation Eingabeprüfung (Anmeldung, Zugangscode)
   data/auth       Anmeldung (Firebase Auth)
   data/user       Benutzer, Rollen, Zugangscode (Firestore)
-  data/finance, planned, calendar, repairs, campsites, files   Fachbereiche und Dateiablage
-  ui/             App-Gerüst, Navigation, Theme, Bildschirme (auth, onboarding, settings, finance, planned, calendar, repairs, campsites)
+  data/finance, planned, calendar, repairs, campsites, documents, dashboard, files   Fachbereiche, Dashboard-Logik und Dateiablage
+  ui/             App-Gerüst, Navigation, Theme, Bildschirme (auth, onboarding, settings, dashboard, finance, planned, calendar, repairs, campsites, documents)
 firebase/         Firestore-Sicherheitsregeln und ihre Tests (rules-tests/)
 ```
 
