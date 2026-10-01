@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils. Alle Benutzer arbeiten auf demselben, aktuellen Datenbestand im Backend (Firebase, kostenloser Spark-Tarif). Es gibt keinen eigenen Server, keine Werbung, kein Tracking und keine Analytics.
 
-Status: **Phase 1 bis 11 abgenommen, Phase 12 (Qualitätssicherung) in Arbeit.** Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt** (aktuelle Version 21). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Funktionen
 | Bereich | Inhalt |
