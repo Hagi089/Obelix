@@ -1,6 +1,6 @@
 # OBELIX – Analyse und Implementierungsplan (Phase 0)
 
-Stand: 01.10.2026 (Rev. 17: **Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)**, Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; Rev. 16: Phase 9 umgesetzt (Version 14, Commit `961f686`); Rev. 15: **Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 9 abgenommen, Phase 10 folgt).
+Stand: 01.10.2026 (Rev. 17: **Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)**, Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; Rev. 16: Phase 9 umgesetzt (Version 14, Commit `961f686`); Rev. 15: **Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden)**, Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün; Phase 7 samt Personenfarben abgenommen (G7-01 bis G7-15 bestanden); Rev. 14: **Phase 7 abgenommen (G7-01 bis G7-14 bestanden, Version 11)**; **Erweiterung „Farbe je Person im Kalender“ (Version 12, Entscheidung 33)**: Bau, Lint, 155 Unit-Tests grün, Gerätetest G7-15 offen; Rev. 13: Phase 7 – Kalender umgesetzt (Version 11); Phase 6 abgenommen (Version 10, G6 bestanden); Phase 5 abgenommen; Phase 4 abgenommen; UI-Überarbeitung abgenommen) · Status: **freigegeben, in Umsetzung** (Phase 1 bis 11 abgenommen, Phase 12 folgt).
 
 > Datenschutz: Dieses Repository ist öffentlich. Die Excel-Datei und die detaillierte Analyse mit Namen und Beträgen liegen lokal im ignorierten Ordner `private/` und im nicht-öffentlichen Claude-Projekt (`Excel-Analyse`). Hier steht nur die anonymisierte Struktur.
 
@@ -652,7 +652,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Nicht Teil von Phase 10:** Suche, eigene Kategorien, Datei austauschen, Umbenennen der Datei, Vorschau-Bilder in der Liste, Teilen/Herunterladen, Dashboard-Anzeige (Phase 11).
 - **Abschluss:** Gerätetest G10-01 bis G10-14 vom Auftraggeber am 01.10.2026 als bestanden gemeldet (Regeln für `documents` veröffentlicht, große Datei und zwei Konten eingeschlossen).
 
-### Phase 11 – Dashboard ✅ umgesetzt (01.10.2026, Version 19), Gerätetest G11-01 bis G11-12 offen
+### Phase 11 – Dashboard ✅ abgenommen (01.10.2026, Version 19), Gerätetest G11-01 bis G11-12 bestanden
 - **Voraussetzung:** Phasen 4 bis 10 (alle Datenbereiche), Entscheidungen 8, 18, 19, 44, 45.
 - **Ziel:** Kennzahlen aus echten Daten, Leerzustand ohne Fake-Zahlen, Offline.
 - **Stand:** Commit `5d205b3`, Lauf 36820452860: Bau (`assembleDebug`), Lint, **293 Unit-Tests** (24 neu, aus den Quellen gezählt) und **114 Regel-Tests** (unverändert) grün, beim ersten Lauf.
@@ -665,7 +665,7 @@ Abschlusskriterium: Freigabe durch dich.
 - **Abweichung vom ersten Plan:** Ich hatte angekündigt, die Zahl „Ausgaben <Jahr>“ müsse „genau mit dem Finanzbereich übereinstimmen“. Der Finanzbereich zeigt aber keine Jahressumme, nur „Ausgaben gesamt“ über alle Jahre; die Jahreszahl entspricht der Summe der Zeilen bei Filter „Ausgabe“ + Jahr (Unit-Test A-48 prüft das gegen `FinanceFilter`, Gerätetest G11-03 von Hand).
 - **Grenzen / Hinweise:** Laden bei jeder Rückkehr in die App kostet je Öffnen etwa 325 + wenige Lesezugriffe (Spark: 50.000 pro Tag, bei wenigen Benutzern unkritisch, aber nicht gemessen). Das Dashboard zeigt keine Namen aus der Benutzerliste (Personenname steht im Kalendereintrag). Nicht automatisch testbar: Darstellung, Bedienung, Abruf gegen echtes Firestore, Offline, Anzeige bei völlig leerer Datenbank (nur das ViewModel ist getestet).
 - **Nicht Teil von Phase 11:** Dokumente-Kachel, „letzter Stellplatz“, Diagramme, Einnahmen des Jahres, Aktualisierung per Wischgeste, Personenfarben auf dem Dashboard. Der nun unbenutzte Platzhalter `SectionNotAvailableScreen` (mit Text `section_not_available`) bleibt bis zur Code-Bereinigung in Phase 12 bestehen.
-- **Abschluss:** Zahlen müssen mit den Detailbereichen übereinstimmen und der Leerzustand darf keine Fake-Zahlen zeigen: Gerätetest G11-01 bis G11-12 (Benutzer) offen.
+- **Abschluss:** Zahlen müssen mit den Detailbereichen übereinstimmen und der Leerzustand darf keine Fake-Zahlen zeigen: Gerätetest G11-01 bis G11-12 (Benutzer) bestanden.
 
 ### Phase 12 – Qualitätssicherung
 - Gesamttest laut Abschnitt 42/43/54 der Anforderungen, Code-Bereinigung, README vollständig.
@@ -783,5 +783,5 @@ Regel 7 der Anforderungen gilt: Was nicht getestet wurde, wird nicht als fertig 
 | 8 Auffälligkeiten | ✅ abgenommen (Version 13): Bau, Lint, 184 Unit-Tests und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295); **Gerätetest G8-01 bis G8-12 bestanden** | 30.09.2026 | – |
 | 9 Stellplätze | ✅ abgenommen (Version 14, Kartenkorrekturen bis Version 17): Bau, Lint, 238 Unit-Tests und 104 Regel-Tests grün; **Gerätetest G9-01 bis G9-18 bestanden** | 01.10.2026 | – |
 | 10 Dokumente | ✅ abgenommen (Version 18): Bau, Lint, 269 Unit-Tests und 114 Regel-Tests grün (Commit `4fdf6b5`); **Gerätetest G10-01 bis G10-14 bestanden** | 01.10.2026 | – |
-| 11 Dashboard | umgesetzt (Version 19): Bau, Lint, 293 Unit-Tests und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung; **Gerätetest G11-01 bis G11-12 offen** | 01.10.2026 | Gerätetest G11 |
+| 11 Dashboard | abgenommen (Version 19): Bau, Lint, 293 Unit-Tests und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung; **Gerätetest G11-01 bis G11-12 bestanden** | 01.10.2026 | Phase 12 |
 | 12 Qualitätssicherung | nicht begonnen | | |

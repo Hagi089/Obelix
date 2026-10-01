@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 01.10.2026 · **Phase 11 – Dashboard umgesetzt (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 offen)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 01.10.2026 · **Phase 11 – Dashboard abgenommen (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 bestanden)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -22,8 +22,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **8** | **Auffälligkeiten (Version 13)** | **✅ abgenommen**: Bau, Lint, 184 Unit-Tests (aus den Quellen gezählt) und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295) · Gerätetest G8-01 bis G8-12 bestanden |
 | **9** | **Stellplätze (Version 14, Kartenkorrekturen 15 bis 17)** | **✅ abgenommen**: Bau, Lint, 238 Unit-Tests (aus den Quellen gezählt) und 104 Regel-Tests grün (Commit `e85babf`) · Gerätetest G9-01 bis G9-18 bestanden |
 | **10** | **Dokumente (Version 18)** | **✅ abgenommen**: Bau, Lint, 269 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `4fdf6b5`) · Gerätetest G10-01 bis G10-14 bestanden |
-| **11** | **Dashboard (Version 19)** | **✅ umgesetzt**: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung · **Gerätetest G11-01 bis G11-12 offen** |
-| 12 | Qualitätssicherung | ⬜ (nächste Phase: 12, sobald G11 bestanden ist) |
+| **11** | **Dashboard (Version 19)** | **✅ abgenommen**: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung · **Gerätetest G11-01 bis G11-12 bestanden** |
+| 12 | Qualitätssicherung | ⬜ (nächste Phase: 12) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
@@ -124,7 +124,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Vorschläge (nicht umgesetzt):** Suche nach Namen; Vorschau-Bild in der Liste; Datei austauschen (bräuchte eine Regeländerung); Teilen/Herunterladen; Dashboard-Hinweis „zuletzt hochgeladenes Dokument“ in Phase 11.
 
 ## 3i. Phase 11 – Dashboard (01.10.2026, Details: Plan, Phase 11 und Entscheidungen 44/45)
-- **Umgesetzt (Commit `5d205b3`, Version 19; Gerätetest G11-01 bis G11-12 offen):** Das Dashboard (Startseite) zeigt fünf Kacheln aus den echten Daten: **Kalender** („Aktuell in Nutzung“, sonst „Nächster Termin“, sonst „Kein Termin geplant.“), **Finanzen** (Kontostand, „Ausgaben <Jahr>“, offene Forderungen; ohne Buchungen „Noch keine Buchungen vorhanden.“ statt 0,00 €), **Offene Auffälligkeiten**, **Geplante Ausgaben** (Anzahl offen, Schätzsumme; ändern den Kontostand nie), **Gespeicherte Stellplätze**. Tippen auf eine Kachel öffnet den Bereich.
+- **Umgesetzt (Commit `5d205b3`, Version 19; Gerätetest G11-01 bis G11-12 bestanden):** Das Dashboard (Startseite) zeigt fünf Kacheln aus den echten Daten: **Kalender** („Aktuell in Nutzung“, sonst „Nächster Termin“, sonst „Kein Termin geplant.“), **Finanzen** (Kontostand, „Ausgaben <Jahr>“, offene Forderungen; ohne Buchungen „Noch keine Buchungen vorhanden.“ statt 0,00 €), **Offene Auffälligkeiten**, **Geplante Ausgaben** (Anzahl offen, Schätzsumme; ändern den Kontostand nie), **Gespeicherte Stellplätze**. Tippen auf eine Kachel öffnet den Bereich.
 - **Annahmen (nicht ausdrücklich beschlossen, Entscheidungen 44/45):** „Aktueller Zeitraum“ = **laufendes Kalenderjahr** (Entscheidung 8 hatte „vorerst kein Zeitraum“ gesagt, die Anforderung 10 nennt ihn aber als Mindestangabe); Jahreszahl zählt alle Ausgaben des Jahres, auch offene und gesponserte. Keine Dokumente-Kachel, kein „letzter Stellplatz“, keine Diagramme.
 - **Technik:** `data/dashboard/DashboardLogic` (reine Logik), `ui/dashboard/DashboardViewModel` + `DashboardScreen`, Verdrahtung in `ObelixNavHost`. Je **Quelle** ein eigener Zustand (`Source`: Wert und Fehler): eine fehlgeschlagene Quelle zeigt „Nicht geladen“, **nie eine 0**; ein früherer Wert bleibt nach einem Fehler stehen und der Fehler wird zusätzlich gemeldet. Ein Laden je Öffnen und je Rückkehr in die App (`ON_RESUME`), keine Dauer-Listener; ein neues Laden ersetzt ein laufendes. **Keine Regeländerung**, daher kein Regelbudget-Thema und **keine neue Veröffentlichung der Regeln nötig**.
 - **Fallstricke / Erkenntnisse:**
@@ -132,7 +132,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
   - Der Platzhalter `SectionNotAvailableScreen` (Text `section_not_available`) ist jetzt **unbenutzt** und bleibt bis zur Code-Bereinigung in Phase 12 bestehen.
   - Lint-Lehre aus Phase 9 (Text vorher mit `stringResource` holen, kein `LocalContext.current.getString` in Lambdas) von Anfang an beachtet; der erste Lauf war grün.
   - Das ViewModel nutzt wie in Phase 7 bis 10 `scopeOverride` + Fakes für JVM-Tests (24 neue Tests, 13 Logik + 11 ViewModel).
-- **Von mir nicht prüfbar (G11):** Darstellung (Hell/Dunkel, große Schrift, kleine Bildschirme, TalkBack), Zahlen gegen das echte Projekt, Bedienung, Flugmodus, Anzeige bei **völlig leerer** Datenbank (nur das ViewModel ist getestet).
+- **Abgenommen:** Der Benutzer meldet G11-01 bis G11-12 als bestanden (01.10.2026).
+- **Von mir nicht prüfbar (G11, vom Benutzer bestätigt):** Darstellung (Hell/Dunkel, große Schrift, kleine Bildschirme, TalkBack), Zahlen gegen das echte Projekt, Bedienung, Flugmodus, Anzeige bei **völlig leerer** Datenbank (nur das ViewModel ist getestet).
 - **Vorschläge (nicht umgesetzt):** Kachel „zuletzt hochgeladenes Dokument“ und „letzter Stellplatz“; Aktualisierung per Wischgeste; Einnahmen des Jahres; Personenfarbe beim nächsten Termin.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
@@ -181,7 +182,7 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ## 7. Prompt für den neuen Chat (Phase 12)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). **Trage vorher das Ergebnis des Gerätetests G11 ein** (die Zeile in eckigen Klammern); wurde ein Fall nicht bestanden, bitte zuerst diesen Fehler beheben lassen.
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Der Gerätetest G11 ist bestanden.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -190,7 +191,7 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 10 abgenommen. Phase 11 (Dashboard) ist Version 19 (Commit 5d205b3; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; keine Regeländerung, die Regeln müssen nicht neu veröffentlicht werden). Gerätetest G11-01 bis G11-12: [HIER DAS ERGEBNIS EINTRAGEN, z. B. "alle bestanden" oder die fehlgeschlagenen Fälle mit Beobachtung].
+Stand: Phase 1 bis 10 abgenommen. Phase 11 (Dashboard) ist Version 19 (Commit 5d205b3; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; keine Regeländerung, die Regeln müssen nicht neu veröffentlicht werden). Gerätetest G11-01 bis G11-12: alle bestanden.
 
 Auftrag jetzt: PHASE 12 – Qualitätssicherung gemäß Plan und Anforderungen Abschnitt 42, 43, 54 und 60 (Abschlusskriterien): Gesamttest, Code-Bereinigung (u. a. der unbenutzte SectionNotAvailableScreen), README vollständig, Nachweis jedes Abschlusskriteriums. Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte die Fallstricke aus UEBERGABE.md Abschnitt 3g, 3h, 3i und 4 (Regelbudget, Lint, Android-Views in Compose).
 
