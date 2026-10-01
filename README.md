@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils. Alle Benutzer arbeiten auf demselben, aktuellen Datenbestand im Backend (Firebase, kostenloser Spark-Tarif). Es gibt keinen eigenen Server, keine Werbung, kein Tracking und keine Analytics.
 
-Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt.** Finale Version 22 (fester Signaturschlüssel, Updates ohne Deinstallieren). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Verteilung und Updates: [`docs/VERTEILUNG.md`](docs/VERTEILUNG.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt.** Version 23 (Admin-Backup; seit Version 22 fester Signaturschlüssel, Updates ohne Deinstallieren). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Verteilung und Updates: [`docs/VERTEILUNG.md`](docs/VERTEILUNG.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Funktionen
 | Bereich | Inhalt |
@@ -14,7 +14,7 @@ Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt.**
 | Aufgaben | Auffälligkeiten und Reparaturen: erstellen, bearbeiten, erledigen, wieder öffnen, Filter Offen/Erledigt/Alle. |
 | Stellplätze | Standort einmalig auf Knopfdruck, Kommentar, bis zu drei Fotos, Liste und Karte (OpenStreetMap). Im Formular zeigt eine Karte mit verschiebbarem Marker die Position; ein ungenauer Standort lässt sich durch Ziehen des Markers korrigieren. „Navigation starten“ nutzt immer die gespeicherte (korrigierte) Position und öffnet eine externe App. |
 | Dokumente | Wichtige Unterlagen (Bild oder PDF) mit Name und Kategorie, öffnen und löschen. |
-| Einstellungen | Hell-/Dunkelmodus, Benutzerverwaltung und Zugangscode (nur ADMIN), Kategorien (nur ADMIN), Excel-Import (einmalig, nur ADMIN), Version. |
+| Einstellungen | Hell-/Dunkelmodus, Benutzerverwaltung und Zugangscode (nur ADMIN), Kategorien (nur ADMIN), Excel-Import (einmalig, nur ADMIN), **Backup als ZIP (nur ADMIN, siehe [`docs/BACKUP.md`](docs/BACKUP.md))**, Version. |
 
 Jeder Bildschirm kennt die Zustände Laden, Leer, Fehler und Offline. Bei fehlender Verbindung steht „Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell.“ Eine Änderung gilt erst als gespeichert, wenn der Server sie bestätigt hat (kein dauerhafter Offline-Cache, keine Offline-Synchronisation). Gelöscht wird immer nach einer Bestätigung.
 
@@ -98,5 +98,6 @@ Nicht automatisch testbar sind Gerätefunktionen (Standort, Kamera, Karte, Datei
 - Keine Offline-Synchronisation (bewusst, Anforderung 8).
 - Zwei Benutzer, die im selben Augenblick überlappende Kalendereinträge speichern, können sich überschneiden (die Prüfung läuft vor dem Schreiben, Plan Risiko 8).
 - osmdroid ist archiviert; ein Ersatz beträfe nur `ui/campsites/CampsiteMap.kt`.
+- Das Backup (Einstellungen, nur ADMIN) sichert Daten und Dateien, aber **ohne** Anmeldekonten und Zugangscode, und es gibt **kein Wiederherstellen in der App** (siehe [`docs/BACKUP.md`](docs/BACKUP.md)).
 - Die Release-APK wird ohne R8 (Verkleinern/Verschleiern) gebaut, weil R8 nie getestet wurde (Plan, Entscheidung 48).
 - Das Repository ist öffentlich; Empfehlung: auf privat stellen (siehe Plan, Abschnitt Sicherheitsprüfung).
