@@ -14,6 +14,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.toRoute
 import de.hagi089.obelix.AppContainer
+import de.hagi089.obelix.R
 import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.data.files.FileRef
 import de.hagi089.obelix.ui.calendar.CalendarFormScreen
@@ -26,6 +27,10 @@ import de.hagi089.obelix.ui.finance.BookingFormScreen
 import de.hagi089.obelix.ui.finance.BookingFormViewModel
 import de.hagi089.obelix.ui.finance.FinanceScreen
 import de.hagi089.obelix.ui.finance.FinanceViewModel
+import de.hagi089.obelix.ui.documents.DocumentFormScreen
+import de.hagi089.obelix.ui.documents.DocumentFormViewModel
+import de.hagi089.obelix.ui.documents.DocumentListScreen
+import de.hagi089.obelix.ui.documents.DocumentListViewModel
 import de.hagi089.obelix.ui.finance.ReceiptScreen
 import de.hagi089.obelix.ui.finance.ReceiptViewModel
 import de.hagi089.obelix.ui.importing.ImportScreen
@@ -234,7 +239,56 @@ fun ObelixNavHost(
                 onFinished = { navController.navigateUp() },
             )
         }
-        composable<DocumentsRoute> { SectionNotAvailableScreen() }
+        composable<DocumentsRoute> {
+            val documentListViewModel: DocumentListViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { DocumentListViewModel(container.documentRepository, container.userRepository) }
+                },
+            )
+            DocumentListScreen(
+                viewModel = documentListViewModel,
+                onAdd = { navController.navigate(DocumentFormRoute()) },
+                onOpen = { id -> navController.navigate(DocumentFormRoute(documentId = id)) },
+            )
+        }
+        composable<DocumentFormRoute> { entry ->
+            val route = entry.toRoute<DocumentFormRoute>()
+            val documentFormViewModel: DocumentFormViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer {
+                        DocumentFormViewModel(
+                            documentId = route.documentId,
+                            uid = user.uid,
+                            documents = container.documentRepository,
+                            fileReader = container.localFileReader,
+                        )
+                    }
+                },
+            )
+            DocumentFormScreen(
+                viewModel = documentFormViewModel,
+                onFinished = { navController.navigateUp() },
+                onOpenFile = { ref ->
+                    navController.navigate(DocumentViewRoute(ref.fileId, ref.name, ref.contentType, ref.sizeBytes))
+                },
+            )
+        }
+        composable<DocumentViewRoute> { entry ->
+            val route = entry.toRoute<DocumentViewRoute>()
+            val ref = FileRef(route.fileId, route.name, route.contentType, route.sizeBytes)
+            val documentViewModel: ReceiptViewModel = viewModel(
+                factory = viewModelFactory {
+                    initializer { ReceiptViewModel(ref, container.fileStore, container.receiptCache) }
+                },
+            )
+            ReceiptScreen(
+                viewModel = documentViewModel,
+                ref = ref,
+                loadingRes = R.string.document_loading,
+                imageDescriptionRes = R.string.document_image_description,
+                pdfInfoRes = R.string.document_pdf_info,
+            )
+        }
         composable<SettingsRoute> {
             val settingsViewModel: SettingsViewModel = viewModel(
                 factory = viewModelFactory { initializer { SettingsViewModel(container.userRepository, user.uid) } },

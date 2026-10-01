@@ -19,6 +19,8 @@ import kotlinx.serialization.Serializable
 @Serializable data object TasksRoute
 @Serializable data object CampsitesRoute
 @Serializable data object DocumentsRoute
+@Serializable data class DocumentFormRoute(val documentId: String? = null)
+@Serializable data class DocumentViewRoute(val fileId: String, val name: String, val contentType: String, val sizeBytes: Long)
 @Serializable data object SettingsRoute
 
 /** Formular für eine Buchung; bookingId = null legt eine neue an. */

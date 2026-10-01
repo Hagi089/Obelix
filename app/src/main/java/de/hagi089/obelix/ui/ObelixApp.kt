@@ -48,6 +48,8 @@ import de.hagi089.obelix.ui.navigation.ImportRoute
 import de.hagi089.obelix.ui.navigation.ObelixNavHost
 import de.hagi089.obelix.ui.navigation.PlannedFormRoute
 import de.hagi089.obelix.ui.navigation.PlannedListRoute
+import de.hagi089.obelix.ui.navigation.DocumentFormRoute
+import de.hagi089.obelix.ui.navigation.DocumentViewRoute
 import de.hagi089.obelix.ui.navigation.ReceiptRoute
 import de.hagi089.obelix.ui.navigation.CampsiteFormRoute
 import de.hagi089.obelix.ui.navigation.RepairFormRoute
@@ -157,6 +159,8 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                             currentDestination?.hasRoute(RepairFormRoute::class) == true -> R.string.repair_form_title
                             currentDestination?.hasRoute(CampsiteFormRoute::class) == true -> R.string.campsite_form_title
                             currentDestination?.hasRoute(ReceiptRoute::class) == true -> R.string.receipt_title
+                            currentDestination?.hasRoute(DocumentFormRoute::class) == true -> R.string.document_form_title
+                            currentDestination?.hasRoute(DocumentViewRoute::class) == true -> R.string.document_title
                             currentDestination?.hasRoute(ImportRoute::class) == true -> R.string.import_title
                             currentDestination?.hasRoute(PlannedListRoute::class) == true -> R.string.planned_title
                             currentDestination?.hasRoute(PlannedFormRoute::class) == true -> R.string.planned_form_title

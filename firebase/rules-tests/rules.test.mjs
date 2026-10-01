@@ -175,8 +175,10 @@ describe('R-03 Angemeldet ohne Benutzerdokument: kein Zugriff', () => {
   it('R-03c noch nicht freigegebene Sammlungen sind für alle gesperrt', async () => {
     for (const uid of ['admin', 'member']) {
       const db = as(uid);
-      await assertFails(setDoc(doc(db, 'documents/t1'), { amountCents: 100 }));
-      await assertFails(getDoc(doc(db, 'documents/t1')));
+      // Seit Phase 10 ist jede fachliche Sammlung freigegeben (documents zuletzt): Beispiele sind jetzt Sammlungen,
+      // die es in der App nicht gibt. Wird künftig eine neue Sammlung freigegeben, hier keine ihrer Namen verwenden.
+      await assertFails(setDoc(doc(db, 'unbekannt/t1'), { amountCents: 100 }));
+      await assertFails(getDoc(doc(db, 'unbekannt/t1')));
       await assertFails(setDoc(doc(db, 'irgendwas/x'), { a: 1 }));
       await assertFails(setDoc(doc(db, 'config/other'), { a: 1 }));
     }
@@ -1308,14 +1310,14 @@ describe('R-11 Auffälligkeiten (repairs)', () => {
     if (open.size !== 1) throw new Error(`erwartet 1 offenen Eintrag, gefunden ${open.size}`);
   });
 
-  it('R-11h Regression: Finanzen, Kalender und geplante Ausgaben unverändert; Dokumente weiter gesperrt', async () => {
+  it('R-11h Regression: Finanzen, Kalender und geplante Ausgaben unverändert; nicht freigegebene Sammlung weiter gesperrt', async () => {
     const db = as('member');
     await assertSucceeds(setDoc(doc(db, 'transactions/t1'), booking('member')));
     await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
     await seedPlanned('p1');
     await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
     await assertSucceeds(setDoc(doc(db, 'repairs/r1'), repair('member')));
-    await assertFails(setDoc(doc(db, 'documents/x'), { a: 1 }));
+    await assertFails(setDoc(doc(db, 'unbekannt/x'), { a: 1 }));
   });
 });
 
@@ -1562,7 +1564,7 @@ describe('R-12 Stellplätze (campsites)', () => {
     if (list.size !== 2 || list.docs[0].id !== 's2') throw new Error('Sortierung nach Datum erwartet');
   });
 
-  it('R-12l Regression: Finanzen, Kalender, Auffälligkeiten, geplante Ausgaben und Belege unverändert; Dokumente gesperrt', async () => {
+  it('R-12l Regression: Finanzen, Kalender, Auffälligkeiten, geplante Ausgaben und Belege unverändert; nicht freigegebene Sammlung gesperrt', async () => {
     const db = as('member');
     await assertSucceeds(createWithReceipt(db, 'member', 't1', 'fr'));
     await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
@@ -1570,9 +1572,278 @@ describe('R-12 Stellplätze (campsites)', () => {
     await seedPlanned('p1');
     await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
     await assertSucceeds(setDoc(doc(db, 'campsites/s1'), campsite('member')));
-    await assertFails(setDoc(doc(db, 'documents/x'), { a: 1 }));
+    await assertFails(setDoc(doc(db, 'unbekannt/x'), { a: 1 }));
     // Ein Beleg darf nicht auf ein Foto-Stück eines Stellplatzes zeigen (Einmalverwendung der Datei)
     await seedCampsite('s9', ['foto9']);
     await assertFails(setDoc(doc(db, 'transactions/t9'), booking('member', { receipt: receiptRef('foto9') })));
+  });
+});
+
+// =====================================================================
+// Phase 10: Dokumente. Testdaten nur für den Emulator (Nullbytes, keine echten Dokumente).
+
+/** Angaben einer PDF-Datei (Metadaten der Datei und Verweis müssen übereinstimmen). */
+const pdfMeta = { contentType: 'application/pdf', name: 'handbuch.pdf' };
+
+/** Was die App beim Anlegen eines Dokuments schreibt (DocumentRepository.create). */
+function docEntry(uid, fileId = 'f1', size = 1000, o = {}) {
+  return {
+    name: 'Fahrzeugschein',
+    category: 'VEHICLE',
+    file: receiptRef(fileId, size),
+    date: '2026-10-01',
+    createdAt: serverTimestamp(),
+    createdBy: uid,
+    ...o,
+  };
+}
+
+/** Dokument anlegen, dabei die Datei (alle Stücke) in derselben Transaktion. */
+function createDocument(db, uid, id, fileId = 'f1', size = 1000, o = {}, metaOverrides = {}) {
+  return runTransaction(db, async (tx) => {
+    stageFile(tx, db, uid, fileId, size, metaOverrides);
+    tx.set(doc(db, `documents/${id}`), docEntry(uid, fileId, size, o));
+  });
+}
+
+/** Wie createDocument, aber mit frei gewählten Dokumentdaten (Datei `f-<id>` entsteht im selben Schritt). */
+function tryCreateDoc(db, id, data, size = 1000) {
+  return runTransaction(db, async (tx) => {
+    stageFile(tx, db, 'member', `f-${id}`, size);
+    tx.set(doc(db, `documents/${id}`), data);
+  });
+}
+
+/** Bestehendes Dokument mit Datei (Datei und Dokument, ohne Regelprüfung). */
+async function seedDocument(id = 'd1', fileId = 'f1', size = 1000, o = {}) {
+  await seedFile(fileId, size);
+  await testEnv.withSecurityRulesDisabled(async (context) => {
+    await setDoc(doc(context.firestore(), `documents/${id}`), {
+      ...without(docEntry('member', fileId, size), 'createdAt'),
+      createdAt: Timestamp.now(),
+      ...o,
+    });
+  });
+}
+
+/** Was die App beim Ändern schreibt (DocumentRepository.update): Name/Kategorie, Audit gesetzt. */
+const docEdit = (uid, o = {}) => ({ name: 'Geändert', updatedAt: serverTimestamp(), updatedBy: uid, ...o });
+
+describe('R-13 Dokumente (documents)', () => {
+  it('R-13a MEMBER und ADMIN legen an und lesen; Bild und PDF, alle sechs Kategorien, kürzester und längster Name', async () => {
+    for (const uid of ['member', 'admin']) {
+      await assertSucceeds(createDocument(as(uid), uid, `d-${uid}`, `f-${uid}`));
+    }
+    const categories = ['VEHICLE', 'INSURANCE', 'INVOICE', 'WARRANTY', 'MANUAL', 'OTHER'];
+    for (const [i, category] of categories.entries()) {
+      await assertSucceeds(createDocument(as('member'), 'member', `c${i}`, `fc${i}`, 1000, { category }));
+    }
+    await assertSucceeds(createDocument(as('member'), 'member', 'pdf', 'fpdf', 1000, { file: receiptRef('fpdf', 1000, pdfMeta) }, pdfMeta));
+    await assertSucceeds(createDocument(as('member'), 'member', 'lang', 'flang', 1000, { name: 'x'.repeat(100) }));
+    await assertSucceeds(createDocument(as('member'), 'member', 'kurz', 'fkurz', 1000, { name: 'x' }));
+    const list = await assertSucceeds(getDocs(collection(as('member'), 'documents')));
+    if (list.size !== 11) throw new Error(`erwartet 11 Dokumente, gefunden ${list.size}`);
+    const pdf = await assertSucceeds(getDoc(doc(as('admin'), 'documents/pdf')));
+    if (pdf.data().file.contentType !== 'application/pdf') throw new Error('PDF-Verweis fehlt');
+    await assertSucceeds(getDoc(doc(as('admin'), 'files/fpdf')));
+    await assertSucceeds(getDoc(doc(as('admin'), 'files/fpdf/chunks/0')));
+  });
+
+  it('R-13b größtes Dokument: 8 MiB = 10 Stücke samt Dokument in einer Transaktion (Grenze der Regelabfragen)', async () => {
+    await assertSucceeds(createDocument(as('member'), 'member', 'd1', 'f-max', MAX_FILE));
+    const chunks = await assertSucceeds(getDocs(collection(as('member'), 'files/f-max/chunks')));
+    if (chunks.size !== 10) throw new Error(`erwartet 10 Stücke, gefunden ${chunks.size}`);
+    // dasselbe als PDF
+    await assertSucceeds(createDocument(as('member'), 'member', 'd2', 'f-max-pdf', MAX_FILE, { file: receiptRef('f-max-pdf', MAX_FILE, pdfMeta) }, pdfMeta));
+    // Gegenprobe: ein Byte mehr ist verboten (die Datei ist zu groß, nichts bleibt zurück)
+    await assertFails(createDocument(as('member'), 'member', 'd3', 'f-zu-gross', MAX_FILE + 1));
+    const d3 = await assertSucceeds(getDoc(doc(as('member'), 'documents/d3')));
+    if (d3.exists()) throw new Error('das zu große Dokument darf nicht entstanden sein');
+  });
+
+  it('R-13c ohne Anmeldung, ohne Freischaltung und als entfernter Benutzer kein Zugriff (auch nicht auf die Dateien)', async () => {
+    await seedDocument();
+    for (const db of [anon(), as('nobody')]) {
+      await assertFails(getDoc(doc(db, 'documents/d1')));
+      await assertFails(getDocs(collection(db, 'documents')));
+      await assertFails(createDocument(db, 'nobody', 'neu', 'fneu'));
+      await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('nobody')));
+      await assertFails(deleteDoc(doc(db, 'documents/d1')));
+      await assertFails(getDoc(doc(db, 'files/f1')));
+      await assertFails(getDoc(doc(db, 'files/f1/chunks/0')));
+      await assertFails(getDocs(collection(db, 'files/f1/chunks')));
+    }
+    // Gegenprobe: ein registrierter Benutzer liest dieselben Daten
+    await assertSucceeds(getDoc(doc(as('member'), 'documents/d1')));
+    await assertSucceeds(getDoc(doc(as('member'), 'files/f1/chunks/0')));
+    // Entfernter Benutzer: Sobald sein Benutzerdokument gelöscht ist, hat er keinen Zugriff mehr
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'users/member')));
+    await assertFails(getDoc(doc(as('member'), 'documents/d1')));
+    await assertFails(getDoc(doc(as('member'), 'files/f1/chunks/0')));
+    await assertFails(deleteDoc(doc(as('member'), 'documents/d1')));
+  });
+
+  it('R-13d Validierung beim Anlegen: Name, Kategorie, Datum, Verweis, Pflichtfelder, Audit, Zusatzfelder', async () => {
+    const db = as('member');
+    let n = 0;
+    // Jeder Fall legt eine gültige Datei im selben Schritt an und verletzt genau eine Regel des Dokuments.
+    const bad = (o) => {
+      const id = `v${n++}`;
+      const fileId = `f-${id}`;
+      return assertFails(tryCreateDoc(db, id, docEntry('member', fileId, 1000, typeof o === 'function' ? o(fileId) : o)));
+    };
+    await bad({ name: '' });
+    await bad({ name: 'x'.repeat(101) });
+    await bad({ name: 5 });
+    await bad({ name: null });
+    await bad({ category: 'Fahrzeug' });
+    await bad({ category: 'vehicle' });
+    await bad({ category: '' });
+    await bad({ category: null });
+    await bad({ category: 7 });
+    await bad({ date: '01.10.2026' });
+    await bad({ date: 20261001 });
+    await bad({ date: '' });
+    await bad({ file: 'f1' });
+    await bad({ file: null });
+    await bad({ file: {} });
+    await bad((f) => ({ file: receiptRef(f, 1000, { extra: 1 }) }));
+    await bad((f) => ({ file: receiptRef(f, 1000, { name: '' }) }));
+    await bad((f) => ({ file: receiptRef(f, 1000, { fileId: '' }) }));
+    await bad((f) => ({ file: receiptRef(f, 0) }));
+    await bad((f) => ({ file: receiptRef(f, 1000, { sizeBytes: '1000' }) }));
+    await bad((f) => ({ file: receiptRef(f, 1000, { contentType: 'image/png' }) }));
+    await bad((f) => ({ file: receiptRef(f, 1000, { contentType: 'text/plain' }) }));
+    await bad({ createdBy: 'admin' });
+    await bad({ createdAt: Timestamp.now() });
+    await bad({ updatedAt: serverTimestamp(), updatedBy: 'member' });
+    await bad({ extra: 1 });
+    for (const key of ['name', 'category', 'file', 'date', 'createdBy', 'createdAt']) {
+      const id = `p-${key}`;
+      await assertFails(tryCreateDoc(db, id, without(docEntry('member', `f-${id}`), key)));
+    }
+    // Gegenprobe: dieselbe Form ohne Fehler ist gültig
+    await assertSucceeds(tryCreateDoc(db, 'ok', docEntry('member', 'f-ok')));
+  });
+
+  it('R-13e Datei nur im selben Schritt und nur einmal: keine fehlende, keine fremde, keine nicht passende Datei', async () => {
+    await seedDocument('d1', 'f1');
+    await seedReceiptBooking('b1', 'fb');
+    await seedCampsite('s1', ['fs']);
+    const db = as('member');
+    // Verweis ohne Datei
+    await assertFails(setDoc(doc(db, 'documents/x1'), docEntry('member', 'fehlt')));
+    // Verweis auf die Datei eines anderen Dokuments, eines Belegs oder eines Stellplatzfotos (Einmalverwendung)
+    for (const [i, fileId] of ['f1', 'fb', 'fs'].entries()) {
+      await assertFails(setDoc(doc(db, `documents/y${i}`), docEntry('member', fileId)));
+    }
+    // Angaben im Verweis passen nicht zur Datei: Größe, Name, Typ
+    for (const [i, o] of [{ sizeBytes: 2000 }, { name: 'anders.jpg' }, { contentType: 'application/pdf' }].entries()) {
+      await assertFails(runTransaction(db, async (tx) => {
+        stageFile(tx, db, 'member', `m${i}`, 1000);
+        tx.set(doc(db, `documents/m${i}`), docEntry('member', `m${i}`, 1000, { file: receiptRef(`m${i}`, 1000, o) }));
+      }));
+    }
+    // Datei im selben Schritt, aber von einem anderen Benutzer angelegt
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'admin', 'fremd', 1000);
+      tx.set(doc(db, 'documents/z1'), docEntry('member', 'fremd'));
+    }));
+    // Datei mit nicht erlaubtem Typ (PNG): weder als Datei noch als Dokument zulässig
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'png', 1000, { contentType: 'image/png', name: 'a.png' });
+      tx.set(doc(db, 'documents/z2'), docEntry('member', 'png', 1000, { file: receiptRef('png', 1000, { contentType: 'image/png', name: 'a.png' }) }));
+    }));
+    // Gegenprobe: ein Dokument mit neuer Datei im selben Schritt ist gültig
+    await assertSucceeds(createDocument(db, 'member', 'ok', 'fok'));
+  });
+
+  it('R-13f Bearbeiten: nur Name und Kategorie; Audit Pflicht; Datei, Datum und Herkunft unveränderlich', async () => {
+    await seedDocument('d1', 'f1');
+    await seedFile('f2');
+    const db = as('member');
+    await assertSucceeds(updateDoc(doc(db, 'documents/d1'), docEdit('member', { name: 'Neu', category: 'INSURANCE' })));
+    await assertSucceeds(updateDoc(doc(as('admin'), 'documents/d1'), docEdit('admin', { category: 'OTHER' })));
+    // unveränderter Dateiverweis im Update ist erlaubt
+    await assertSucceeds(updateDoc(doc(db, 'documents/d1'), docEdit('member', { file: receiptRef('f1') })));
+    const d = await assertSucceeds(getDoc(doc(as('admin'), 'documents/d1')));
+    if (d.data().category !== 'OTHER' || d.data().updatedBy !== 'member' || d.data().file.fileId !== 'f1') {
+      throw new Error('Name, Kategorie, Audit oder Datei nicht wie erwartet');
+    }
+    await assertFails(updateDoc(doc(db, 'documents/d1'), { name: 'Ohne Audit' }));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('admin')));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { updatedAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { file: receiptRef('f1', 2000) })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { file: receiptRef('f2') })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { file: deleteField() })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { date: '2026-11-01' })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { createdBy: 'admin' })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { createdAt: Timestamp.now() })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { name: '' })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { name: 'x'.repeat(101) })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { name: deleteField() })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { category: 'Fahrzeug' })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { category: deleteField() })));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { extra: 1 })));
+  });
+
+  it('R-13g die Datei lässt sich nachträglich nicht austauschen (auch nicht mit neuer Datei im selben Schritt)', async () => {
+    await seedDocument('d1', 'f1');
+    await seedDocument('d2', 'f2');
+    const db = as('member');
+    await assertFails(runTransaction(db, async (tx) => {
+      stageFile(tx, db, 'member', 'neu', 1000);
+      tx.update(doc(db, 'documents/d1'), docEdit('member', { file: receiptRef('neu') }));
+    }));
+    await assertFails(updateDoc(doc(db, 'documents/d1'), docEdit('member', { file: receiptRef('f2') })));
+    const d1 = await assertSucceeds(getDoc(doc(db, 'documents/d1')));
+    if (d1.data().file.fileId !== 'f1') throw new Error('die Datei des Dokuments muss unverändert sein');
+    const neu = await assertSucceeds(getDoc(doc(db, 'files/neu')));
+    if (neu.exists()) throw new Error('die neue Datei darf nicht entstanden sein');
+  });
+
+  it('R-13h Löschen: jeder Benutzer; Dokument samt Datei (mehrere Stücke) in einer Transaktion', async () => {
+    await seedDocument('d1', 'f1', CHUNK * 3);
+    await seedDocument('d2', 'f2');
+    const db = as('member');
+    await assertSucceeds(runTransaction(db, async (tx) => {
+      stageDeleteFile(tx, db, 'f1', CHUNK * 3);
+      tx.delete(doc(db, 'documents/d1'));
+    }));
+    // ein fremdes Dokument darf auch der ADMIN löschen (Entscheidung 4: jeder darf löschen)
+    await assertSucceeds(deleteDoc(doc(as('admin'), 'documents/d2')));
+    const list = await assertSucceeds(getDocs(collection(as('admin'), 'documents')));
+    if (list.size !== 0) throw new Error('Dokumente müssen gelöscht sein');
+    const file = await assertSucceeds(getDoc(doc(as('admin'), 'files/f1')));
+    if (file.exists()) throw new Error('Datei muss gelöscht sein');
+    const chunk = await assertSucceeds(getDoc(doc(as('admin'), 'files/f1/chunks/2')));
+    if (chunk.exists()) throw new Error('Stücke müssen gelöscht sein');
+  });
+
+  it('R-13i Liste abfragbar: nach Datum sortiert und nach Kategorie gefiltert (App lädt alle Dokumente einmal)', async () => {
+    await seedDocument('d1', 'f1', 1000, { date: '2026-09-01', category: 'INVOICE' });
+    await seedDocument('d2', 'f2', 1000, { date: '2026-10-01', category: 'VEHICLE' });
+    const sorted = await assertSucceeds(getDocs(query(collection(as('member'), 'documents'), orderBy('date', 'desc'))));
+    if (sorted.size !== 2 || sorted.docs[0].id !== 'd2') throw new Error('Sortierung nach Datum erwartet');
+    const invoices = await assertSucceeds(getDocs(query(collection(as('member'), 'documents'), where('category', '==', 'INVOICE'))));
+    if (invoices.size !== 1 || invoices.docs[0].id !== 'd1') throw new Error('Filter nach Kategorie erwartet');
+  });
+
+  it('R-13j Regression: Belege, Stellplatzfotos, Finanzen, Kalender, Auffälligkeiten unverändert; Dokumentdatei nirgends wiederverwendbar', async () => {
+    const db = as('member');
+    await assertSucceeds(createWithReceipt(db, 'member', 't1', 'fr'));
+    await assertSucceeds(setDoc(doc(db, 'calendarEntries/c1'), entry('member')));
+    await assertSucceeds(setDoc(doc(db, 'repairs/r1'), repair('member')));
+    await seedPlanned('p1');
+    await assertSucceeds(purchase(db, 'member', 'p1', 'b-p1'));
+    await assertSucceeds(createCampsite(db, 'member', 's1', ['fp1']));
+    await assertSucceeds(createDocument(db, 'member', 'd1', 'fd'));
+    // Die Datei eines Dokuments lässt sich weder als Beleg noch als Stellplatzfoto verwenden (Einmalverwendung)
+    await assertFails(setDoc(doc(db, 'transactions/t9'), booking('member', { receipt: receiptRef('fd') })));
+    await seedCampsite('s2', []);
+    await assertFails(updateDoc(doc(db, 'campsites/s2'), campsiteEdit('member', { photos: [photoRef('fd')] })));
+    await assertFails(setDoc(doc(db, 'campsites/s3'), campsite('member', { photos: [photoRef('fd')] })));
+    // Eine nicht freigegebene Sammlung bleibt gesperrt
+    await assertFails(setDoc(doc(db, 'unbekannt/x'), { a: 1 }));
   });
 });

@@ -383,4 +383,42 @@
     <string name="error_photo_limit">Es sind höchstens 3 Fotos je Stellplatz möglich.</string>
     <string name="error_photo_type">Bitte wähle ein Bild.</string>
     <string name="error_photo_too_large">Das Foto ist auch nach dem Verkleinern zu groß. Bitte wähle ein anderes Foto.</string>
+
+    <!-- Dokumente (Phase 10) -->
+    <string name="document_title">Dokument</string>
+    <string name="document_form_title">Dokument</string>
+    <string name="document_add">Dokument hinzufügen</string>
+    <string name="document_empty">Noch keine Dokumente. Lade das erste hoch (Bild oder PDF).</string>
+    <string name="document_empty_category">In dieser Kategorie gibt es noch keine Dokumente.</string>
+    <string name="document_category_select">Kategorie wählen</string>
+    <string name="document_category_vehicle">Fahrzeug</string>
+    <string name="document_category_insurance">Versicherung</string>
+    <string name="document_category_invoice">Rechnung</string>
+    <string name="document_category_warranty">Garantie</string>
+    <string name="document_category_manual">Anleitung</string>
+    <string name="document_category_other">Sonstiges</string>
+    <string name="field_document_name">Name</string>
+    <string name="field_document_category">Kategorie</string>
+    <string name="document_file">Datei</string>
+    <string name="document_file_choose">Datei auswählen</string>
+    <string name="document_file_change">Andere Datei</string>
+    <string name="document_file_discard">Auswahl verwerfen</string>
+    <string name="document_file_hint">Bild oder PDF, höchstens 8 MB. Bilder werden automatisch verkleinert. Die Datei kann später nicht ausgetauscht werden.</string>
+    <string name="document_file_info">%1$s (%2$s)</string>
+    <string name="document_file_preparing">Datei wird vorbereitet …</string>
+    <string name="document_upload">Hochladen</string>
+    <string name="document_open">Öffnen</string>
+    <string name="document_uploaded_by">von %1$s</string>
+    <string name="document_uploaded_on">Hochgeladen am %1$s</string>
+    <string name="document_type_image">Bild</string>
+    <string name="document_type_pdf">PDF</string>
+    <string name="document_delete_title">Dokument löschen?</string>
+    <string name="document_delete_text">Das Dokument und seine Datei werden für alle endgültig gelöscht.</string>
+    <string name="document_loading">Dokument wird geladen …</string>
+    <string name="document_image_description">Bild des Dokuments</string>
+    <string name="document_pdf_info">Dieses Dokument ist eine PDF-Datei (%1$s). Sie wird in einer anderen App geöffnet.</string>
+    <string name="error_document_name_required">Bitte einen Namen eingeben.</string>
+    <string name="error_document_name_too_long">Der Name darf höchstens 100 Zeichen lang sein.</string>
+    <string name="error_document_category_required">Bitte eine Kategorie wählen.</string>
+    <string name="error_document_file_required">Bitte eine Datei auswählen.</string>
 </resources>

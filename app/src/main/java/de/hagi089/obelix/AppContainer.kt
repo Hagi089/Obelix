@@ -17,6 +17,8 @@ import de.hagi089.obelix.data.campsites.FirestoreCampsiteRepository
 import de.hagi089.obelix.data.campsites.FusedLocationProvider
 import de.hagi089.obelix.data.campsites.LocationProvider
 import de.hagi089.obelix.data.calendar.FirestoreCalendarRepository
+import de.hagi089.obelix.data.documents.DocumentRepository
+import de.hagi089.obelix.data.documents.FirestoreDocumentRepository
 import de.hagi089.obelix.data.files.AndroidFileReader
 import de.hagi089.obelix.data.files.FileStore
 import de.hagi089.obelix.data.files.FirestoreFileStore
@@ -75,6 +77,8 @@ class AppContainer(context: Context) {
     val calendarRepository: CalendarRepository by lazy { FirestoreCalendarRepository(firestore) }
 
     val campsiteRepository: CampsiteRepository by lazy { FirestoreCampsiteRepository(firestore, fileStore) }
+
+    val documentRepository: DocumentRepository by lazy { FirestoreDocumentRepository(firestore, fileStore) }
 
     /** Einmalige Standortbestimmung (nur auf Knopfdruck). */
     val locationProvider: LocationProvider by lazy { FusedLocationProvider(appContext) }

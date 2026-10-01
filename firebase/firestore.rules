@@ -2,7 +2,7 @@ rules_version = '2';
 
 // OBELIX – Firestore-Sicherheitsregeln (Phase 3: Benutzer, Rollen, Zugangscode; Phase 4: Finanzen;
 // Phase 5: geplante Ausgaben; Phase 6: Dateiablage und Belege; Phase 7: Kalender; Phase 8: Auffälligkeiten;
-// Phase 9: Stellplätze).
+// Phase 9: Stellplätze; Phase 10: Dokumente).
 // Konzept: docs/PROJEKTPLAN.md, Abschnitt 7. Es gibt keinen Haushalt: alle registrierten
 // Benutzer teilen denselben Datenbestand.
 //
@@ -218,6 +218,21 @@ service cloud.firestore {
         && (d.photos.size() < 3 || (d.photos[0].fileId != d.photos[2].fileId && d.photos[1].fileId != d.photos[2].fileId));
     }
 
+    // Dokument (Phase 10): wichtige Unterlage des Wohnmobils (Fahrzeugschein, Versicherung, Rechnung, …) mit genau
+    // einer Datei. Die Datei steht wie ein Beleg als Verweis in file (fileId/name/contentType/sizeBytes, JPEG oder
+    // PDF, höchstens 8 MiB) und entsteht im selben Schritt wie das Dokument (newReceiptOk: Einmalverwendung, jede Datei
+    // gehört zu genau einem Dokument). Regelabfragen je Transaktion: Stück 1 (isUser) · Datei 3 · Dokument 3; ein
+    // Dokument mit 10 Stücken ergibt 10 + 3 + 3 = 16 von 20 (wie ein Beleg, Test R-09b/R-13b).
+    // Muss zu data/documents/DocumentValidator.kt (Kategorien: DocumentCategory) passen.
+    function validDocument(d) {
+      return d.keys().hasOnly(['name', 'category', 'file', 'date', 'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
+        && d.keys().hasAll(['name', 'category', 'file', 'date', 'createdAt', 'createdBy'])
+        && validText(d.name, 100)
+        && d.category in ['VEHICLE', 'INSURANCE', 'INVOICE', 'WARRANTY', 'MANUAL', 'OTHER']
+        && validReceiptRef(d.file)
+        && validDay(d.date);
+    }
+
     // =====================================================================
     // users/{uid}: Name und Rolle. Alle Benutzer sehen alle Namen („Bezahlt von").
     // =====================================================================
@@ -427,6 +442,35 @@ service cloud.firestore {
         && request.resource.data.updatedBy == request.auth.uid
         && request.resource.data.updatedAt == request.time
         && photosOk(request.resource.data.photos, resource.data.photos);
+
+      allow delete: if isUser();
+    }
+
+    // =====================================================================
+    // documents/{id}: Dokumente (Phase 10). Alle registrierten Benutzer dürfen lesen, anlegen, ändern und löschen
+    // (Entscheidung 4). Audit-Felder werden erzwungen. Die Datei ist nach dem Anlegen unveränderlich (file, date,
+    // createdBy/At); geändert werden nur Name und Kategorie. Die Datei entsteht im selben Schritt wie das Dokument
+    // (Dateien in files/), es gibt keine öffentlichen Links: Wer kein Benutzerdokument hat, liest nichts.
+    // =====================================================================
+    match /documents/{documentId} {
+      allow get, list: if isUser();
+
+      allow create: if isUser()
+        && validDocument(request.resource.data)
+        && !('updatedAt' in request.resource.data) && !('updatedBy' in request.resource.data)
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.createdAt == request.time
+        && newReceiptOk(request.resource.data.file);
+
+      allow update: if isUser()
+        && validDocument(request.resource.data)
+        && request.resource.data.createdBy == resource.data.createdBy
+        && request.resource.data.createdAt == resource.data.createdAt
+        && request.resource.data.date == resource.data.date
+        && request.resource.data.file == resource.data.file
+        && 'updatedBy' in request.resource.data && 'updatedAt' in request.resource.data
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt == request.time;
 
       allow delete: if isUser();
     }
