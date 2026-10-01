@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 01.10.2026 · **Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 01.10.2026 · **Phase 10 – Dokumente umgesetzt (Version 18), Gerätetest G10-01 bis G10-14 offen** · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -21,11 +21,12 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **7** | **Kalender (Version 11; Personenfarben Version 12)** | **✅ abgenommen** (G7-01 bis G7-15 bestanden) |
 | **8** | **Auffälligkeiten (Version 13)** | **✅ abgenommen**: Bau, Lint, 184 Unit-Tests (aus den Quellen gezählt) und 92 Regel-Tests grün (Commit `6227ef9`, Lauf 36762739295) · Gerätetest G8-01 bis G8-12 bestanden |
 | **9** | **Stellplätze (Version 14, Kartenkorrekturen 15 bis 17)** | **✅ abgenommen**: Bau, Lint, 238 Unit-Tests (aus den Quellen gezählt) und 104 Regel-Tests grün (Commit `e85babf`) · Gerätetest G9-01 bis G9-18 bestanden |
-| 10–12 | Dokumente, Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 10) |
+| **10** | **Dokumente (Version 18)** | **✅ umgesetzt**: Bau, Lint, 269 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `4fdf6b5`) · ⏳ Gerätetest G10-01 bis G10-14 offen; Regeln in der Firebase-Konsole veröffentlichen |
+| 11–12 | Dashboard, Qualitätssicherung | ⬜ (nächste Phase: 11, nach Abnahme von Phase 10) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
-- 238 automatische Unit-Tests (aus den Quelltexten gezählt), Build und Lint sowie 104 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
+- 269 automatische Unit-Tests (aus den Quelltexten gezählt), Build und Lint sowie 114 Regel-Tests im Firebase-Emulator (Job „rules") laufen bei jedem Push in GitHub Actions. Die Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf.
 - **Die Regeln wirken erst, wenn du sie in der Firebase-Konsole veröffentlichst**, und der erste Zugangscode sowie deine Admin-Rolle werden einmalig von Hand angelegt: `docs/FIREBASE-EINRICHTUNG.md`, Abschnitte 7 und 8. Bis dahin ist die Datenbank komplett gesperrt.
 
 ## 2. Wichtigste Entscheidungen (Kurzfassung, Details im Plan)
@@ -92,7 +93,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Umgesetzt (Commit `6227ef9`, Version 13):** Sammlung `repairs` (`title` ≤ 200, **`description` Pflicht** ≤ 2000, `date`, `status` `OPEN`/`DONE`, optional `priority`, `comment` ≤ 500, Audit), Regeln `validRepair` + Tests R-11. Jeder Benutzer darf anlegen, ändern, erledigen, wieder öffnen und löschen (Entscheidung 4). Neue Auffälligkeiten sind immer `OPEN`.
 - **Ablauf (Entscheidung 34/35, Annahmen):** Bereich „Aufgaben“ = Liste mit Zähler, Filter **Offen (Standard)/Erledigt/Alle**, Sortierung offen vor erledigt, Priorität, neueres Datum. Formular mit „Als erledigt markieren“/„Wieder öffnen“ (speichert die Angaben des Formulars mit, ungültige Eingaben verhindern es), Löschen mit Bestätigung. Kein eigenes Erledigt-Datum.
 - **Neu im Code:** `data/repairs/*` (`Models`, `RepairValidator`, `RepairLogic`, `RepairRepository`), `ui/repairs/*` (`RepairListScreen`/`-ViewModel`, `RepairFormScreen`/`-ViewModel`), `RepairFormRoute` in `Destinations.kt`, Verdrahtung in `ObelixNavHost`/`ObelixApp`, `AppContainer.repairRepository`, Texte „Auffälligkeiten (Phase 8)“ in `strings.xml`, Regeln/Tests in `firebase/`. Die Priorität nutzt `Priority` aus `data/planned`.
-- **R-03c (Fallstrick aus Phase 7, diesmal vorbeugend):** Der Test „noch nicht freigegebene Sammlungen sind gesperrt“ zeigt jetzt auf `campsites` (Phase 9); danach auf `documents` (Phase 10).
+- **R-03c (Fallstrick aus Phase 7, diesmal vorbeugend):** Der Test „noch nicht freigegebene Sammlungen sind gesperrt“ zeigt jetzt auf `campsites` (Phase 9); danach auf `documents` (Phase 10); seit Phase 10 auf die nicht existierende Sammlung `unbekannt`.
 - **Abgenommen:** Gerätetest G8-01 bis G8-12 ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4f) bestanden; die Regeln für `repairs` sind in der Firebase-Konsole veröffentlicht.
 - **Vorschläge (nicht umgesetzt):** „Zuletzt geändert von/am“ im Formular anzeigen; Dashboard-Zähler offener Auffälligkeiten kommt mit Phase 11; Foto zur Auffälligkeit nach Phase 9 (Kamera vorhanden).
 
@@ -107,8 +108,19 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
   - Die Datei `CampsiteFormViewModelTest` nutzt `addPhotoFrom { }` statt `Uri`, damit die JVM-Tests kein Android brauchen (Muster aus Phase 7: `scopeOverride` + Fakes).
   - **Karten-Fallstricke (Gerätefund):** eine Android-View in Compose immer mit `clipToBounds` einbetten (sonst überdeckt sie Nachbar-Elemente); `zoomToBoundingBox` nie mit sehr engem Ausschnitt aufrufen (Zoom jenseits der Kachelgrenze → leere Karte). Seit Version 17 gilt Zoom 3 bis 19.
   - Auf dem Gerät bestätigt (G9, vorher von hier nicht prüfbar): GPS, Berechtigungsdialog, Kamera, Kartendarstellung, Navigation, drei große Fotos gegen die echte Datenbank, Berechtigungen der APK.
-- **R-03c und R-11h** (Test „noch nicht freigegebene Sammlung ist gesperrt“) zeigen jetzt auf `documents` (Phase 10). **Vorbeugend bei Phase 10 wieder umstellen**, sonst schlägt der Regel-Test fehl.
+- **R-03c und R-11h** zeigten auf `documents`; in Phase 10 vorbeugend umgestellt (siehe 3h).
 - **Vorschläge (nicht umgesetzt):** Fotos im Vollbild mit Zoom; Stellplatz-Bewertung/Filter in der Liste; Kartenbibliothek später durch MapLibre ersetzen; Dashboard-Hinweis „letzter Stellplatz“ in Phase 11.
+
+## 3h. Phase 10 – Dokumente (01.10.2026, Details: Plan, Phase 10 und Entscheidungen 40 bis 43)
+- **Umgesetzt (Commit `4fdf6b5`, Version 18; Gerätetest G10-01 bis G10-14 offen):** Sammlung `documents` (`name` 1–100, `category` eine von sechs festen Werten, `file` = Dateiverweis wie beim Beleg, `date` = Tag des Hochladens, Audit). Genau eine Datei (Bild oder PDF, höchstens 8 MiB) in der Dateiablage aus Phase 6; die Datei ist nach dem Hochladen unveränderlich (Regeln `newReceiptOk`/`validReceiptRef` unverändert wiederverwendet). Liste mit Kategorie-Filter, Formular (Hochladen, Name und Kategorie ändern, Öffnen, Löschen mit Bestätigung; jeder Benutzer darf löschen, Entscheidung 4).
+- **Neu im Code:** `data/documents/*`, `ui/documents/*`, `DocumentFormRoute`/`DocumentViewRoute`, `AppContainer.documentRepository`, `ReceiptScreen` (optionale Textparameter, Standard = Belegtexte), Regeln `validDocument`, Regel-Tests R-13, Unit-Tests A-44 bis A-47.
+- **Fallstricke / Erkenntnisse:**
+  - **R-03c, R-11h und R-12l** (drei Stellen, nicht zwei) zeigten auf `documents`; alle drei nutzen jetzt `unbekannt`. Beim Freigeben der nächsten Sammlung wieder prüfen, ob ein Test auf sie zeigt.
+  - Regelbudget: 10 Stücke + Datei + Dokument ≈ 15–16 von 20, wie beim Beleg (R-13b testet den Grenzfall im Emulator; die echte Datenbank prüft G10-08).
+  - Hat eine Datei keinen Anzeigenamen, setzt `LocalFileReader` „Beleg“/„Beleg.pdf“ (kleine Schwäche aus Phase 6, unverändert).
+  - Der erste Lauf war grün (kein Lint-Fehler), weil die Lehren aus Phase 9 (Texte vorher mit `stringResource` holen) von Anfang an beachtet wurden.
+- **Von mir zu prüfen (nicht automatisch testbar):** Dateiauswahl, PDF-Öffnen in einer externen App, Darstellung, große Datei gegen die echte Datenbank, Offline; **Regeln in der Firebase-Konsole veröffentlichen**.
+- **Vorschläge (nicht umgesetzt):** Suche nach Namen; Vorschau-Bild in der Liste; Datei austauschen (bräuchte eine Regeländerung); Teilen/Herunterladen; Dashboard-Hinweis „zuletzt hochgeladenes Dokument“ in Phase 11.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
@@ -153,9 +165,9 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den neuen Chat (Phase 10)
+## 7. Prompt für den neuen Chat (Phase 11)
 
-Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Testergebnisse sind bereits eingetragen.
+Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App"). Die Ergebnisse des Gerätetests G10 und der Regel-Veröffentlichung trägst du vorher in die eckigen Klammern ein.
 
 ```text
 Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst diese Dateien, bevor du etwas änderst:
@@ -164,9 +176,9 @@ Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-
 3. docs/TESTFAELLE.md (aktuelle und offene Testfälle)
 4. im Claude-Projekt das Dokument "Anforderungen" (verbindliche Anforderungen)
 
-Stand: Phase 1 bis 9 abgenommen. Phase 9 (Stellplätze) ist Version 14 mit Kartenkorrekturen bis Version 17 (letzter Code-Commit e85babf; Bau, Lint, 238 Unit-Tests, 104 Regel-Tests grün). Gerätetest G9-01 bis G9-18: alle bestanden (inklusive drei großer Fotos gegen die echte Datenbank). Die Regeln aus firebase/firestore.rules (inklusive campsites) sind in der Firebase-Konsole veröffentlicht: ja.
+Stand: Phase 1 bis 9 abgenommen, Phase 10 (Dokumente, Version 18) umgesetzt (Commit 4fdf6b5; Bau, Lint, 269 Unit-Tests, 114 Regel-Tests grün). Gerätetest G10-01 bis G10-14: [HIER EINTRAGEN: bestanden / Fehler]. Die Regeln aus firebase/firestore.rules (inklusive documents) sind in der Firebase-Konsole veröffentlicht: [ja/nein].
 
-Auftrag jetzt: PHASE 10 – Dokumente gemäß Plan (Hochladen, Kategorie, öffnen, löschen, Zugriffsschutz; die Dateiablage aus Phase 6 wiederverwenden). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte: Die Regel-Tests R-03c und R-11h (gesperrte Sammlung) zeigen auf documents und müssen vorbeugend auf eine andere gesperrte Sammlung bzw. ein Beispiel umgestellt werden, sobald documents freigegeben wird. Gelerntes aus Phase 9: Android-Views (z. B. Karte) in Compose mit clipToBounds einbetten; Lint verbietet LocalContext.current.getString in Compose-Lambdas (vorher stringResource holen); Regelbudget je Transaktion (20 Abfragen) beim Entwurf neuer Regeln mitzählen.
+Auftrag jetzt: PHASE 11 – Dashboard gemäß Plan (Kennzahlen aus echten Daten, Leerzustand ohne Fake-Zahlen, Offline). Erst analysieren und einen kurzen Plan zeigen, Fragen nur, wenn sie wirklich meine Entscheidung brauchen. Beachte die Fallstricke aus UEBERGABE.md Abschnitt 3g/3h und 4 (Regelbudget, Lint, Android-Views in Compose).
 
-Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 18, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
+Rahmenbedingungen wie bisher: Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen, kurze Zusammenfassung der geänderten Dateien; alles kostenlos (Firebase Spark, ohne Cloud Functions), keine erfundenen Daten, keine ungefragten Erweiterungen; gebaut und getestet wird in GitHub Actions (kein Android-SDK, kein npm in der Cloud-Sitzung); was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente (claude/Projektplan, claude/Testfaelle, claude/Uebergabe) am Ende aktualisieren. Zu den offenen Punkten in docs/UEBERGABE.md (Abschnitt 5) gelten deine Vorschläge, sofern ich nichts anderes sage. Excel-Dateien, Analysen und Importdateien mit Namen/Beträgen nie committen. Bei jedem Deployment die Version erhöhen (versionCode +1, versionName zweistellig, nächste ist 19, in app/build.gradle.kts; die Version steht unten in den Einstellungen). Beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl), sonst bricht der Befehl ab.
 ```
