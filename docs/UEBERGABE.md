@@ -1,6 +1,6 @@
 # OBELIX – Übergabe an den nächsten Chat
 
-Stand: 01.10.2026 · **ALLE PHASEN ABGENOMMEN – Phase 12 Gerätetest G12-01 bis G12-07 bestanden (mit Version 21); OBELIX gilt als fertig** · **Verbesserung Stellplatz-Karte und Positionskorrektur (Version 21; Bau, Lint, 303 Unit-Tests, 115 Regel-Tests grün; Regeln veröffentlicht; Gerätetest G9-19 bis G9-30 bestanden, abgenommen)** · **Phase 12 – Qualitätssicherung umgesetzt (Version 20; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G12-01 bis G12-07 offen)** · **Phase 11 – Dashboard abgenommen (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 bestanden)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
+Stand: 01.10.2026 · **FINALE VERSION 22 (Sicherheit und Verteilung): Bau (Debug und Release), Lint, 303 Unit-Tests, 116 Regel-Tests grün; Regeln neu veröffentlichen, Secrets anlegen, Gerätetest G13-01 bis G13-06 offen** · **ALLE PHASEN ABGENOMMEN – Phase 12 Gerätetest G12-01 bis G12-07 bestanden (mit Version 21); OBELIX gilt als fertig** · **Verbesserung Stellplatz-Karte und Positionskorrektur (Version 21; Bau, Lint, 303 Unit-Tests, 115 Regel-Tests grün; Regeln veröffentlicht; Gerätetest G9-19 bis G9-30 bestanden, abgenommen)** · **Phase 12 – Qualitätssicherung umgesetzt (Version 20; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G12-01 bis G12-07 offen)** · **Phase 11 – Dashboard abgenommen (Version 19; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; Gerätetest G11-01 bis G11-12 bestanden)** · Phase 10 – Dokumente abgenommen (Version 18, G10-01 bis G10-14 bestanden) · Phase 9 – Stellplätze abgenommen (Version 14, Kartenkorrekturen bis Version 17, G9-01 bis G9-18 bestanden)** · Phase 8 – Auffälligkeiten abgenommen (Version 13, G8-01 bis G8-12 bestanden) · Phase 4 (Finanzen, Kategorien, Excel-Import) **abgenommen** · UI-Überarbeitung (Version 07) abgenommen (GU bestanden) · Phase 5 – Geplante Ausgaben abgenommen (Version 08, G5 bestanden) · Phase 6 – Dateiablage und Belege abgenommen (Version 10, G6 bestanden) · Phase 7 – Kalender abgenommen (Version 11, G7-01 bis G7-14 bestanden) · Erweiterung Personenfarben (Version 12, G7-15 bestanden) · danach: **Phase 8 – Auffälligkeiten**
 
 Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PROJEKTPLAN.md`](PROJEKTPLAN.md) (Plan, Entscheidungen, Datenmodell) und [`TESTFAELLE.md`](TESTFAELLE.md) (Tests). Die Projektanforderungen liegen im Claude-Projekt „Obelix Wohnmobil App" (Dokument `Anforderungen`).
 
@@ -25,6 +25,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **11** | **Dashboard (Version 19)** | **✅ abgenommen**: Bau, Lint, 293 Unit-Tests (aus den Quellen gezählt) und 114 Regel-Tests grün (Commit `5d205b3`, Lauf 36820452860), keine Regeländerung · **Gerätetest G11-01 bis G11-12 bestanden** |
 | **12** | **Qualitätssicherung (Version 20)** | **✅ abgenommen**: Bau, Lint, 293 Unit-Tests und 114 Regel-Tests grün (Commit `6ddfef5`, Lauf 36822992931), keine Regeländerung · **Gerätetest G12-01 bis G12-07 bestanden** (mit Version 21, 01.10.2026) |
 | – | Verbesserung Stellplatz-Karte und Positionskorrektur (Version 21) | ✅ umgesetzt: Bau, Lint, 303 Unit-Tests, 115 Regel-Tests grün (Commit `bfcdd62`, Lauf 36824668717), Regeländerung (Regeln veröffentlicht) · **✅ abgenommen: Gerätetest G9-19 bis G9-30 bestanden** |
+| – | **Finale Version 22: Sicherheit und Verteilung** | ✅ umgesetzt: Bau (Debug und Release), Lint, 303 Unit-Tests, 116 Regel-Tests grün (Commit `4ff774f`, Lauf 36827453945); **Regeländerung: Regeln neu veröffentlichen**; Secrets anlegen; **Gerätetest G13-01 bis G13-06 offen** |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
 - Firebase-Projekt `obelix-daf7c`: Tarif Spark, E-Mail/Passwort aktiv, Firestore in `europe-west3` im Produktionsmodus (alles gesperrt, bis Regeln vorliegen). Paketname `de.hagi089.obelix`.
@@ -47,7 +48,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - App: Registrierung mit Codefeld → Konto anlegen → `users/{uid}` anlegen (die Regel vergleicht den Code) → Hauptbereich; falscher Code löscht das Konto wieder. Konto ohne Freischaltung sieht nur „Zugangscode eingeben". Einstellungen: Rolle; ADMIN: Code anzeigen/kopieren/teilen/erneuern, Benutzer zum Admin/Mitglied machen, entfernen. Schreiben nur per Transaktion (offline Fehler statt Schein-Erfolg).
 - Anforderung 43 (Haushalt A/B) entfällt, weil es keine Haushalte gibt; geschützt ist: ohne gültigen Code kein Zugriff.
 - **Offen:** Gerätetest G3-01 bis G3-11 ([`TESTFAELLE.md`](TESTFAELLE.md), Abschnitt 2.4). Ohne diese Abnahme gilt Phase 3 nicht als abgeschlossen.
-- **APK-Installation:** Jeder CI-Bau hat einen neuen Debug-Schlüssel. Vor dem Installieren einer neuen APK die alte App deinstallieren (offener Punkt: fester Debug-Schlüssel für CI).
+- **APK-Installation:** Bis Version 21 hatte jeder CI-Bau einen neuen Debug-Schlüssel (vor jeder Installation deinstallieren). **Seit Version 22 fester Schlüssel aus GitHub-Secrets, Updates ohne Deinstallieren** (siehe 3l und `docs/VERTEILUNG.md`).
 
 ## 3a. Phase 4 – was umgesetzt ist (Details: Plan, Phase 4)
 - **Import-Weg B:** ADMIN wählt in der App (Einstellungen → Excel-Import) die private Datei `obelix-import.json` (nicht im Repository, ignoriert per `.gitignore`). Die App vergleicht Kontrollwerte (300 Buchungen, Einnahmen 69.617,94 €, Ausgaben 70.415,60 €, Kontostand 107,17 €, offen 99,00 €, nach Begleichung 8,17 €), der ADMIN ordnet die zwei Excel-Zahler Benutzerkonten zu (Auswahl, E-Mail-Adressen technisch nicht nötig), dann Import in Blöcken zu 10 je Transaktion. Dokument-ID `xl-<Excel-Zeile>` ⇒ wiederholbar ohne Dubletten.
@@ -59,7 +60,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 
 ## 3b. UI-Überarbeitung (30.09.2026, Details: Plan)
 - Icon: Adaptive Icon aus Benutzerbild (`mipmap-anydpi-v26`, `drawable-nodpi/ic_launcher_foreground.png`, Farbe `ic_launcher_background`). Login: Hintergrundbild `drawable-nodpi/login_background.jpg`, Formular auf halbtransparenter Karte (`ui/auth/AuthScreens.kt`). Menü: `label = null`, Name als `contentDescription` (`ui/ObelixApp.kt`).
-- **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 09, 10, … in `app/build.gradle.kts`). Version 08 = Phase 5; 09/10 = Phase 6; 11 = Phase 7; 12 = Personenfarben im Kalender; 13 = Phase 8; 14 bis 17 = Phase 9; 18 = Phase 10; 19 = Phase 11; 20 = Phase 12; 21 = Stellplatz-Karte/Positionskorrektur; nächstes Deployment ist Version 22.
+- **Version 07:** Hell-/Dunkelmodus-Umschalter oben in den Einstellungen (lokal gespeichert), „Version 07“ unten, Kategorien nur für ADMIN sichtbar. **Regel: Bei jedem Deployment Version erhöhen** (`versionCode` +1, `versionName` zweistellig 09, 10, … in `app/build.gradle.kts`). Version 08 = Phase 5; 09/10 = Phase 6; 11 = Phase 7; 12 = Personenfarben im Kalender; 13 = Phase 8; 14 bis 17 = Phase 9; 18 = Phase 10; 19 = Phase 11; 20 = Phase 12; 21 = Stellplatz-Karte/Positionskorrektur; 22 = finale Version (Sicherheit, fester Schlüssel); nächstes Deployment ist Version 23.
 - **Abgenommen:** Gerätetest GU-01 bis GU-10 bestanden ([`TESTFAELLE.md`](TESTFAELLE.md), 2.4b). Alte App vor der Installation deinstallieren.
 
 ## 3c. Phase 5 – Geplante Ausgaben (30.09.2026, Details: Plan, Phase 5)
@@ -155,6 +156,14 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Abgenommen:** Gerätetest G9-19 bis G9-30 (`docs/TESTFAELLE.md`, 2.4k) vom Benutzer als bestanden gemeldet (01.10.2026); damit sind auch die Gesten (Seite scrollt nicht mit) und das lange Drücken auf dem Gerät bestätigt. G12 ist inzwischen ebenfalls bestanden.
 - **Vorschläge (nicht umgesetzt):** Position auch durch Tippen auf die Karte oder Eingabe von Koordinaten setzen (Alternative zum Ziehen, barrierefrei); „Rückgängig“ nach dem Verschieben; Hinweis „Position manuell korrigiert“.
 
+## 3l. Finale Version 22 – Sicherheit und Verteilung (01.10.2026, Details: Plan, Abschnitt 12a, Entscheidungen 48/49)
+- **Umgesetzt (Commit `4ff774f`, Lauf 36827453945, Version 22):** Bau (Debug **und** Release), Lint, 303 Unit-Tests und 116 von 116 Regel-Tests (R-04i neu) beim ersten Lauf grün. Der Lauf hatte noch keine Secrets: Es entstand nur die Debug-APK (Warnung „Kein fester Signaturschlüssel“).
+- **Updates ohne Deinstallieren:** Fester Signaturschlüssel (`obelix-signing.p12`, PKCS12, Alias `obelix`, SHA-256 `CF:91:1C:E7:…:3B:4E`, SHA-1 `31:69:ED:…:D4:34`) wurde in der Sitzung erzeugt und **nur dem Benutzer übergeben** (nie im Repository; der Container der Sitzung ist danach weg). Die CI liest ihn aus den Secrets `OBELIX_KEYSTORE_BASE64`/`OBELIX_KEYSTORE_PASSWORD` (nur bei Push), signiert Debug und Release und lädt die Release-APK als **`obelix-apk`** hoch, mit Anmerkung „Signatur der APK“. Release ohne R8 (Entscheidung 48). `app/build.gradle.kts`: `signingConfigs.obelix` aus den Umgebungsvariablen `OBELIX_KEYSTORE_FILE`/`OBELIX_KEYSTORE_PASSWORD`. **Geht der Schlüssel verloren, ist kein Update mehr möglich** (nur Neuinstallation). Ablauf: `docs/VERTEILUNG.md`.
+- **Sicherheitsfund behoben:** Der aktuelle Zugangscode stand in jedem Benutzerdokument und war für alle Benutzer lesbar. Regel `ownProfileUpdateOk` (Besitzer darf `accessCode` nur entfernen) + `FirestoreUserRepository.loadProfile` entfernt das Feld nebenbei (`removeStoredAccessCode`). **Regeln neu veröffentlichen**, sonst schlägt das Entfernen still fehl (nur Log) und der Code bleibt lesbar.
+- **Docs anonymisiert:** echte Vornamen → Konto 1/2, Zahler 1/2 (die App war davon nie betroffen; Namen stehen nur in den Firebase-Daten). Die Git-Historie enthält sie weiterhin.
+- **Offen: Gerätetest G13-01 bis G13-06** (`docs/TESTFAELLE.md`, 2.4l): Regeln veröffentlichen, Secrets anlegen und Lauf neu starten, einmal deinstallieren und `obelix-apk` installieren, Feld `accessCode` verschwunden, Rundgang mit der Release-APK, Update-Test mit der nächsten Version, optional API-Schlüssel beschränken.
+- **Empfehlungen (Benutzer):** Repository auf privat stellen; API-Schlüssel beschränken; E-Mail-Aufzählungsschutz prüfen; Zugangscode einmal erneuern (Plan, 12a).
+
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
 - **Kein Android-SDK in der Cloud-Sitzung.** Netzzugang zu `dl.google.com`, `maven.google.com`, `services.gradle.org` ist gesperrt. Gebaut und getestet wird **in GitHub Actions**. Kompilierfehler stehen als Annotation am Lauf (Job „Fehler zusammenfassen"), abrufbar mit  
   `curl https://api.github.com/repos/Hagi089/Obelix/check-runs/<JOB-ID>/annotations` (Job-ID über `/actions/runs/<RUN-ID>/jobs`). Die Rohlogs sind nicht erreichbar.
@@ -162,7 +171,9 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Direkte Aufrufe an dein Firebase-Projekt** sind aus der Sitzung blockiert. Alles, was echtes Firebase braucht (Anmeldung, Datenbank, Regeln „live"), muss auf dem Gerät oder in der Konsole geprüft werden. Regeln veröffentlicht der Benutzer in der Firebase-Konsole (Firestore → Regeln) oder per `firebase deploy` (ohne Blaze möglich).
 - **Git:** Der Benutzer lädt manchmal Dateien über die GitHub-Weboberfläche hoch (z. B. `google-services.json`). Vor jedem Push `git pull --rebase origin main`. Ein Stop-Hook fordert Commit und Push bei ungetrackten Dateien.
 - **Commit-Zusatzzeilen** am Ende jeder Commit-Nachricht: `Co-Authored-By: Claude Sonnet 5.5 <noreply@anthropic.com>` und `Claude-Session: <URL aus der Sitzungsvorgabe>` (bei neuem Chat die dort genannte aktuelle Zeile verwenden).
-- **Nicht im Repository (bewusst):** Excel-Datei, Analyse mit Namen und Beträgen, `obelix-import.json` (Muster `obelix-import*.json` ist ignoriert). Nie committen. Die Analyse steht im Claude-Projekt als `Excel-Analyse`.
+- **Nicht im Repository (bewusst):** Excel-Datei, Analyse mit Namen und Beträgen, `obelix-import.json` (Muster `obelix-import*.json` ist ignoriert), **Signaturschlüssel** (`*.p12`, `obelix-signing*`). Nie committen. Die Analyse steht im Claude-Projekt als `Excel-Analyse`. In den Docs keine echten Vornamen (Konto 1/2, Zahler 1/2).
+- **GitHub-Secrets lassen sich aus der Sitzung nicht setzen** (API antwortet 403); der Benutzer legt sie in der Weboberfläche an.
+- **Release-Bau:** Die CI baut `assembleRelease` immer mit (prüft den Release-Bau samt `lintVitalRelease`); signiert und hochgeladen wird er nur mit Secrets.
 - **Firestore-Transaktionen:** Regeln erlauben rund 20 Zugriffe je Transaktion; Import und Kategorie-Anlage arbeiten deshalb in Blöcken zu 10 (nicht empirisch als nötig bewiesen, bewusst vorsichtig).
 - **Regel-Tests:** Bei Schreibtests muss `createdBy` der angemeldeten uid entsprechen, sonst schlägt der Test aus dem falschen Grund fehl.
 - **Android:** kein `readNBytes` (erst Android 13), `import` ist ein weiches Schlüsselwort (Methode `importBookings`).
@@ -179,7 +190,11 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | 10 | `google-services.json` im Repository lassen | ja (CI-APK ist dann sofort testbar) |
 | 15b | „Verantwortung" aus der Excel | ✅ erledigt: an den Kommentar angehängt |
 | 15c | Nullbeträge der Excel (25 Zeilen) | ✅ erledigt: nicht importiert, in der Vorschau aufgelistet |
-| – | API-Schlüssel in der Google Cloud Console auf die App beschränken | braucht festen Debug-Schlüssel (SHA-1); CI erzeugt bei jedem Bau einen neuen. Vorschlag: festen Debug-Schlüssel für CI anlegen (nur zum Testen, keine Geheimnisse) |
+| – | Fester Signaturschlüssel | ✅ erledigt (Version 22, Entscheidung 48) |
+| – | API-Schlüssel in der Google Cloud Console auf die App beschränken | jetzt möglich (SHA-1 in `docs/VERTEILUNG.md`); vom Benutzer in der Konsole (G13-06) |
+| – | Repository auf privat stellen | empfohlen (Plan, 12a); vom Benutzer in GitHub |
+| – | Namen in den Docs | ✅ erledigt (Version 22) |
+| – | Position per Tippen/Koordinaten setzen | vom Benutzer abgelehnt (nicht erforderlich) |
 | 6a | Belege: Büroklammer in der Liste, Zoom, Kamera-Aufnahme direkt im Buchungsformular | Büroklammer und Zoom auf Wunsch; Kamera-Aufnahme für Belege wäre mit `PhotoCameraCache` jetzt leicht möglich (auf Wunsch) |
 | 6b | Fotogröße nach der Kompression | ✅ erledigt: 687 KB → 85 KB gemessen (Plan, Abschnitt 6) |
 | 7a | Kalender: Überschneidung schon beim Wählen der Tage anzeigen; Tippen auf Tag im Raster | auf Wunsch |
@@ -199,16 +214,16 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den nächsten Chat (Abschluss von Phase 12)
+## 7. Prompt für den nächsten Chat (Wartung und Verbesserungen)
 
-Nur nötig, wenn Fehler aus dem Gerätetest G12 zu beheben sind oder zusätzliche Wünsche folgen. Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App“).
+Das Projekt ist abgeschlossen. Nur nötig für Fehler aus G13 oder spätere Verbesserungen. Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App“).
 
 ```text
-Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst docs/UEBERGABE.md, docs/PROJEKTPLAN.md, docs/TESTFAELLE.md (besonders 2.4j und 2.7) und im Claude-Projekt das Dokument "Anforderungen".
+Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst docs/UEBERGABE.md, docs/PROJEKTPLAN.md, docs/TESTFAELLE.md, docs/VERTEILUNG.md und im Claude-Projekt das Dokument "Anforderungen".
 
-Stand: Phase 1 bis 11 abgenommen, Phase 12 (Qualitätssicherung) ist Version 20 (Commit 6ddfef5; Bau, Lint, 293 Unit-Tests, 114 Regel-Tests grün; keine Regeländerung). Gerätetest G12-01 bis G12-07: <Ergebnis eintragen>.
+Stand: Alle Phasen abgenommen, finale Version 22 (Commit 4ff774f; Bau Debug und Release, Lint, 303 Unit-Tests, 116 Regel-Tests grün). Gerätetest G13-01 bis G13-06: <Ergebnis eintragen>. Die App wird als fest signierte Release-APK (Artefakt obelix-apk) verteilt; Updates ohne Deinstallieren.
 
-Auftrag jetzt: <Fehler aus G12 beheben bzw. Phase 12 abschließen / weiterer Wunsch>.
+Auftrag jetzt: <Fehler beheben / Verbesserung>.
 
-Rahmenbedingungen wie bisher (siehe UEBERGABE.md, Abschnitt 6): Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen; alles kostenlos (Firebase Spark, ohne Cloud Functions); gebaut und getestet wird in GitHub Actions; was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente am Ende aktualisieren; Excel-Dateien, Analysen und Importdateien nie committen; bei jedem Deployment die Version erhöhen (nächste ist 21); beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl).
+Rahmenbedingungen wie bisher (siehe UEBERGABE.md, Abschnitt 6): Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen; alles kostenlos (Firebase Spark, ohne Cloud Functions); gebaut und getestet wird in GitHub Actions; was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente am Ende aktualisieren; Excel-Dateien, Analysen, Importdateien und Signaturschlüssel nie committen, keine echten Namen in den Docs; bei jedem Deployment die Version erhöhen (nächste ist 23), sonst ist kein Update möglich; bei Regeländerungen erinnern, die Regeln zu veröffentlichen; beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl).
 ```

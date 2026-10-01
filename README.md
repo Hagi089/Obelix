@@ -2,7 +2,7 @@
 
 Native Android-App zur gemeinsamen Verwaltung des Familien-Wohnmobils. Alle Benutzer arbeiten auf demselben, aktuellen Datenbestand im Backend (Firebase, kostenloser Spark-Tarif). Es gibt keinen eigenen Server, keine Werbung, kein Tracking und keine Analytics.
 
-Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt** (aktuelle Version 21). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
+Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt.** Finale Version 22 (fester Signaturschlüssel, Updates ohne Deinstallieren). Fortschritt und Entscheidungen: [`docs/PROJEKTPLAN.md`](docs/PROJEKTPLAN.md), Testfälle und Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md), Verteilung und Updates: [`docs/VERTEILUNG.md`](docs/VERTEILUNG.md), Stand für einen neuen Chat: [`docs/UEBERGABE.md`](docs/UEBERGABE.md).
 
 ## Funktionen
 | Bereich | Inhalt |
@@ -62,8 +62,11 @@ Datenmodell, Sicherheitskonzept und Datenflüsse: [`docs/PROJEKTPLAN.md`](docs/P
 ## Build
 ```bash
 ./gradlew assembleDebug        # Debug-APK: app/build/outputs/apk/debug/
+./gradlew assembleRelease      # Release-APK: app/build/outputs/apk/release/ (signiert nur mit festem Schlüssel)
 ```
-Die aktuelle Debug-APK liegt als Artefakt `obelix-debug-apk` im jeweils neuesten Lauf unter GitHub Actions. Jeder CI-Bau hat einen eigenen Debug-Schlüssel: vor dem Installieren einer neuen APK die alte App deinstallieren. Die Version steht unten in den Einstellungen; bei jedem Deployment wird sie erhöht (`versionCode` +1, `versionName` zweistellig in `app/build.gradle.kts`).
+**Verteilen:** GitHub Actions signiert Debug- und Release-APK mit einem **festen Schlüssel** aus den Repository-Secrets `OBELIX_KEYSTORE_BASE64` und `OBELIX_KEYSTORE_PASSWORD` und stellt die Release-APK als Artefakt **`obelix-apk`** bereit. Damit lassen sich neue Versionen als **Update** installieren, ohne zu deinstallieren. Der Schlüssel liegt nie im Repository. Ohne die Secrets entsteht nur eine Debug-APK mit zufälligem Schlüssel (`obelix-debug-apk`, nur zum Testen). Einrichtung und Ablauf: [`docs/VERTEILUNG.md`](docs/VERTEILUNG.md).
+
+Die Version steht unten in den Einstellungen; bei jedem Deployment wird sie erhöht (`versionCode` +1, `versionName` zweistellig in `app/build.gradle.kts`), sonst lehnt Android das Update ab.
 
 ## Tests
 Testfälle, Ergebnisse und der Nachweis der Abschlusskriterien: [`docs/TESTFAELLE.md`](docs/TESTFAELLE.md).
@@ -88,10 +91,12 @@ Nicht automatisch testbar sind Gerätefunktionen (Standort, Kamera, Karte, Datei
 - Es werden nur die nötigen personenbezogenen Daten gespeichert (Name, E-Mail, Rolle, Einträge der Benutzer). Keine Analytics, kein Tracking, keine Werbung, keine Weitergabe an Dritte außer den technisch nötigen Diensten (Firebase, OpenStreetMap-Kacheln, Google Play Services für den Standort).
 - Der Standort wird nur beim ausdrücklichen Speichern eines Stellplatzes abgefragt, nie im Hintergrund.
 - Private Daten (Excel-Datei, Analysen, `obelix-import*.json`) liegen nie im Repository (`.gitignore`).
-- Keine Passwörter, privaten Schlüssel oder Service-Account-Dateien im Repository.
+- Keine Passwörter, privaten Schlüssel (auch nicht der Signaturschlüssel) oder Service-Account-Dateien im Repository.
+- Der bei der Registrierung mitgeschickte Zugangscode wird von der App sofort wieder aus dem Benutzerdokument entfernt; den aktuellen Code sieht nur der ADMIN.
 
 ## Bekannte Grenzen
 - Keine Offline-Synchronisation (bewusst, Anforderung 8).
 - Zwei Benutzer, die im selben Augenblick überlappende Kalendereinträge speichern, können sich überschneiden (die Prüfung läuft vor dem Schreiben, Plan Risiko 8).
 - osmdroid ist archiviert; ein Ersatz beträfe nur `ui/campsites/CampsiteMap.kt`.
-- Die Release-Variante (R8) wird in CI nicht gebaut und ist nicht getestet; ausgeliefert wird die Debug-APK.
+- Die Release-APK wird ohne R8 (Verkleinern/Verschleiern) gebaut, weil R8 nie getestet wurde (Plan, Entscheidung 48).
+- Das Repository ist öffentlich; Empfehlung: auf privat stellen (siehe Plan, Abschnitt Sicherheitsprüfung).

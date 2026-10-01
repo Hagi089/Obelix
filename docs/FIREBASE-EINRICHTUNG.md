@@ -58,6 +58,9 @@ Ohne gültigen Zugangscode kann sich niemand registrieren. Den ersten Code legst
 6. **Dich zum Admin machen:** Firestore → Daten → Sammlung `users` → das Dokument mit deinem Namen öffnen → Feld `role` auf `ADMIN` ändern → Speichern. (Die Dokument-ID ist deine Benutzer-ID; du findest sie auch unter Authentication → Benutzer.)
 7. In der App die Einstellungen neu öffnen: Dort siehst du jetzt den Zugangscode und die Benutzerliste. Weitere Personen bekommen den Code von dir, später erneuerst du ihn direkt in der App.
 
+## 9. App verteilen und API-Schlüssel beschränken
+Fester Signaturschlüssel (Updates ohne Deinstallieren) und die empfohlene Beschränkung des API-Schlüssels auf die App: [`VERTEILUNG.md`](VERTEILUNG.md).
+
 ## Checkliste für die Rückmeldung
 - [ ] Tarif Spark
 - [ ] E-Mail/Passwort aktiv, Vorlagen auf Deutsch
