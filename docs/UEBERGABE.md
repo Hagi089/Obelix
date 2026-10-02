@@ -179,7 +179,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 ## 3n. Kalender: Jahresübersicht (02.10.2026, Version 24, Details: Plan, Entscheidung 51)
 - **Umgesetzt:** Kalender mit Umschaltung „Jahresübersicht | Monatsübersicht“ (Standard: Jahr). Jahresansicht: Jahreswechsel, Kennzahl belegte/freie Tage, zwölf Mini-Monate (2 Spalten, ab 600 dp 3), Legende, chronologische Jahresliste. Monatsansicht unverändert.
 - **Neu im Code:** `data/calendar/CalendarYear` (reine Logik), `ui/calendar/CalendarYearView.kt` (`yearItems`, `MiniMonth`), `CalendarViewMode`, `CalendarState.viewMode/year/yearEntries/yearOccupants`, ViewModel-Funktionen `showYearView`, `showMonthView`, `previousYear`, `nextYear`, `openMonth`; `showToday` richtet sich nach der Ansicht; Texte `calendar_mode_*`, `calendar_year_*` in `strings.xml`. In `CalendarScreen.kt` nur Umschaltung und Verzweigung ergänzt, `EntryRow`, `PersonLegend`, `asColor` sind jetzt `internal`. Keine Regeländerung, keine Datenänderung, keine neue Abhängigkeit.
-- **Offen: Gerätetest G15-01 bis G15-12** (`docs/TESTFAELLE.md`, 2.4n). **Von mir nicht prüfbar:** Darstellung/Lesbarkeit auf dem Telefon, Treffsicherheit der kleinen Tage (Fallback: Liste und Monatsansicht), TalkBack.
+- **Abgenommen:** Gerätetest G15-01 bis G15-12 bestanden (Benutzer, 02.10.2026; `docs/TESTFAELLE.md`, 2.4n). CI: Commit `904de5f`, Lauf 36975799565 grün.
 - **Bekannte Grenzen:** Tage im Jahresraster sind klein; für sicheres Treffen dienen Monatstipp und Liste. Für Screenreader ist ein Mini-Monat eine Einheit (Anzahl belegter Tage), Einträge stehen in der Liste.
 
 ## 4. Technische Fallstricke (aus diesem Chat gelernt)
