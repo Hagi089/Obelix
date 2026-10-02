@@ -30,6 +30,9 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SegmentedButton
+import androidx.compose.material3.SegmentedButtonDefaults
+import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.ListItem
@@ -81,7 +84,7 @@ internal fun periodText(startDate: String, endDate: String): String =
 internal fun entryDetails(entry: CalendarEntry): String =
     listOfNotNull(periodText(entry.startDate, entry.endDate), entry.destination).joinToString(" · ")
 
-private fun PersonColor.asColor(): Color = Color(background)
+internal fun PersonColor.asColor(): Color = Color(background)
 
 /** Farbiger Punkt vor einem Namen; die Farbe ist nur Zusatz, der Name steht immer daneben. */
 @Composable
@@ -160,31 +163,36 @@ private fun CalendarContent(state: CalendarState, viewModel: CalendarViewModel, 
                 )
             }
         }
+        item { ViewModeSwitch(state.viewMode, onYear = viewModel::showYearView, onMonth = viewModel::showMonthView) }
         if (current.isNotEmpty()) item { CurrentUsageCard(current, colors, onOpen) }
-        item { MonthHeader(state = state, viewModel = viewModel) }
-        item { MonthGrid(state = state, occupants = occupants, colors = colors) }
-        item { Text(text = stringResource(R.string.calendar_legend), style = MaterialTheme.typography.bodySmall) }
-        if (legend.isNotEmpty()) item { PersonLegend(legend) }
-        item {
-            Text(
-                text = stringResource(R.string.calendar_list_title, monthTitle(state.month)),
-                style = MaterialTheme.typography.titleMedium,
-                modifier = Modifier.padding(top = 8.dp).semantics { heading() },
-            )
-        }
-        if (monthEntries.isEmpty()) {
+        if (state.viewMode == CalendarViewMode.YEAR) {
+            yearItems(state = state, viewModel = viewModel, colors = colors, legend = legend, onOpen = onOpen)
+        } else {
+            item { MonthHeader(state = state, viewModel = viewModel) }
+            item { MonthGrid(state = state, occupants = occupants, colors = colors) }
+            item { Text(text = stringResource(R.string.calendar_legend), style = MaterialTheme.typography.bodySmall) }
+            if (legend.isNotEmpty()) item { PersonLegend(legend) }
             item {
                 Text(
-                    text = stringResource(if (state.entries.isEmpty()) R.string.calendar_empty else R.string.calendar_empty_month),
-                    style = MaterialTheme.typography.bodyLarge,
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    text = stringResource(R.string.calendar_list_title, monthTitle(state.month)),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(top = 8.dp).semantics { heading() },
                 )
             }
-        } else {
-            items(monthEntries, key = { it.id }) { entry ->
-                EntryRow(entry = entry, color = colors[entry.personUid], onClick = { onOpen(entry.id) })
-                HorizontalDivider()
+            if (monthEntries.isEmpty()) {
+                item {
+                    Text(
+                        text = stringResource(if (state.entries.isEmpty()) R.string.calendar_empty else R.string.calendar_empty_month),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    )
+                }
+            } else {
+                items(monthEntries, key = { it.id }) { entry ->
+                    EntryRow(entry = entry, color = colors[entry.personUid], onClick = { onOpen(entry.id) })
+                    HorizontalDivider()
+                }
             }
         }
     }
@@ -221,7 +229,7 @@ private fun CurrentUsageCard(current: List<CalendarEntry>, colors: Map<String, P
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun PersonLegend(legend: List<Pair<String, PersonColor>>) {
+internal fun PersonLegend(legend: List<Pair<String, PersonColor>>) {
     FlowRow(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(16.dp),
@@ -348,11 +356,30 @@ private fun DayCell(
 }
 
 @Composable
-private fun EntryRow(entry: CalendarEntry, color: PersonColor?, onClick: () -> Unit) {
+internal fun EntryRow(entry: CalendarEntry, color: PersonColor?, onClick: () -> Unit) {
     ListItem(
         modifier = Modifier.clickable(onClick = onClick),
         leadingContent = { ColorDot(color) },
         headlineContent = { Text(entry.personName) },
         supportingContent = { Text(entryDetails(entry)) },
     )
+}
+
+/** Umschaltung zwischen Jahres- und Monatsübersicht ganz oben im Kalender. */
+@Composable
+private fun ViewModeSwitch(mode: CalendarViewMode, onYear: () -> Unit, onMonth: () -> Unit) {
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        SegmentedButton(
+            selected = mode == CalendarViewMode.YEAR,
+            onClick = onYear,
+            shape = SegmentedButtonDefaults.itemShape(index = 0, count = 2),
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) { Text(stringResource(R.string.calendar_mode_year), maxLines = 1) }
+        SegmentedButton(
+            selected = mode == CalendarViewMode.MONTH,
+            onClick = onMonth,
+            shape = SegmentedButtonDefaults.itemShape(index = 1, count = 2),
+            modifier = Modifier.heightIn(min = 48.dp),
+        ) { Text(stringResource(R.string.calendar_mode_month), maxLines = 1) }
+    }
 }

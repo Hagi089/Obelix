@@ -335,6 +335,22 @@
     <string name="calendar_list_title">Einträge im %1$s</string>
     <string name="calendar_empty">Noch keine Nutzung eingetragen.</string>
     <string name="calendar_empty_month">In diesem Monat ist nichts eingetragen.</string>
+    <string name="calendar_empty_year">In diesem Jahr ist nichts eingetragen.</string>
+    <string name="calendar_mode_year">Jahresübersicht</string>
+    <string name="calendar_mode_month">Monatsübersicht</string>
+    <string name="calendar_prev_year">Vorheriges Jahr</string>
+    <string name="calendar_next_year">Nächstes Jahr</string>
+    <string name="calendar_year_list_title">Einträge %1$d</string>
+    <string name="calendar_year_occupied">Belegt: %1$d von %2$d Tagen (%3$d %%)</string>
+    <string name="calendar_year_open_month">Monat %1$s öffnen</string>
+    <plurals name="calendar_year_free">
+        <item quantity="one">%1$d Tag frei</item>
+        <item quantity="other">%1$d Tage frei</item>
+    </plurals>
+    <plurals name="calendar_year_month_description">
+        <item quantity="one">%1$s %2$d, %3$d Tag belegt</item>
+        <item quantity="other">%1$s %2$d, %3$d Tage belegt</item>
+    </plurals>
     <string name="calendar_row_period">%1$s – %2$s</string>
     <string name="calendar_row_person_period">%1$s · %2$s</string>
     <string name="field_calendar_start">Von</string>
