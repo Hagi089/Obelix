@@ -357,6 +357,7 @@ private fun ChangeArea.destination(): TopLevelDestination = when (this) {
     ChangeArea.FINANCE -> TopLevelDestination.FINANCE
     ChangeArea.TASKS -> TopLevelDestination.TASKS
     ChangeArea.CAMPSITES -> TopLevelDestination.CAMPSITES
+    ChangeArea.DOCUMENTS -> TopLevelDestination.DOCUMENTS
 }
 
 /** Wechselt zwischen Hauptbereichen, ohne den Back-Stack aufzublähen. */

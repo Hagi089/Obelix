@@ -111,4 +111,5 @@ internal fun ChangeArea.labelRes(): Int = when (this) {
     ChangeArea.FINANCE -> R.string.nav_finance
     ChangeArea.TASKS -> R.string.nav_tasks
     ChangeArea.CAMPSITES -> R.string.nav_campsites
+    ChangeArea.DOCUMENTS -> R.string.nav_documents
 }

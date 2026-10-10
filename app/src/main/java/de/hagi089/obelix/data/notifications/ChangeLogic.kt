@@ -2,6 +2,7 @@ package de.hagi089.obelix.data.notifications
 
 import de.hagi089.obelix.data.calendar.CALENDAR_COLLECTION
 import de.hagi089.obelix.data.campsites.CAMPSITES_COLLECTION
+import de.hagi089.obelix.data.documents.DOCUMENTS_COLLECTION
 import de.hagi089.obelix.data.finance.BOOKINGS_COLLECTION
 import de.hagi089.obelix.data.finance.PLANNED_COLLECTION
 import de.hagi089.obelix.data.repairs.REPAIRS_COLLECTION
@@ -31,12 +32,12 @@ data class Stamp(val seconds: Long, val nanos: Int) : Comparable<Stamp> {
     }
 }
 
-/** Die vier Bereiche, die benachrichtigen (Entscheidung 53). Reihenfolge = Reihenfolge der Navigation. */
-enum class ChangeArea { CALENDAR, FINANCE, TASKS, CAMPSITES }
+/** Die fünf Bereiche, die benachrichtigen (Entscheidung 53). Reihenfolge = Reihenfolge der Navigation. */
+enum class ChangeArea { CALENDAR, FINANCE, TASKS, CAMPSITES, DOCUMENTS }
 
 /**
- * Geprüfte Sammlungen je Bereich. Bewusst nicht: `categories` (nur ADMIN in den Einstellungen), `documents`
- * (nicht gewünscht), `users`, `files`, `config`.
+ * Geprüfte Sammlungen je Bereich. Bewusst nicht: `categories` (nur ADMIN in den Einstellungen), `users`, `files`,
+ * `config`.
  */
 val CHANGE_COLLECTIONS: Map<String, ChangeArea> = linkedMapOf(
     CALENDAR_COLLECTION to ChangeArea.CALENDAR,
@@ -44,6 +45,7 @@ val CHANGE_COLLECTIONS: Map<String, ChangeArea> = linkedMapOf(
     PLANNED_COLLECTION to ChangeArea.FINANCE,
     REPAIRS_COLLECTION to ChangeArea.TASKS,
     CAMPSITES_COLLECTION to ChangeArea.CAMPSITES,
+    DOCUMENTS_COLLECTION to ChangeArea.DOCUMENTS,
 )
 
 /** Audit-Felder eines Dokuments, das seit dem letzten Stand angelegt oder geändert wurde. */

@@ -469,14 +469,14 @@
 
     <!-- Benachrichtigungen bei Änderungen anderer Benutzer (Version 26, Entscheidung 53) -->
     <string name="change_channel_name">Änderungen anderer Benutzer</string>
-    <string name="change_channel_description">Hinweis, wenn jemand in Kalender, Finanzen, Aufgaben oder Stellplätzen etwas einträgt oder ändert.</string>
+    <string name="change_channel_description">Hinweis, wenn jemand in Kalender, Finanzen, Aufgaben, Stellplätzen oder Dokumenten etwas einträgt oder ändert.</string>
     <string name="change_line_created">%1$s hat etwas unter %2$s eingetragen.</string>
     <string name="change_line_updated">%1$s hat etwas unter %2$s geändert.</string>
     <string name="change_line_created_and_updated">%1$s hat etwas unter %2$s eingetragen und geändert.</string>
     <string name="change_unknown_person">Ein Benutzer</string>
     <string name="settings_notifications">Benachrichtigungen</string>
     <string name="settings_notifications_switch">Bei Änderungen anderer benachrichtigen</string>
-    <string name="settings_notifications_intro">Kalender, Finanzen, Aufgaben und Stellplätze werden etwa alle 15 Minuten geprüft. Android kann die Prüfung im Energiesparmodus verzögern. Gelöschte Einträge werden nicht gemeldet.</string>
+    <string name="settings_notifications_intro">Kalender, Finanzen, Aufgaben, Stellplätze und Dokumente werden etwa einmal pro Stunde geprüft. Android kann die Prüfung im Energiesparmodus verzögern. Gelöschte Einträge werden nicht gemeldet.</string>
     <string name="settings_notifications_blocked">Android erlaubt OBELIX derzeit keine Benachrichtigungen.</string>
     <string name="settings_notifications_open_system">In Android erlauben</string>
 </resources>

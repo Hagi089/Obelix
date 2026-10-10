@@ -51,7 +51,7 @@ class ChangeLogicTest {
     }
 
     @Test
-    fun `Buchungen und geplante Ausgaben sind Finanzen, Reihenfolge wie die Navigation`() {
+    fun `Buchungen und geplante Ausgaben sind Finanzen, Dokumente zaehlen, Reihenfolge wie die Navigation`() {
         val result = ChangeLogic.summarize(
             listOf(
                 rec("campsites", after, "a", id = "1"),
@@ -59,23 +59,25 @@ class ChangeLogicTest {
                 rec("transactions", after, "c", id = "3"),
                 rec("repairs", after, "d", id = "4"),
                 rec("calendarEntries", after, "e", id = "5"),
+                rec("documents", before, "a", after, "f", id = "6"),
             ),
             since,
             "ich",
         )
         assertEquals(
-            listOf(ChangeArea.CALENDAR, ChangeArea.FINANCE, ChangeArea.TASKS, ChangeArea.CAMPSITES),
+            listOf(ChangeArea.CALENDAR, ChangeArea.FINANCE, ChangeArea.TASKS, ChangeArea.CAMPSITES, ChangeArea.DOCUMENTS),
             result.map { it.area },
         )
         assertEquals(setOf("b", "c"), result[1].created)
+        assertEquals(AreaChange(ChangeArea.DOCUMENTS, emptySet(), setOf("f")), result[4])
     }
 
     @Test
     fun `nicht gepruefte Sammlungen und Zeitstempel bis einschliesslich Stand zaehlen nicht`() {
         val result = ChangeLogic.summarize(
             listOf(
-                rec("documents", after, "anna", id = "1"),
-                rec("categories", after, "anna", id = "2"),
+                rec("categories", after, "anna", id = "1"),
+                rec("users", after, "anna", id = "2"),
                 rec("calendarEntries", since, "anna", since, "bert", id = "3"),
                 rec("calendarEntries", null, "anna", null, "bert", id = "4"),
                 rec("calendarEntries", after, null, id = "5"),

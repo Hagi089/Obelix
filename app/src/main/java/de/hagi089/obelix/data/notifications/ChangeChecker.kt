@@ -24,7 +24,7 @@ interface ChangePoster {
 enum class CheckOutcome { NO_USER, DISABLED, NOT_ALLOWED, STARTED, FAILED, NOTHING_NEW, POSTED }
 
 /**
- * Eine Prüfung (läuft im Hintergrund etwa alle 15 Minuten, siehe ChangeCheckWorker). Liest nur, schreibt nie in
+ * Eine Prüfung (läuft im Hintergrund etwa einmal pro Stunde, siehe ChangeCheckWorker). Liest nur, schreibt nie in
  * Firestore; das Speichern in der App ist davon unberührt.
  */
 class ChangeChecker(
