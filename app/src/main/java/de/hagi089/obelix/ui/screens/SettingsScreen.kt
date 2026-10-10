@@ -75,6 +75,8 @@ fun SettingsScreen(
     isDark: Boolean,
     onToggleTheme: () -> Unit,
     modifier: Modifier = Modifier,
+    notificationsEnabled: Boolean = true,
+    onNotificationsChange: (Boolean) -> Unit = {},
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirm by remember { mutableStateOf<Confirm?>(null) }
@@ -127,6 +129,8 @@ fun SettingsScreen(
         if (state.isLoading) {
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         }
+        HorizontalDivider()
+        NotificationSection(enabled = notificationsEnabled, onEnabledChange = onNotificationsChange)
         if (profile?.isAdmin == true) {
             // Kategorien verwalten: nur ADMIN (Mitglieder sehen den Bereich nicht).
             HorizontalDivider()

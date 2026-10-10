@@ -26,8 +26,8 @@ android {
         applicationId = "de.hagi089.obelix"
         minSdk = 26
         targetSdk = 36
-        versionCode = 25
-        versionName = "25" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
+        versionCode = 26
+        versionName = "26" // Bei jedem Deployment erhöhen (versionCode +1, versionName zweistellig: 11, 12, ...)
     }
 
     signingConfigs {
@@ -97,6 +97,7 @@ dependencies {
     // Phase 9: Standort (Google Play Services) und Karte (OpenStreetMap, ohne API-Schlüssel)
     implementation(libs.play.services.location)
     implementation(libs.osmdroid.android)
+    implementation(libs.work.runtime.ktx)
 
     testImplementation(libs.junit)
 }

@@ -21,6 +21,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -39,6 +40,7 @@ import androidx.navigation.compose.rememberNavController
 import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.R
 import de.hagi089.obelix.data.auth.AuthUser
+import de.hagi089.obelix.data.notifications.ChangeArea
 import de.hagi089.obelix.ui.auth.AuthScreens
 import de.hagi089.obelix.ui.auth.AuthViewModel
 import de.hagi089.obelix.ui.components.OfflineBanner
@@ -58,9 +60,10 @@ import de.hagi089.obelix.ui.navigation.TopLevelDestination
 import de.hagi089.obelix.ui.navigation.navigateToTopLevel
 import de.hagi089.obelix.ui.onboarding.AccessCodeScreen
 import de.hagi089.obelix.ui.onboarding.AccessCodeViewModel
+import de.hagi089.obelix.ui.notifications.ChangeNotificationSetup
 
 @Composable
-fun ObelixApp(container: AppContainer) {
+fun ObelixApp(container: AppContainer, openArea: ChangeArea? = null, onAreaOpened: () -> Unit = {}) {
     if (!container.isFirebaseConfigured) {
         FirebaseMissingScreen()
         return
@@ -70,6 +73,15 @@ fun ObelixApp(container: AppContainer) {
         factory = viewModelFactory { initializer { SessionViewModel(container.authRepository, container.userRepository) } },
     )
     val session by sessionViewModel.session.collectAsStateWithLifecycle()
+
+    // Version 26: Nach dem Abmelden keine Hintergrundprüfung mehr; nach der nächsten Anmeldung beginnt sie neu.
+    val signedOut = session == SessionState.SignedOut
+    LaunchedEffect(signedOut) {
+        if (signedOut) {
+            container.changeCheckScheduler.cancel()
+            container.changeNotificationPreference.clearAllWatermarks()
+        }
+    }
 
     when (val current = session) {
         SessionState.Loading -> LoadingScreen()
@@ -108,12 +120,17 @@ fun ObelixApp(container: AppContainer) {
                 onRetry = sessionViewModel::reloadProfile,
                 onSignOut = sessionViewModel::signOut,
             )
-            is ProfileState.Ready -> ObelixMainScaffold(
-                user = current.user,
-                container = container,
-                isOnline = isOnline,
-                onSignOut = sessionViewModel::signOut,
-            )
+            is ProfileState.Ready -> {
+                ChangeNotificationSetup(container)
+                ObelixMainScaffold(
+                    user = current.user,
+                    container = container,
+                    isOnline = isOnline,
+                    onSignOut = sessionViewModel::signOut,
+                    openArea = openArea,
+                    onAreaOpened = onAreaOpened,
+                )
+            }
         }
     }
 }
@@ -127,7 +144,14 @@ private fun LoadingScreen() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline: Boolean, onSignOut: () -> Unit) {
+private fun ObelixMainScaffold(
+    user: AuthUser,
+    container: AppContainer,
+    isOnline: Boolean,
+    onSignOut: () -> Unit,
+    openArea: ChangeArea?,
+    onAreaOpened: () -> Unit,
+) {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
@@ -204,6 +228,8 @@ private fun ObelixMainScaffold(user: AuthUser, container: AppContainer, isOnline
                     user = user,
                     container = container,
                     onSignOut = onSignOut,
+                    openArea = openArea,
+                    onAreaOpened = onAreaOpened,
                     modifier = Modifier.fillMaxSize(),
                 )
             }

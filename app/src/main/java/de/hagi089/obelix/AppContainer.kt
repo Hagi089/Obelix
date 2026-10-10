@@ -31,6 +31,10 @@ import de.hagi089.obelix.data.finance.CategoryRepository
 import de.hagi089.obelix.data.finance.FinanceRepository
 import de.hagi089.obelix.data.finance.FirestoreCategoryRepository
 import de.hagi089.obelix.data.finance.FirestoreFinanceRepository
+import de.hagi089.obelix.data.notifications.ChangeChecker
+import de.hagi089.obelix.data.notifications.ChangeNotificationPreference
+import de.hagi089.obelix.data.notifications.FirestoreChangeSource
+import de.hagi089.obelix.data.notifications.Stamp
 import de.hagi089.obelix.data.planned.FirestorePlannedExpenseRepository
 import de.hagi089.obelix.data.planned.PlannedExpenseRepository
 import de.hagi089.obelix.data.repairs.FirestoreRepairRepository
@@ -38,6 +42,8 @@ import de.hagi089.obelix.data.repairs.RepairRepository
 import de.hagi089.obelix.data.settings.ThemePreference
 import de.hagi089.obelix.data.user.FirestoreUserRepository
 import de.hagi089.obelix.data.user.UserRepository
+import de.hagi089.obelix.notifications.AndroidChangePoster
+import de.hagi089.obelix.notifications.ChangeCheckScheduler
 
 /**
  * Einfache manuelle Dependency Injection (bewusst ohne Hilt, siehe docs/PROJEKTPLAN.md).
@@ -90,6 +96,20 @@ class AppContainer(context: Context) {
 
     /** Zielordner für Kameraaufnahmen (Stellplatzfotos). */
     val photoCameraCache: PhotoCameraCache by lazy { PhotoCameraCache(appContext) }
+
+    /** Version 26: Benachrichtigung bei Änderungen anderer Benutzer (lokaler Schalter und Stand, Hintergrundprüfung). */
+    val changeNotificationPreference = ChangeNotificationPreference(appContext)
+
+    val changeCheckScheduler = ChangeCheckScheduler(appContext)
+
+    val changeChecker: ChangeChecker by lazy {
+        ChangeChecker(
+            source = FirestoreChangeSource(firestore, userRepository),
+            store = changeNotificationPreference,
+            poster = AndroidChangePoster(appContext),
+            now = { Stamp.ofMillis(System.currentTimeMillis()) },
+        )
+    }
 
     /** Übergabe von Code und Name zwischen Registrierungsformular und Codebildschirm. */
     val registrationHandoff = RegistrationHandoff()

@@ -2,6 +2,7 @@ package de.hagi089.obelix.ui.navigation
 
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.compose.ui.Modifier
@@ -17,6 +18,7 @@ import de.hagi089.obelix.AppContainer
 import de.hagi089.obelix.R
 import de.hagi089.obelix.data.auth.AuthUser
 import de.hagi089.obelix.data.files.FileRef
+import de.hagi089.obelix.data.notifications.ChangeArea
 import de.hagi089.obelix.ui.calendar.CalendarFormScreen
 import de.hagi089.obelix.ui.calendar.CalendarFormViewModel
 import de.hagi089.obelix.ui.calendar.CalendarScreen
@@ -60,6 +62,8 @@ fun ObelixNavHost(
     container: AppContainer,
     onSignOut: () -> Unit,
     modifier: Modifier = Modifier,
+    openArea: ChangeArea? = null,
+    onAreaOpened: () -> Unit = {},
 ) {
     NavHost(
         navController = navController,
@@ -324,6 +328,7 @@ fun ObelixNavHost(
             )
             val chosenDark by container.themePreference.darkMode.collectAsStateWithLifecycle()
             val isDark = chosenDark ?: isSystemInDarkTheme()
+            val notificationsEnabled by container.changeNotificationPreference.enabled.collectAsStateWithLifecycle()
             SettingsScreen(
                 viewModel = settingsViewModel,
                 categoriesViewModel = categoriesViewModel,
@@ -333,9 +338,25 @@ fun ObelixNavHost(
                 onOpenImport = { navController.navigate(ImportRoute) },
                 isDark = isDark,
                 onToggleTheme = { container.themePreference.setDarkMode(!isDark) },
+                notificationsEnabled = notificationsEnabled,
+                onNotificationsChange = container.changeNotificationPreference::setEnabled,
             )
         }
     }
+
+    // Version 26: Antippen einer Benachrichtigung öffnet den Bereich. Erst nach dem NavHost, damit der Graph gesetzt ist.
+    LaunchedEffect(openArea) {
+        val area = openArea ?: return@LaunchedEffect
+        navController.navigateToTopLevel(area.destination())
+        onAreaOpened()
+    }
+}
+
+private fun ChangeArea.destination(): TopLevelDestination = when (this) {
+    ChangeArea.CALENDAR -> TopLevelDestination.CALENDAR
+    ChangeArea.FINANCE -> TopLevelDestination.FINANCE
+    ChangeArea.TASKS -> TopLevelDestination.TASKS
+    ChangeArea.CAMPSITES -> TopLevelDestination.CAMPSITES
 }
 
 /** Wechselt zwischen Hauptbereichen, ohne den Back-Stack aufzublähen. */

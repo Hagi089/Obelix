@@ -4,6 +4,8 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Version 26: Hinweis bei Änderungen anderer Benutzer (Android 13+ fragt zur Laufzeit). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <!-- Phase 9: Standort nur auf Knopfdruck und im Vordergrund. -->
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
