@@ -14,7 +14,8 @@ Status: **Alle Phasen (1 bis 12) abgenommen; alle Abschlusskriterien erfüllt.**
 | Aufgaben | Auffälligkeiten und Reparaturen: erstellen, bearbeiten, erledigen, wieder öffnen, Filter Offen/Erledigt/Alle. |
 | Stellplätze | Standort einmalig auf Knopfdruck, Kommentar, bis zu drei Fotos, Liste und Karte (OpenStreetMap). Im Formular zeigt eine Karte mit verschiebbarem Marker die Position; ein ungenauer Standort lässt sich durch Ziehen des Markers korrigieren. „Navigation starten“ nutzt immer die gespeicherte (korrigierte) Position und öffnet eine externe App. |
 | Dokumente | Wichtige Unterlagen (Bild oder PDF) mit Name und Kategorie, öffnen und löschen. |
-| Einstellungen | Hell-/Dunkelmodus, Benutzerverwaltung und Zugangscode (nur ADMIN), Kategorien (nur ADMIN), Excel-Import (einmalig, nur ADMIN), **Backup als ZIP (nur ADMIN, siehe [`docs/BACKUP.md`](docs/BACKUP.md))**, Version. |
+| Benachrichtigungen | Etwa einmal pro Stunde prüft die App im Hintergrund, ob andere Benutzer in Kalender, Finanzen, Aufgaben, Stellplätzen oder Dokumenten etwas eingetragen oder geändert haben, und zeigt je Bereich eine Benachrichtigung („Benutzer A hat etwas unter Kalender eingetragen.“). Antippen öffnet den Bereich; abschaltbar in den Einstellungen. |
+| Einstellungen | Hell-/Dunkelmodus, Benachrichtigungen an/aus, Benutzerverwaltung und Zugangscode (nur ADMIN), Kategorien (nur ADMIN), Excel-Import (einmalig, nur ADMIN), **Backup als ZIP (nur ADMIN, siehe [`docs/BACKUP.md`](docs/BACKUP.md))**, Version. |
 
 Jeder Bildschirm kennt die Zustände Laden, Leer, Fehler und Offline. Bei fehlender Verbindung steht „Keine Internetverbindung. Die angezeigten Daten sind möglicherweise nicht aktuell.“ Eine Änderung gilt erst als gespeichert, wenn der Server sie bestätigt hat (kein dauerhafter Offline-Cache, keine Offline-Synchronisation). Gelöscht wird immer nach einer Bestätigung.
 
@@ -30,6 +31,7 @@ Jeder Bildschirm kennt die Zustände Laden, Leer, Fehler und Offline. Bei fehlen
 - Navigation Compose mit typsicheren Routen
 - Firebase Authentication und Cloud Firestore (Spark-Tarif, Region `europe-west3`), keine Cloud Functions
 - Dateien (Belege, Fotos, Dokumente) liegen in Stücken zu 900 KiB in Firestore, höchstens 8 MiB je Datei (Firebase Storage ist ohne Bezahltarif nicht nutzbar, siehe Plan, Abschnitt 6)
+- Hintergrundprüfung mit WorkManager und lokalen Benachrichtigungen (kein Firebase Cloud Messaging, kein Server)
 - Standort über Google Play Services, nur auf Knopfdruck und im Vordergrund; Karte mit osmdroid und OpenStreetMap-Kacheln (ohne API-Schlüssel)
 - Android-Architekturleitfaden, [Kotlin-Styleguide](https://developer.android.com/kotlin/style-guide) und [Material 3](https://m3.material.io)
 
@@ -96,6 +98,7 @@ Nicht automatisch testbar sind Gerätefunktionen (Standort, Kamera, Karte, Datei
 
 ## Bekannte Grenzen
 - Keine Offline-Synchronisation (bewusst, Anforderung 8).
+- Benachrichtigungen kommen **nicht in Echtzeit**: etwa einmal pro Stunde, im Energiesparmodus oder bei selten genutzter App auch später; Löschen wird nicht gemeldet (Plan, Entscheidung 53). Ein echter Push bräuchte Cloud Functions (Blaze-Tarif) oder einen externen Vermittler.
 - Zwei Benutzer, die im selben Augenblick überlappende Kalendereinträge speichern, können sich überschneiden (die Prüfung läuft vor dem Schreiben, Plan Risiko 8).
 - osmdroid ist archiviert; ein Ersatz beträfe nur `ui/campsites/CampsiteMap.kt`.
 - Das Backup (Einstellungen, nur ADMIN) sichert Daten und Dateien, aber **ohne** Anmeldekonten und Zugangscode, und es gibt **kein Wiederherstellen in der App** (siehe [`docs/BACKUP.md`](docs/BACKUP.md)).

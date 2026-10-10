@@ -2,6 +2,8 @@
 
 Stand: 10.10.2026 · Letzter Stand im Repository: Version 25 (Commit `8ea3ce9`, Lauf 38066975289, danach nur Docs). Gerätetest G16-01 bis G16-12 bestanden.
 
+> **Ergebnis (10.10.2026):** Recherchiert und entschieden, siehe Plan **Entscheidung 53** und `docs/UEBERGABE.md`, Abschnitt 3p. Belegt: Cloud Functions brauchen den Blaze-Tarif (Firebase-FAQ); FCM-HTTP-v1 verlangt Server-Zugangsdaten (Dienstkonto). Der Benutzer wählte **Option C** (hier Abschnitt 4; im Chat „Option 1“): Hintergrundprüfung per WorkManager **etwa einmal pro Stunde** mit lokaler Benachrichtigung, **Dokumente** zusätzlich aufgenommen. Umgesetzt als **Version 26**. Für einen späteren echten Push bleiben Option A (Blaze) oder E (z. B. Cloudflare Worker als Vermittler, Gratis-Plan 100.000 Anfragen pro Tag, neues Konto, Dienstkonto-Schlüssel als Secret). Der Rest dieser Datei ist der Stand **vor** der Entscheidung.
+
 Diese Datei ist die Übergabe an den neuen Chat. Sie trennt klar: **A = aus dem Code geprüft**, **B = nicht geprüft (Annahme/Wissensstand, im neuen Chat zu recherchieren)**. Es wurde **noch nichts umgesetzt und keine Lösung beschlossen.**
 
 ---
