@@ -24,6 +24,8 @@ data class Repair(
     val comment: String,
     /** Benutzer, der die Auffälligkeit angelegt hat. */
     val createdBy: String,
+    /** Optional: Kalendertag (`yyyy-MM-dd`), bis zu dem die Auffälligkeit erledigt sein soll („Geplant bis zum“). */
+    val plannedUntil: String? = null,
 )
 
 /** Eingabe zum Anlegen oder Ändern. Der Status wird getrennt übergeben. */
@@ -33,4 +35,6 @@ data class RepairInput(
     val date: String,
     val priority: Priority?,
     val comment: String,
+    /** Optional: „Geplant bis zum“ als `yyyy-MM-dd`; null = kein Datum. */
+    val plannedUntil: String? = null,
 )

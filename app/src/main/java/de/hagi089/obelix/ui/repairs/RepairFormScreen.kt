@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +52,7 @@ fun RepairFormScreen(
     LaunchedEffect(state.finished) { if (state.finished) onFinished() }
     var confirmDelete by remember { mutableStateOf(false) }
     var datePickerOpen by remember { mutableStateOf(false) }
+    var plannedUntilPickerOpen by remember { mutableStateOf(false) }
 
     when {
         state.isLoading -> Box(modifier = modifier.fillMaxSize(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
@@ -67,7 +69,7 @@ fun RepairFormScreen(
             Button(onClick = viewModel::load, modifier = Modifier.heightIn(min = 48.dp)) { Text(stringResource(R.string.action_retry)) }
         }
         else -> Column(
-            modifier = modifier.fillMaxSize().verticalScroll(rememberScrollState()).padding(16.dp),
+            modifier = modifier.fillMaxSize().imePadding().verticalScroll(rememberScrollState()).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             val editable = !state.isSaving
@@ -111,6 +113,28 @@ fun RepairFormScreen(
                     modifier = Modifier.padding(start = 16.dp),
                 )
             }
+            OutlinedButton(onClick = { plannedUntilPickerOpen = true }, enabled = editable, modifier = Modifier.fillMaxWidth().heightIn(min = 56.dp)) {
+                Column(modifier = Modifier.weight(1f), horizontalAlignment = Alignment.Start) {
+                    Text(stringResource(R.string.field_repair_planned_until), style = MaterialTheme.typography.labelSmall)
+                    Text(
+                        text = state.plannedUntil?.let { formatDay(it) } ?: stringResource(R.string.repair_planned_until_none),
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+            state.plannedUntilError?.let {
+                Text(
+                    text = stringResource(it),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.error,
+                    modifier = Modifier.padding(start = 16.dp),
+                )
+            }
+            if (state.plannedUntil != null) {
+                TextButton(onClick = { viewModel.setPlannedUntil(null) }, enabled = editable, modifier = Modifier.heightIn(min = 48.dp)) {
+                    Text(stringResource(R.string.repair_planned_until_clear))
+                }
+            }
             val noneText = stringResource(R.string.select_none)
             SelectorField(
                 label = stringResource(R.string.field_priority),
@@ -128,7 +152,7 @@ fun RepairFormScreen(
                 label = { Text(stringResource(R.string.field_comment)) },
                 isError = state.commentError != null,
                 supportingText = { state.commentError?.let { Text(stringResource(it)) } },
-                minLines = 2,
+                minLines = 4,
                 enabled = editable,
                 modifier = Modifier.fillMaxWidth(),
             )
@@ -168,6 +192,13 @@ fun RepairFormScreen(
             initialIso = state.date,
             onSelected = { viewModel.setDate(it); datePickerOpen = false },
             onDismiss = { datePickerOpen = false },
+        )
+    }
+    if (plannedUntilPickerOpen) {
+        DateDialog(
+            initialIso = state.plannedUntil ?: state.date,
+            onSelected = { viewModel.setPlannedUntil(it); plannedUntilPickerOpen = false },
+            onDismiss = { plannedUntilPickerOpen = false },
         )
     }
     if (confirmDelete) {

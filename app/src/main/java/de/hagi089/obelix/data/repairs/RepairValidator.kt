@@ -2,6 +2,8 @@ package de.hagi089.obelix.data.repairs
 
 import androidx.annotation.StringRes
 import de.hagi089.obelix.R
+import java.time.LocalDate
+import java.time.format.DateTimeParseException
 
 /**
  * Eingabeprüfung für Auffälligkeiten (Anforderung 35). Datum und Kommentar prüft
@@ -17,6 +19,18 @@ object RepairValidator {
         text.isBlank() -> R.string.error_repair_title_required
         text.trim().length > MAX_TITLE -> R.string.error_repair_title_too_long
         else -> null
+    }
+
+    /** „Geplant bis zum“ ist optional (null = kein Datum); ein gesetzter Wert muss ein gültiger Kalendertag `yyyy-MM-dd` sein. */
+    @StringRes
+    fun plannedUntil(iso: String?): Int? {
+        if (iso == null) return null
+        return try {
+            LocalDate.parse(iso)
+            null
+        } catch (e: DateTimeParseException) {
+            R.string.error_repair_planned_until_invalid
+        }
     }
 
     @StringRes

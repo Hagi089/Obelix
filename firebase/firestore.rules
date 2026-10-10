@@ -166,14 +166,16 @@ service cloud.firestore {
     }
 
     // Auffälligkeit (Phase 8): Problem oder offene Arbeit am Wohnmobil. Status OPEN oder DONE (Oberfläche:
-    // OFFEN / ERLEDIGT), priority optional. Muss zu data/repairs/RepairValidator.kt passen.
+    // OFFEN / ERLEDIGT), priority optional, plannedUntil („Geplant bis zum“, Version 25) optional als Kalendertag.
+    // Muss zu data/repairs/RepairValidator.kt passen.
     function validRepair(d) {
-      return d.keys().hasOnly(['title', 'description', 'date', 'status', 'priority', 'comment',
+      return d.keys().hasOnly(['title', 'description', 'date', 'plannedUntil', 'status', 'priority', 'comment',
                                'createdAt', 'createdBy', 'updatedAt', 'updatedBy'])
         && d.keys().hasAll(['title', 'description', 'date', 'status', 'comment', 'createdAt', 'createdBy'])
         && validText(d.title, 200)
         && validText(d.description, 2000)
         && validDay(d.date)
+        && (!('plannedUntil' in d) || validDay(d.plannedUntil))
         && d.status in ['OPEN', 'DONE']
         && (!('priority' in d) || d.priority in ['LOW', 'MEDIUM', 'HIGH'])
         && d.comment is string && d.comment.size() <= 500;

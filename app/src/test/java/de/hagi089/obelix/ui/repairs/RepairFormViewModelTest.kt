@@ -92,6 +92,79 @@ class RepairFormViewModelTest {
     }
 
     @Test
+    fun newRepair_hasNoPlannedUntil_andSavesNull() {
+        val repairs = FakeRepairs()
+        val vm = viewModel(repairs)
+        assertNull(vm.state.value.plannedUntil)
+        vm.fill()
+        vm.save()
+        assertNull(repairs.created.single().plannedUntil)
+    }
+
+    @Test
+    fun save_newRepair_withPlannedUntil_passesItOn() {
+        val repairs = FakeRepairs()
+        val vm = viewModel(repairs)
+        vm.fill()
+        vm.setPlannedUntil("2026-11-15")
+        vm.save()
+        assertEquals("2026-11-15", repairs.created.single().plannedUntil)
+        assertEquals("2026-10-01", repairs.created.single().date) // das erste Datum bleibt unberührt
+        assertTrue(vm.state.value.finished)
+    }
+
+    @Test
+    fun setPlannedUntil_null_removesTheDate() {
+        val repairs = FakeRepairs()
+        val vm = viewModel(repairs)
+        vm.fill()
+        vm.setPlannedUntil("2026-11-15")
+        vm.setPlannedUntil(null)
+        vm.save()
+        assertNull(repairs.created.single().plannedUntil)
+    }
+
+    @Test
+    fun save_invalidPlannedUntil_showsErrorAndWritesNothing() {
+        val repairs = FakeRepairs()
+        val vm = viewModel(repairs)
+        vm.fill()
+        vm.setPlannedUntil("kaputt")
+        vm.save()
+        assertEquals(R.string.error_repair_planned_until_invalid, vm.state.value.plannedUntilError)
+        assertTrue(repairs.created.isEmpty())
+        assertFalse(vm.state.value.finished)
+        vm.setPlannedUntil("2026-11-15")
+        assertNull(vm.state.value.plannedUntilError)
+    }
+
+    @Test
+    fun edit_loadsPlannedUntil_andCanChangeAndClearIt() {
+        val withDate = repair().copy(plannedUntil = "2026-10-20")
+        val repairs = FakeRepairs(existing = withDate)
+        val vm = viewModel(repairs, "r1")
+        assertEquals("2026-10-20", vm.state.value.plannedUntil)
+        vm.setPlannedUntil("2026-10-25")
+        vm.save()
+        assertEquals("2026-10-25", repairs.updated.single().second.plannedUntil)
+
+        val repairs2 = FakeRepairs(existing = withDate)
+        val vm2 = viewModel(repairs2, "r1")
+        vm2.setPlannedUntil(null)
+        vm2.save()
+        assertNull(repairs2.updated.single().second.plannedUntil)
+    }
+
+    @Test
+    fun edit_existingWithoutPlannedUntil_staysWithoutIt() {
+        val repairs = FakeRepairs(existing = repair())
+        val vm = viewModel(repairs, "r1")
+        assertNull(vm.state.value.plannedUntil)
+        vm.save()
+        assertNull(repairs.updated.single().second.plannedUntil)
+    }
+
+    @Test
     fun save_withoutTitleOrDescription_showsErrorsAndWritesNothing() {
         val repairs = FakeRepairs()
         val vm = viewModel(repairs)

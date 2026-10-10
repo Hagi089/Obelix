@@ -33,6 +33,24 @@ class RepairValidatorTest {
     }
 
     @Test
+    fun plannedUntil_isOptional() {
+        assertNull(RepairValidator.plannedUntil(null))
+    }
+
+    @Test
+    fun plannedUntil_acceptsValidDay() {
+        assertNull(RepairValidator.plannedUntil("2026-10-31"))
+        assertNull(RepairValidator.plannedUntil("2028-02-29")) // Schaltjahr
+    }
+
+    @Test
+    fun plannedUntil_rejectsInvalidDay() {
+        assertEquals(R.string.error_repair_planned_until_invalid, RepairValidator.plannedUntil(""))
+        assertEquals(R.string.error_repair_planned_until_invalid, RepairValidator.plannedUntil("31.10.2026"))
+        assertEquals(R.string.error_repair_planned_until_invalid, RepairValidator.plannedUntil("2026-02-30"))
+    }
+
+    @Test
     fun validText_isAccepted() {
         assertNull(RepairValidator.title("Wasserhahn tropft"))
         assertNull(RepairValidator.description("Der Hahn in der Küche tropft."))

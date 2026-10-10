@@ -32,9 +32,12 @@ data class RepairFormState(
     val date: String = LocalDate.now().toString(),
     val priority: Priority? = null,
     val comment: String = "",
+    /** „Geplant bis zum“ als `yyyy-MM-dd`; null = kein Datum (optional). */
+    val plannedUntil: String? = null,
     @param:StringRes val titleError: Int? = null,
     @param:StringRes val descriptionError: Int? = null,
     @param:StringRes val dateError: Int? = null,
+    @param:StringRes val plannedUntilError: Int? = null,
     @param:StringRes val commentError: Int? = null,
     /** true, sobald gespeichert, erledigt, wieder geöffnet oder gelöscht wurde: der Bildschirm schließt sich. */
     val finished: Boolean = false,
@@ -83,6 +86,7 @@ class RepairFormViewModel(
                             date = existing.date,
                             priority = existing.priority,
                             comment = existing.comment,
+                            plannedUntil = existing.plannedUntil,
                         )
                     }
                 }
@@ -93,6 +97,8 @@ class RepairFormViewModel(
     fun setTitle(text: String) = _state.update { it.copy(title = text, titleError = null) }
     fun setDescription(text: String) = _state.update { it.copy(description = text, descriptionError = null) }
     fun setDate(iso: String) = _state.update { it.copy(date = iso, dateError = null) }
+    /** null entfernt das Datum „Geplant bis zum“. */
+    fun setPlannedUntil(iso: String?) = _state.update { it.copy(plannedUntil = iso, plannedUntilError = null) }
     fun setPriority(priority: Priority?) = _state.update { it.copy(priority = priority) }
     fun setComment(text: String) = _state.update { it.copy(comment = text, commentError = null) }
 
@@ -124,10 +130,11 @@ class RepairFormViewModel(
             titleError = RepairValidator.title(s.title),
             descriptionError = RepairValidator.description(s.description),
             dateError = BookingValidator.date(s.date),
+            plannedUntilError = RepairValidator.plannedUntil(s.plannedUntil),
             commentError = BookingValidator.comment(s.comment),
             saveError = null,
         )
-        if (listOf(errors.titleError, errors.descriptionError, errors.dateError, errors.commentError).any { it != null }) {
+        if (listOf(errors.titleError, errors.descriptionError, errors.dateError, errors.plannedUntilError, errors.commentError).any { it != null }) {
             _state.value = errors
             return
         }
@@ -137,6 +144,7 @@ class RepairFormViewModel(
             date = s.date,
             priority = s.priority,
             comment = s.comment.trim(),
+            plannedUntil = s.plannedUntil,
         )
         _state.value = errors.copy(isSaving = true)
         scope.launch {

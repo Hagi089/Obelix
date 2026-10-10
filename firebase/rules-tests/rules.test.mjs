@@ -1267,6 +1267,9 @@ describe('R-11 Auffälligkeiten (repairs)', () => {
     await bad({ description: 'x'.repeat(2001) });
     await bad({ date: '10.10.2026' });
     await bad({ date: 20261010 });
+    await bad({ plannedUntil: '15.11.2026' }); // Geplant bis zum: nur yyyy-MM-dd
+    await bad({ plannedUntil: 20261115 });
+    await bad({ plannedUntil: '' });
     await bad({ status: 'DONE' }); // neue Auffälligkeiten sind immer offen
     await bad({ status: 'CLOSED' });
     await bad({ status: 'open' });
@@ -1285,6 +1288,24 @@ describe('R-11 Auffälligkeiten (repairs)', () => {
     await assertSucceeds(setDoc(doc(db, 'repairs/g1'), repair('member', {
       title: 'x'.repeat(200), description: 'x'.repeat(2000), comment: 'x'.repeat(500),
     })));
+  });
+
+  it('R-11i Geplant bis zum (plannedUntil) ist optional: anlegen, setzen, ändern, entfernen; alte Dokumente bleiben gültig', async () => {
+    const db = as('member');
+    await assertSucceeds(setDoc(doc(db, 'repairs/pu1'), repair('member', { plannedUntil: '2026-11-15' })));
+    await assertSucceeds(setDoc(doc(db, 'repairs/pu2'), repair('member'))); // ohne das Feld (wie bis Version 24)
+    // Altbestand ohne Feld: Datum nachträglich setzen, ändern und wieder entfernen
+    await seedRepair('r1');
+    await assertSucceeds(updateDoc(doc(as('admin'), 'repairs/r1'), repairEdit('admin', { plannedUntil: '2026-12-01' })));
+    await assertSucceeds(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { plannedUntil: '2026-12-24' })));
+    const set = await assertSucceeds(getDoc(doc(as('member'), 'repairs/r1')));
+    if (set.data().plannedUntil !== '2026-12-24') throw new Error('Datum nicht gespeichert');
+    await assertSucceeds(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { plannedUntil: deleteField() })));
+    const cleared = await assertSucceeds(getDoc(doc(as('admin'), 'repairs/r1')));
+    if ('plannedUntil' in cleared.data()) throw new Error('Datum nicht entfernt');
+    // ungültige Werte beim Ändern
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { plannedUntil: 'morgen' })));
+    await assertFails(updateDoc(doc(as('member'), 'repairs/r1'), repairEdit('member', { plannedUntil: 5 })));
   });
 
   it('R-11d Erledigen und Wiederöffnen sind Statuswechsel mit Audit, jeder Benutzer darf beides', async () => {

@@ -280,6 +280,10 @@
     <string name="repair_action_done">Als erledigt markieren</string>
     <string name="repair_action_reopen">Wieder öffnen</string>
     <string name="field_repair_date">Datum</string>
+    <string name="field_repair_planned_until">Geplant bis zum</string>
+    <string name="repair_planned_until_none">Kein Datum gewählt</string>
+    <string name="repair_planned_until_clear">Datum entfernen</string>
+    <string name="error_repair_planned_until_invalid">Bitte wähle ein gültiges Datum.</string>
     <string name="repair_delete_title">Auffälligkeit löschen?</string>
     <string name="repair_delete_text">Die Auffälligkeit wird endgültig gelöscht.</string>
     <string name="error_repair_title_required">Bitte gib einen Titel ein.</string>

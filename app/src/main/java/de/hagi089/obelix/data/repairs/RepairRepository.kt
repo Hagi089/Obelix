@@ -52,6 +52,7 @@ class FirestoreRepairRepository(private val db: FirebaseFirestore) : RepairRepos
             put("status", RepairStatus.OPEN.name)
             input.priority?.let { put("priority", it.name) }
             put("comment", input.comment)
+            input.plannedUntil?.let { put("plannedUntil", it) }
             put("createdAt", FieldValue.serverTimestamp())
             put("createdBy", uid)
         }
@@ -66,6 +67,7 @@ class FirestoreRepairRepository(private val db: FirebaseFirestore) : RepairRepos
             put("status", status.name)
             put("priority", input.priority?.name ?: FieldValue.delete())
             put("comment", input.comment)
+            put("plannedUntil", input.plannedUntil ?: FieldValue.delete())
             put("updatedAt", FieldValue.serverTimestamp())
             put("updatedBy", uid)
         }
@@ -87,6 +89,7 @@ class FirestoreRepairRepository(private val db: FirebaseFirestore) : RepairRepos
             priority = Priority.from(getString("priority")),
             comment = getString("comment") ?: "",
             createdBy = getString("createdBy") ?: return null,
+            plannedUntil = getString("plannedUntil"),
         )
     }
 }
