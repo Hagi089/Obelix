@@ -181,7 +181,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Umsetzung:** Im Formular einer Auffälligkeit (Bereich „Aufgaben“, Sammlung `repairs`) gibt es ein zweites **optionales** Datumsfeld „Geplant bis zum“ (Feld `plannedUntil`, `yyyy-MM-dd`, mit „Datum entfernen“). Bestehende Auffälligkeiten ohne das Feld bleiben gültig. Kommentarfeld von 2 auf 4 Zeilen; das Formular hat `imePadding`, damit die Tastatur das Kommentarfeld nicht verdeckt (Ursache der Kollision: Edge-to-Edge, `adjustResize` wirkt dort nicht; nur die Anmeldebildschirme hatten `imePadding`).
 - **Bewusst nicht geändert:** Liste und Dashboard zeigen „Geplant bis zum“ nicht an; es gibt keine Prüfung gegen das Feld „Datum“; die anderen Formulare (Buchung, Kalender, Stellplatz, Dokument, geplante Ausgabe) haben weiterhin kein `imePadding`.
 - **Regeländerung:** `validRepair` erlaubt `plannedUntil` (optional, `validDay`) → **Regeln neu veröffentlichen**.
-- **Offen:** Lauf in GitHub Actions (Bau, Lint, 369 Unit-Tests, 117 Regel-Tests erwartet), Gerätetest G16-01 bis G16-12 (`docs/TESTFAELLE.md`, 2.4o), insbesondere das Tastaturverhalten (von mir nicht prüfbar).
+- **Automatisch grün:** Bau, Lint, Unit-Tests (369 aus den Quellen gezählt) und 117 von 117 Regel-Tests beim ersten Lauf (Commit `8ea3ce9`, Lauf 38066975289).
+- **Offen:** Regeln veröffentlichen, Gerätetest G16-01 bis G16-12 (`docs/TESTFAELLE.md`, 2.4o), insbesondere das Tastaturverhalten (von mir nicht prüfbar).
 - **Als Nächstes (neuer Chat):** Push-Benachrichtigungen an alle anderen Benutzer, wenn jemand in Kalender, Finanzen, Aufgaben oder Stellplätzen etwas anlegt oder ändert. Einschränkung zu klären: Firebase Spark ohne Cloud Functions (siehe Rahmenbedingungen), Senden von FCM-Nachrichten braucht normalerweise einen Server.
 
 ## 3n. Kalender: Jahresübersicht (02.10.2026, Version 24, Details: Plan, Entscheidung 51)
