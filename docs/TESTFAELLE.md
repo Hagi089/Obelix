@@ -410,24 +410,24 @@ Neu: Umschaltung „Jahresübersicht | Monatsübersicht“, Jahresübersicht mit
 | G15-11 | **Darstellung:** kleines Telefon, Querformat/Tablet (3 Spalten), große Schrift, Hell- und Dunkelmodus; viele Einträge | Monate nicht abgeschnitten, Tage lesbar, Kennzeile umbricht sinnvoll, Liste scrollt flüssig, Knopf „+“ verdeckt nichts Wichtiges | ✅ |
 | G15-12 | **TalkBack:** Monat in der Jahresübersicht, Umschaltung, Jahreswechsel | Monat wird als „Oktober 2026, 8 Tage belegt“ mit Aktion „Monat Oktober öffnen“ angesagt; Umschaltung als Auswahl; Jahr wird beim Wechsel angesagt; einzelne Einträge über die Liste erreichbar | ✅ |
 
-### 2.4o Gerätetest Aufgaben: „Geplant bis zum“ und Kommentarfeld (Version 25) (⏳ offen)
+### 2.4o Gerätetest Aufgaben: „Geplant bis zum“ und Kommentarfeld (Version 25) (✅ G16-01 bis G16-12 bestanden, Version 25, 10.10.2026)
 
 Neu: Im Formular einer Auffälligkeit (Bereich „Aufgaben“) gibt es ein zweites, **optionales** Datumsfeld „Geplant bis zum“ (neues Feld `plannedUntil`, Format `yyyy-MM-dd`); das Kommentarfeld ist größer (4 statt 2 Zeilen), und das Formular weicht der Tastatur aus (`imePadding`). Automatisch geprüft: `RepairValidatorTest` (3 neu), `RepairFormViewModelTest` (6 neu), Regel-Test R-11i und zusätzliche Fälle in R-11c. **Von mir nicht prüfbar:** das Verhalten mit der echten Tastatur auf dem Telefon (Version 25: Abstand über der Tastatur, evtl. zusätzlicher Leerraum durch die Navigationsleiste), Datumsauswahl, TalkBack. **Regeländerung: Regeln in der Firebase-Konsole neu veröffentlichen, sonst scheitert das Speichern mit „Geplant bis zum“.**
 
 | Nr. | Schritte | Erwartet | Ergebnis |
 |---|---|---|---|
-| G16-01 | Neue `obelix-apk` (Version 25) **ohne Deinstallieren** über Version 24 installieren | „Version 25“ unten in den Einstellungen; vorhandene Auffälligkeiten sichtbar wie vorher | ⏳ |
-| G16-02 | Aufgaben → „Auffälligkeit hinzufügen“ | Unter „Datum“ steht ein zweites Feld „Geplant bis zum“ mit „Kein Datum gewählt“; kein Knopf „Datum entfernen“ | ⏳ |
-| G16-03 | Neue Auffälligkeit **ohne** „Geplant bis zum“ speichern | Wird gespeichert wie bisher; beim erneuten Öffnen „Kein Datum gewählt“ | ⏳ |
-| G16-04 | Neue Auffälligkeit mit „Geplant bis zum“ (Datum wählen, OK) speichern, wieder öffnen | Das gewählte Datum steht im Feld; das Feld „Datum“ ist unverändert | ⏳ |
-| G16-05 | Datum ändern, speichern; danach „Datum entfernen“, speichern | Änderung wird übernommen; nach dem Entfernen steht wieder „Kein Datum gewählt“ | ⏳ |
-| G16-06 | Bestehende Auffälligkeit aus Version 24 öffnen, ohne „Geplant bis zum“ speichern; danach mit Datum | Beides lässt sich speichern (Regeln veröffentlicht); Titel, Beschreibung, Priorität, Kommentar, Status unverändert | ⏳ |
-| G16-07 | **Regression:** Als erledigt markieren, Wieder öffnen, Löschen, Filter Offen/Erledigt/Alle, Zähler, Dashboard-Kachel „offene Auffälligkeiten“ | Alles wie in Version 24 | ⏳ |
-| G16-08 | **Tastatur:** Kommentarfeld antippen, Text mit mehreren Zeilen eingeben (Hoch- und Querformat) | Das Kommentarfeld bleibt über der Tastatur sichtbar, die Eingabezeile wird nicht verdeckt, das Formular lässt sich weiter scrollen; Speichern-Knopf nach Schließen der Tastatur erreichbar. **Auffälligkeiten melden:** großer Leerraum über der Tastatur? | ⏳ |
-| G16-09 | **Tastatur:** Titel und Beschreibung antippen | Das jeweilige Feld bleibt sichtbar; kein Springen der Ansicht | ⏳ |
-| G16-10 | Kommentar mit mehr als 500 Zeichen | Fehlermeldung wie bisher, nichts wird gespeichert | ⏳ |
-| G16-11 | **Backup (ADMIN):** Backup erstellen, `data.json` ansehen (Auffälligkeit mit „Geplant bis zum“) | Feld `plannedUntil` ist in `repairs` enthalten; Backup ohne Fehler | ⏳ |
-| G16-12 | **Darstellung:** kleines Telefon, große Schrift, Hell-/Dunkelmodus; **TalkBack** auf dem neuen Feld | Feld nicht abgeschnitten; „Geplant bis zum, Kein Datum gewählt“ bzw. das Datum wird angesagt; „Datum entfernen“ erreichbar | ⏳ |
+| G16-01 | Neue `obelix-apk` (Version 25) **ohne Deinstallieren** über Version 24 installieren | „Version 25“ unten in den Einstellungen; vorhandene Auffälligkeiten sichtbar wie vorher | ✅ |
+| G16-02 | Aufgaben → „Auffälligkeit hinzufügen“ | Unter „Datum“ steht ein zweites Feld „Geplant bis zum“ mit „Kein Datum gewählt“; kein Knopf „Datum entfernen“ | ✅ |
+| G16-03 | Neue Auffälligkeit **ohne** „Geplant bis zum“ speichern | Wird gespeichert wie bisher; beim erneuten Öffnen „Kein Datum gewählt“ | ✅ |
+| G16-04 | Neue Auffälligkeit mit „Geplant bis zum“ (Datum wählen, OK) speichern, wieder öffnen | Das gewählte Datum steht im Feld; das Feld „Datum“ ist unverändert | ✅ |
+| G16-05 | Datum ändern, speichern; danach „Datum entfernen“, speichern | Änderung wird übernommen; nach dem Entfernen steht wieder „Kein Datum gewählt“ | ✅ |
+| G16-06 | Bestehende Auffälligkeit aus Version 24 öffnen, ohne „Geplant bis zum“ speichern; danach mit Datum | Beides lässt sich speichern (Regeln veröffentlicht); Titel, Beschreibung, Priorität, Kommentar, Status unverändert | ✅ |
+| G16-07 | **Regression:** Als erledigt markieren, Wieder öffnen, Löschen, Filter Offen/Erledigt/Alle, Zähler, Dashboard-Kachel „offene Auffälligkeiten“ | Alles wie in Version 24 | ✅ |
+| G16-08 | **Tastatur:** Kommentarfeld antippen, Text mit mehreren Zeilen eingeben (Hoch- und Querformat) | Das Kommentarfeld bleibt über der Tastatur sichtbar, die Eingabezeile wird nicht verdeckt, das Formular lässt sich weiter scrollen; Speichern-Knopf nach Schließen der Tastatur erreichbar. **Auffälligkeiten melden:** großer Leerraum über der Tastatur? | ✅ |
+| G16-09 | **Tastatur:** Titel und Beschreibung antippen | Das jeweilige Feld bleibt sichtbar; kein Springen der Ansicht | ✅ |
+| G16-10 | Kommentar mit mehr als 500 Zeichen | Fehlermeldung wie bisher, nichts wird gespeichert | ✅ |
+| G16-11 | **Backup (ADMIN):** Backup erstellen, `data.json` ansehen (Auffälligkeit mit „Geplant bis zum“) | Feld `plannedUntil` ist in `repairs` enthalten; Backup ohne Fehler | ✅ |
+| G16-12 | **Darstellung:** kleines Telefon, große Schrift, Hell-/Dunkelmodus; **TalkBack** auf dem neuen Feld | Feld nicht abgeschnitten; „Geplant bis zum, Kein Datum gewählt“ bzw. das Datum wird angesagt; „Datum entfernen“ erreichbar | ✅ |
 
 ### 2.5 Emulator-Tests der Sicherheitsregeln (✅ bestanden, GitHub Actions)
 
@@ -567,3 +567,4 @@ Wird beim Umsetzen der jeweiligen Phase in konkrete Fälle mit Schritten überf�
 | 02.10.2026 | **Kalender-Jahresübersicht (Version 24, Entscheidung 51):** Umschaltung Jahres-/Monatsübersicht, Jahresübersicht mit zwölf Mini-Monaten, Jahreskennzahl, Jahresliste, Jahreswechsel. Neue Unit-Tests `CalendarYearTest` und `CalendarViewModelTest`. Gerätefälle G15-01 bis G15-12 offen |
 | 02.10.2026 | Benutzer meldet G15-01 bis G15-12 als bestanden. **Kalender-Jahresübersicht (Version 24) vollständig abgenommen** |
 | 10.10.2026 | **Version 25 in Arbeit (Aufgaben):** zweites, optionales Datumsfeld „Geplant bis zum“ (`plannedUntil`) im Formular einer Auffälligkeit, Kommentarfeld größer (4 Zeilen) und Ausweichen vor der Tastatur (`imePadding`). **Regeländerung** (`validRepair`): Regeln neu veröffentlichen. Neu: 9 Unit-Tests (369 aus den Quellen gezählt), Regel-Test R-11i (117). Bau (Debug und Release, fest signiert), Lint, Unit-Tests und **117 von 117 Regel-Tests** beim **ersten** Lauf grün (Commit `8ea3ce9`, Lauf 38066975289). Gerätefälle G16-01 bis G16-12 offen; vorher die Regeln in der Firebase-Konsole veröffentlichen |
+| 10.10.2026 | Benutzer meldet G16-01 bis G16-12 als bestanden (Version 25, Regeln veröffentlicht). **Aufgaben: „Geplant bis zum“ und größeres Kommentarfeld (Version 25) vollständig abgenommen** – einschließlich Tastaturverhalten (G16-08, G16-09), Regression der Auffälligkeiten (G16-07) und Backup (G16-11). Zum möglichen Leerraum über der Tastatur (G16-08) wurde kein Mangel gemeldet |

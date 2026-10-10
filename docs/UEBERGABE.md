@@ -26,6 +26,7 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 | **12** | **Qualitätssicherung (Version 20)** | **✅ abgenommen**: Bau, Lint, 293 Unit-Tests und 114 Regel-Tests grün (Commit `6ddfef5`, Lauf 36822992931), keine Regeländerung · **Gerätetest G12-01 bis G12-07 bestanden** (mit Version 21, 01.10.2026) |
 | – | Verbesserung Stellplatz-Karte und Positionskorrektur (Version 21) | ✅ umgesetzt: Bau, Lint, 303 Unit-Tests, 115 Regel-Tests grün (Commit `bfcdd62`, Lauf 36824668717), Regeländerung (Regeln veröffentlicht) · **✅ abgenommen: Gerätetest G9-19 bis G9-30 bestanden** |
 | – | **Finale Version 22: Sicherheit und Verteilung** | ✅ umgesetzt: Bau (Debug und Release), Lint, 303 Unit-Tests, 116 Regel-Tests grün (Commit `4ff774f`, Lauf 36827453945); **Regeländerung: Regeln neu veröffentlichen**; Secrets anlegen; **Gerätetest G13-01 bis G13-06 offen** |
+| – | **Aufgaben: „Geplant bis zum“, größeres Kommentarfeld (Version 25)** | ✅ abgenommen: Bau, Lint, 369 Unit-Tests, 117 Regel-Tests grün (Commit `8ea3ce9`, Lauf 38066975289); Regeln veröffentlicht; Gerätetest G16-01 bis G16-12 bestanden (Abschnitt 3o) |
 | – | **Admin-Backup (Version 23)** | ✅ umgesetzt: Bau (Debug und Release, fest signiert), Lint, 342 Unit-Tests, 116 Regel-Tests grün (Commit `d640c81`, Lauf 36860209374); **keine Regeländerung**; **Gerätetest G14-01 bis G14-09 offen** (`docs/TESTFAELLE.md`, 2.4m) |
 
 - Repository: `Hagi089/Obelix` (öffentlich), Branch `main`, letzter Stand mit grünem Bau.
@@ -182,8 +183,8 @@ Diese Datei ist die Kurzfassung für einen neuen Chat. Maßgeblich bleiben [`PRO
 - **Bewusst nicht geändert:** Liste und Dashboard zeigen „Geplant bis zum“ nicht an; es gibt keine Prüfung gegen das Feld „Datum“; die anderen Formulare (Buchung, Kalender, Stellplatz, Dokument, geplante Ausgabe) haben weiterhin kein `imePadding`.
 - **Regeländerung:** `validRepair` erlaubt `plannedUntil` (optional, `validDay`) → **Regeln neu veröffentlichen**.
 - **Automatisch grün:** Bau, Lint, Unit-Tests (369 aus den Quellen gezählt) und 117 von 117 Regel-Tests beim ersten Lauf (Commit `8ea3ce9`, Lauf 38066975289).
-- **Offen:** Regeln veröffentlichen, Gerätetest G16-01 bis G16-12 (`docs/TESTFAELLE.md`, 2.4o), insbesondere das Tastaturverhalten (von mir nicht prüfbar).
-- **Als Nächstes (neuer Chat):** Push-Benachrichtigungen an alle anderen Benutzer, wenn jemand in Kalender, Finanzen, Aufgaben oder Stellplätzen etwas anlegt oder ändert. Einschränkung zu klären: Firebase Spark ohne Cloud Functions (siehe Rahmenbedingungen), Senden von FCM-Nachrichten braucht normalerweise einen Server.
+- **Abgenommen (10.10.2026):** Regeln veröffentlicht, Gerätetest G16-01 bis G16-12 (`docs/TESTFAELLE.md`, 2.4o) vom Benutzer als bestanden gemeldet, auch das Tastaturverhalten.
+- **Als Nächstes (neuer Chat):** Push-Benachrichtigungen an alle anderen Benutzer, wenn jemand in Kalender, Finanzen, Aufgaben oder Stellplätzen etwas anlegt oder ändert. **Vollständige Übergabe: `docs/UEBERGABE-PUSH.md`.**
 
 ## 3n. Kalender: Jahresübersicht (02.10.2026, Version 24, Details: Plan, Entscheidung 51)
 - **Umgesetzt:** Kalender mit Umschaltung „Jahresübersicht | Monatsübersicht“ (Standard: Jahr). Jahresansicht: Jahreswechsel, Kennzahl belegte/freie Tage, zwölf Mini-Monate (2 Spalten, ab 600 dp 3), Legende, chronologische Jahresliste. Monatsansicht unverändert.
@@ -242,16 +243,16 @@ Für offene Punkte gelten bis zur Antwort des Benutzers die Vorschläge.
 
 ---
 
-## 7. Prompt für den nächsten Chat (Wartung und Verbesserungen)
+## 7. Prompt für den nächsten Chat (Push-Benachrichtigungen, Version 26)
 
-Das Projekt ist abgeschlossen. Nur nötig für Fehler aus G13 oder spätere Verbesserungen. Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App“).
+Das Projekt ist abgeschlossen; jetzt folgt die Erweiterung „Push-Benachrichtigungen“. Die ausführliche Übergabe mit Anforderung, Randbedingungen, offenen Fragen und Lösungsoptionen steht in **`docs/UEBERGABE-PUSH.md`**. Kopiere den folgenden Block als erste Nachricht in den neuen Chat (im selben Claude-Projekt „Obelix Wohnmobil App“).
 
 ```text
-Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst docs/UEBERGABE.md, docs/PROJEKTPLAN.md, docs/TESTFAELLE.md, docs/VERTEILUNG.md und im Claude-Projekt das Dokument "Anforderungen".
+Wir arbeiten am Projekt OBELIX (native Android-App für das gemeinsame Familien-Wohnmobil). Das GitHub-Repository heißt Obelix (Hagi089/Obelix, Branch main). Bitte binde es ein und lies zuerst docs/UEBERGABE-PUSH.md, danach docs/UEBERGABE.md, docs/PROJEKTPLAN.md, docs/TESTFAELLE.md und im Claude-Projekt das Dokument "Anforderungen".
 
-Stand: Alle Phasen abgenommen, Version 23 mit Admin-Backup (Commit d640c81; Bau Debug und Release, Lint, 342 Unit-Tests, 116 Regel-Tests grün). Gerätetest G13-01 bis G13-06 und G14-01 bis G14-09: <Ergebnis eintragen>. Die App wird als fest signierte Release-APK (Artefakt obelix-apk) verteilt; Updates ohne Deinstallieren.
+Stand: Alle Phasen abgenommen, Version 25 (Aufgaben: "Geplant bis zum", größeres Kommentarfeld; Commit 8ea3ce9, Lauf 38066975289; Bau, Lint, 369 Unit-Tests, 117 Regel-Tests grün; Gerätetest G16-01 bis G16-12 bestanden).
 
-Auftrag jetzt: <Fehler beheben / Verbesserung>.
+Auftrag jetzt (Version 26): Wenn irgendein Benutzer in den Hauptbereichen Kalender, Finanzen, Aufgaben oder Stellplätze etwas ändert oder neu hinzufügt, bekommen alle anderen Benutzer eine Push-Nachricht aufs Handy, z. B. "Robert hat etwas unter Kalender geändert" oder "Heidi hat etwas unter Aufgaben eingetragen". Gehe das bitte mit mir Schritt für Schritt durch: erst analysieren und die Machbarkeit mit Firebase Spark ohne Cloud Functions klären (nicht als Fakt annehmen, sondern recherchieren und Unsicherheiten kennzeichnen), dann Lösungsoptionen mit Vor- und Nachteilen vorlegen und meine Entscheidung abwarten, bevor du Code änderst.
 
-Rahmenbedingungen wie bisher (siehe UEBERGABE.md, Abschnitt 6): Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen; alles kostenlos (Firebase Spark, ohne Cloud Functions); gebaut und getestet wird in GitHub Actions; was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente am Ende aktualisieren; Excel-Dateien, Analysen, Importdateien und Signaturschlüssel nie committen, keine echten Namen in den Docs; bei jedem Deployment die Version erhöhen (nächste ist 26), sonst ist kein Update möglich; bei Regeländerungen erinnern, die Regeln zu veröffentlichen; beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl).
+Rahmenbedingungen wie bisher (siehe UEBERGABE.md, Abschnitt 6): Senior Softwareentwickler und Senior QA Engineer, erst analysieren, nur das Nötige ändern, auf Regressionen prüfen; alles kostenlos (Firebase Spark, ohne Cloud Functions, keine kostenpflichtigen Dienste ohne meine ausdrückliche Freigabe); gebaut und getestet wird in GitHub Actions; was du nicht testen kannst, kennzeichne als "von mir zu prüfen"; vor jedem Push git pull --rebase origin main; Plan, docs/TESTFAELLE.md und die Projektdokumente am Ende aktualisieren; Excel-Dateien, Analysen, Importdateien und Signaturschlüssel nie committen, keine echten Namen in den Docs; bei jedem Deployment die Version erhöhen (nächste ist 26), sonst ist kein Update möglich; bei Regeländerungen erinnern, die Regeln zu veröffentlichen; beim Warten auf GitHub Actions nur kurze Abfragen (unter 2 Minuten je Befehl).
 ```
