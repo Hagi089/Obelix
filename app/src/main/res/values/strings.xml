@@ -476,7 +476,7 @@
     <string name="change_unknown_person">Ein Benutzer</string>
     <string name="settings_notifications">Benachrichtigungen</string>
     <string name="settings_notifications_switch">Bei Änderungen anderer benachrichtigen</string>
-    <string name="settings_notifications_intro">Kalender, Finanzen, Aufgaben, Stellplätze und Dokumente werden etwa alle 15 Minuten geprüft. Android kann die Prüfung im Energiesparmodus verzögern. Gelöschte Einträge werden nicht gemeldet.</string>
+    <string name="settings_notifications_intro">Kalender, Finanzen, Aufgaben, Stellplätze und Dokumente werden etwa einmal pro Stunde geprüft. Android kann die Prüfung im Energiesparmodus verzögern. Gelöschte Einträge werden nicht gemeldet.</string>
     <string name="settings_notifications_blocked">Android erlaubt OBELIX derzeit keine Benachrichtigungen.</string>
     <string name="settings_notifications_open_system">In Android erlauben</string>
     <string name="settings_notifications_last">Letzte Prüfung: %1$s – %2$s</string>

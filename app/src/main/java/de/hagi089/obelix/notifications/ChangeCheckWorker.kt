@@ -13,9 +13,8 @@ import de.hagi089.obelix.ObelixApplication
 import java.util.concurrent.TimeUnit
 
 /**
- * Hintergrundprüfung auf Änderungen anderer Benutzer (Entscheidung 53, Option 1). Version 27: vorübergehend alle
- * 15 Minuten (Wunsch des Benutzers zum Testen; Android erlaubt nicht weniger), danach wieder etwa einmal pro Stunde.
- * Im Energiesparmodus oder bei selten genutzter App auch später. Liefert immer „Erfolg“: Bei einem Fehler bleibt der
+ * Hintergrundprüfung auf Änderungen anderer Benutzer (Entscheidung 53, Option 1). Etwa einmal pro Stunde (Wunsch des
+ * Benutzers; Version 27 lief zum Testen mit 15 Minuten, dem kleinsten Wert von Android). Im Energiesparmodus oder bei selten genutzter App auch später. Liefert immer „Erfolg“: Bei einem Fehler bleibt der
  * Stand stehen und die nächste Prüfung holt alles nach (kein Wiederholen, schont den Akku).
  */
 class ChangeCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -56,7 +55,7 @@ class ChangeCheckScheduler(context: Context) {
 
     private companion object {
         const val WORK_NAME = "change-check"
-        // Vorübergehend 15 für den Gerätetest (Version 27); danach wieder 60 (Entscheidung 53).
-        const val INTERVAL_MINUTES = 15L
+        // Entscheidung 53: 60 Minuten (Version 27 hatte zum Testen 15). UPDATE übernimmt den Wert nach dem Update.
+        const val INTERVAL_MINUTES = 60L
     }
 }
