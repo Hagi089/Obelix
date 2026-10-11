@@ -121,7 +121,7 @@ fun ObelixApp(container: AppContainer, openArea: ChangeArea? = null, onAreaOpene
                 onSignOut = sessionViewModel::signOut,
             )
             is ProfileState.Ready -> {
-                ChangeNotificationSetup(container)
+                ChangeNotificationSetup(container, current.user.uid)
                 ObelixMainScaffold(
                     user = current.user,
                     container = container,

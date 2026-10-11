@@ -26,6 +26,11 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import de.hagi089.obelix.R
+import de.hagi089.obelix.data.notifications.CheckOutcome
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.util.Locale
 import de.hagi089.obelix.ui.notifications.needsPermissionRequest
 import de.hagi089.obelix.ui.notifications.notificationsAllowed
 import de.hagi089.obelix.ui.notifications.openSystemNotificationSettings
@@ -36,12 +41,18 @@ import de.hagi089.obelix.ui.notifications.openSystemNotificationSettings
  * Android-Einstellungen (nach zweimaligem Ablehnen zeigt Android den Erlaubnis-Dialog nicht mehr).
  */
 @Composable
-fun NotificationSection(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
+fun NotificationSection(
+    enabled: Boolean,
+    onEnabledChange: (Boolean) -> Unit,
+    lastCheck: () -> Pair<Long, CheckOutcome>? = { null },
+) {
     val context = LocalContext.current
     var allowed by remember { mutableStateOf(notificationsAllowed(context)) }
-    // Nach der Rückkehr aus den Android-Einstellungen neu prüfen.
+    var last by remember { mutableStateOf(lastCheck()) }
+    // Nach der Rückkehr aus den Android-Einstellungen (oder aus dem Hintergrund) neu prüfen.
     LifecycleResumeEffect(Unit) {
         allowed = notificationsAllowed(context)
+        last = lastCheck()
         onPauseOrDispose { }
     }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
@@ -78,6 +89,11 @@ fun NotificationSection(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
+        // Version 27: Zeitpunkt und Ergebnis der letzten Hintergrundprüfung (Hilfe beim Testen).
+        val lastText = last?.let { (at, outcome) ->
+            stringResource(R.string.settings_notifications_last, formatCheckTime(at), stringResource(outcome.labelRes()))
+        } ?: stringResource(R.string.settings_notifications_last_none)
+        Text(text = lastText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
         if (enabled && !allowed) {
             Text(
                 text = stringResource(R.string.settings_notifications_blocked),
@@ -92,4 +108,19 @@ fun NotificationSection(enabled: Boolean, onEnabledChange: (Boolean) -> Unit) {
             }
         }
     }
+}
+
+private val CHECK_TIME_FORMAT: DateTimeFormatter = DateTimeFormatter.ofPattern("dd.MM.yyyy, HH:mm", Locale.GERMANY)
+
+private fun formatCheckTime(millis: Long): String =
+    CHECK_TIME_FORMAT.format(Instant.ofEpochMilli(millis).atZone(ZoneId.systemDefault()))
+
+private fun CheckOutcome.labelRes(): Int = when (this) {
+    CheckOutcome.NO_USER -> R.string.check_outcome_no_user
+    CheckOutcome.DISABLED -> R.string.check_outcome_disabled
+    CheckOutcome.NOT_ALLOWED -> R.string.check_outcome_not_allowed
+    CheckOutcome.STARTED -> R.string.check_outcome_started
+    CheckOutcome.FAILED -> R.string.check_outcome_failed
+    CheckOutcome.NOTHING_NEW -> R.string.check_outcome_nothing_new
+    CheckOutcome.POSTED -> R.string.check_outcome_posted
 }

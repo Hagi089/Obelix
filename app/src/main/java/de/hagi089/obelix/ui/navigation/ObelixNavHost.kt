@@ -340,6 +340,7 @@ fun ObelixNavHost(
                 onToggleTheme = { container.themePreference.setDarkMode(!isDark) },
                 notificationsEnabled = notificationsEnabled,
                 onNotificationsChange = container.changeNotificationPreference::setEnabled,
+                lastCheck = container.changeNotificationPreference::lastCheck,
             )
         }
     }

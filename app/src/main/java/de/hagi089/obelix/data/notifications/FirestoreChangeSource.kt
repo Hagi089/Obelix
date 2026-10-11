@@ -18,7 +18,8 @@ class FirestoreChangeSource(
     private val userRepository: UserRepository,
 ) : ChangeSource {
 
-    override suspend fun loadSince(since: Stamp): Result<List<ChangeRecord>> = repositoryCall {
+    // Zwölf Abfragen nacheinander im Hintergrund (oft mit kaltem Prozess): 20 s Standardgrenze ist zu knapp.
+    override suspend fun loadSince(since: Stamp): Result<List<ChangeRecord>> = repositoryCall(TIMEOUT_MS) {
         val after = Timestamp(since.seconds, since.nanos)
         val byKey = linkedMapOf<Pair<String, String>, ChangeRecord>()
         CHANGE_COLLECTIONS.keys.forEach { collection ->
@@ -52,5 +53,6 @@ class FirestoreChangeSource(
         const val CREATED_AT = "createdAt"
         const val UPDATED_AT = "updatedAt"
         val FIELDS = listOf(CREATED_AT, UPDATED_AT)
+        const val TIMEOUT_MS = 60_000L
     }
 }

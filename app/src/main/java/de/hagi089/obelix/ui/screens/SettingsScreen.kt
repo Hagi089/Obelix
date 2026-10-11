@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import de.hagi089.obelix.R
 import de.hagi089.obelix.data.auth.AuthUser
+import de.hagi089.obelix.data.notifications.CheckOutcome
 import de.hagi089.obelix.data.user.AccessCode
 import de.hagi089.obelix.data.user.Role
 import de.hagi089.obelix.data.user.UserProfile
@@ -77,6 +78,7 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     notificationsEnabled: Boolean = true,
     onNotificationsChange: (Boolean) -> Unit = {},
+    lastCheck: () -> Pair<Long, CheckOutcome>? = { null },
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     var confirm by remember { mutableStateOf<Confirm?>(null) }
@@ -130,7 +132,7 @@ fun SettingsScreen(
             Box(modifier = Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) { CircularProgressIndicator() }
         }
         HorizontalDivider()
-        NotificationSection(enabled = notificationsEnabled, onEnabledChange = onNotificationsChange)
+        NotificationSection(enabled = notificationsEnabled, onEnabledChange = onNotificationsChange, lastCheck = lastCheck)
         if (profile?.isAdmin == true) {
             // Kategorien verwalten: nur ADMIN (Mitglieder sehen den Bereich nicht).
             HorizontalDivider()

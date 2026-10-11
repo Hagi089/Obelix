@@ -22,14 +22,16 @@ import de.hagi089.obelix.AppContainer
  * beendet sie sie. Fragt auf Android 13+ genau einmal nach der Erlaubnis (danach nur noch über die Einstellungen).
  */
 @Composable
-fun ChangeNotificationSetup(container: AppContainer) {
+fun ChangeNotificationSetup(container: AppContainer, uid: String) {
     val preference = container.changeNotificationPreference
     val enabled by preference.enabled.collectAsStateWithLifecycle()
     val context = LocalContext.current
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { }
 
-    LaunchedEffect(enabled) {
+    LaunchedEffect(enabled, uid) {
         if (enabled) {
+            // Startpunkt sofort setzen, nicht erst in der (oft verzögerten) ersten Hintergrundprüfung.
+            container.changeChecker.ensureStart(uid)
             container.changeCheckScheduler.schedule()
             if (needsPermissionRequest(context) && !preference.permissionAsked) {
                 preference.markPermissionAsked()
@@ -37,6 +39,9 @@ fun ChangeNotificationSetup(container: AppContainer) {
             }
         } else {
             container.changeCheckScheduler.cancel()
+            // Ausgeschaltet läuft keine Prüfung mehr, die den Stand löschen könnte: Beim Wiedereinschalten soll die
+            // Zwischenzeit nicht gemeldet werden.
+            preference.clearAllWatermarks()
         }
     }
 }

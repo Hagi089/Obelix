@@ -39,7 +39,25 @@ class ChangeNotificationPreference(context: Context) : ChangeStateStore {
         prefs.edit().remove(KEY_WATERMARK + uid).apply()
     }
 
-    /** Beim Abmelden: Nach der nächsten Anmeldung beginnt die Prüfung neu (keine Meldungen über die Zwischenzeit). */
+    override fun recordCheck(outcome: CheckOutcome) {
+        prefs.edit()
+            .putLong(KEY_LAST_CHECK_AT, System.currentTimeMillis())
+            .putString(KEY_LAST_CHECK_OUTCOME, outcome.name)
+            .apply()
+    }
+
+    /** Letzte Prüfung (Gerätezeit in Millisekunden, Ergebnis) oder null, wenn noch keine lief. */
+    fun lastCheck(): Pair<Long, CheckOutcome>? {
+        val at = prefs.getLong(KEY_LAST_CHECK_AT, 0L).takeIf { it > 0L } ?: return null
+        val outcome = prefs.getString(KEY_LAST_CHECK_OUTCOME, null)
+            ?.let { name -> CheckOutcome.entries.firstOrNull { it.name == name } } ?: return null
+        return at to outcome
+    }
+
+    /**
+     * Beim Abmelden und beim Ausschalten: Nach der nächsten Anmeldung bzw. dem Einschalten beginnt die Prüfung neu
+     * (keine Meldungen über die Zwischenzeit).
+     */
     fun clearAllWatermarks() {
         val editor = prefs.edit()
         prefs.all.keys.filter { it.startsWith(KEY_WATERMARK) }.forEach { editor.remove(it) }
@@ -51,5 +69,7 @@ class ChangeNotificationPreference(context: Context) : ChangeStateStore {
         const val KEY_ENABLED = "enabled"
         const val KEY_PERMISSION_ASKED = "permission_asked"
         const val KEY_WATERMARK = "watermark_"
+        const val KEY_LAST_CHECK_AT = "last_check_at"
+        const val KEY_LAST_CHECK_OUTCOME = "last_check_outcome"
     }
 }

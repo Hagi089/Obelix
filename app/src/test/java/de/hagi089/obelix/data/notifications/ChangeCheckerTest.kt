@@ -6,7 +6,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** A-56: Ablauf einer Hintergrundprüfung mit Fakes (Entscheidung 53). */
+/** A-56: Ablauf einer Hintergrundprüfung mit Fakes (Entscheidung 53; Korrektur Version 27). */
 class ChangeCheckerTest {
 
     private val now = Stamp(5_000, 0)
@@ -30,10 +30,12 @@ class ChangeCheckerTest {
 
     private class FakeStore(var enabled: Boolean = true) : ChangeStateStore {
         val marks = mutableMapOf<String, Stamp>()
+        val checks = mutableListOf<CheckOutcome>()
         override fun isEnabled() = enabled
         override fun watermark(uid: String) = marks[uid]
         override fun setWatermark(uid: String, stamp: Stamp) { marks[uid] = stamp }
         override fun clearWatermark(uid: String) { marks.remove(uid) }
+        override fun recordCheck(outcome: CheckOutcome) { checks += outcome }
     }
 
     private class FakePoster(var allowed: Boolean = true) : ChangePoster {
@@ -66,17 +68,64 @@ class ChangeCheckerTest {
     }
 
     @Test
-    fun `abgeschaltet oder nicht erlaubt liest nichts und setzt den Stand zurueck`() = runBlocking {
+    fun `abgeschaltet liest nichts und setzt den Stand zurueck`() = runBlocking {
         val source = FakeSource()
         val store = FakeStore(enabled = false).apply { marks["ich"] = start }
         assertEquals(CheckOutcome.DISABLED, checker(source, store, FakePoster()).run("ich"))
         assertNull(store.marks["ich"])
-
-        store.enabled = true
-        store.marks["ich"] = start
-        assertEquals(CheckOutcome.NOT_ALLOWED, checker(source, store, FakePoster(allowed = false)).run("ich"))
-        assertNull(store.marks["ich"])
         assertTrue(source.queried.isEmpty())
+    }
+
+    @Test
+    fun `Fehler Version 26 - ohne Erlaubnis bleibt der Stand, nach dem Erlauben wird alles seitdem gemeldet`() = runBlocking {
+        // Ablauf auf dem Gerät: Startpunkt beim Öffnen, erste Prüfung während der Erlaubnis-Dialog noch offen ist,
+        // danach trägt ein anderer Benutzer in mehreren Bereichen etwas ein, dann wird die Erlaubnis erteilt.
+        val source = FakeSource(
+            records = Result.success(
+                listOf(
+                    ChangeRecord("calendarEntries", "1", Stamp(1_100, 0), "anna", null, null),
+                    ChangeRecord("transactions", "2", Stamp(1_101, 0), "anna", null, null),
+                    ChangeRecord("repairs", "3", Stamp(1_102, 0), "anna", null, null),
+                    ChangeRecord("campsites", "4", Stamp(1_103, 0), "anna", null, null),
+                    ChangeRecord("documents", "5", Stamp(1_104, 0), "anna", null, null),
+                ),
+            ),
+        )
+        val store = FakeStore()
+        val poster = FakePoster(allowed = false)
+        val checker = checker(source, store, poster)
+        store.marks["ich"] = start // ensureStart beim Öffnen der App
+        assertEquals(CheckOutcome.NOT_ALLOWED, checker.run("ich"))
+        assertEquals(start, store.marks["ich"])
+        assertTrue(source.queried.isEmpty())
+
+        poster.allowed = true
+        assertEquals(CheckOutcome.POSTED, checker.run("ich"))
+        assertEquals(listOf(start), source.queried)
+        assertEquals(ChangeArea.entries.toList(), poster.posted.map { it.first })
+    }
+
+    @Test
+    fun `Startpunkt beim Oeffnen der App, ein vorhandener Stand bleibt`() = runBlocking {
+        val store = FakeStore()
+        val checker = checker(FakeSource(), store, FakePoster())
+        checker.ensureStart("ich")
+        assertEquals(now, store.marks["ich"])
+        store.marks["ich"] = start
+        checker.ensureStart("ich")
+        assertEquals(start, store.marks["ich"])
+        // Die erste Hintergrundprüfung setzt dann keinen neuen Startpunkt, sondern prüft ab dem Öffnen.
+        assertEquals(CheckOutcome.NOTHING_NEW, checker.run("ich"))
+    }
+
+    @Test
+    fun `jede Pruefung merkt sich ihr Ergebnis`() = runBlocking {
+        val store = FakeStore()
+        val checker = checker(FakeSource(records = Result.failure(IllegalStateException())), store, FakePoster())
+        checker.run(null)
+        checker.run("ich")
+        checker.run("ich")
+        assertEquals(listOf(CheckOutcome.NO_USER, CheckOutcome.STARTED, CheckOutcome.FAILED), store.checks)
     }
 
     @Test
