@@ -14,8 +14,8 @@ import java.util.concurrent.TimeUnit
 
 /**
  * Hintergrundprüfung auf Änderungen anderer Benutzer (Entscheidung 53, Option 1). Etwa einmal pro Stunde (Wunsch des
- * Benutzers; Version 27 lief zum Testen mit 15 Minuten, dem kleinsten Wert von Android). Im Energiesparmodus oder bei selten genutzter App auch später. Liefert immer „Erfolg“: Bei einem Fehler bleibt der
- * Stand stehen und die nächste Prüfung holt alles nach (kein Wiederholen, schont den Akku).
+ * Benutzers; Version 27 lief zum Testen mit 15 Minuten, dem kleinsten Wert von Android). Im Energiesparmodus oder bei
+ * selten genutzter App auch später. Liefert immer „Erfolg“: Bei einem Fehler bleibt der Stand stehen und die nächste Prüfung holt alles nach (kein Wiederholen, schont den Akku).
  */
 class ChangeCheckWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
